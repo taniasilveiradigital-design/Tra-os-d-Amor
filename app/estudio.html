@@ -246,7 +246,7 @@ const PAPEL_TXT = { dona:"Estratega", equipa:"Equipa criativa", cliente:"Cliente
 let db = null, userCap = null, sample = null;
 const S = { cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
 const UI = { tab:"quadro", vista:"semanas", semana:"todas", semAberta:null, mes:"2026-10", cardId:null, pend:false, editSem:null, editEst:false, editDados:null, relId:null, editMelh:null, qaBusy:false, qaTxt:"",
-  of:{ modo:"semana", semanas:[], data:"", tipo:"Feed", formato:"Reel", brief:"", busy:false, prog:"", out:[], err:"" } };
+  of:{ modo:"semana", semanas:[], data:"", tipo:"Feed", formato:"Reel", brief:"", busy:false, prog:"", out:[], err:"", ret:null, retTxt:{}, rascId:null } };
 try { const t = localStorage.getItem("td-tab3"); if (t) UI.tab = t; const v = localStorage.getItem("td-vista"); if (v) UI.vista = v; } catch(e){}
 
 /* ---------- helpers ---------- */
@@ -758,21 +758,41 @@ function renderOficina(main){
     <label class="f">O que queres que eu faça<textarea id="of-brief" data-of="brief" style="min-height:130px" placeholder="Ex.: temos vídeos da Sílvia a abrir caixas e fotos dos conjuntos no jardim. Quero spoiler na segunda e revelação na quarta às 10h.">${esc(o.brief)}</textarea></label>
     <div class="row"><button class="btn primary" data-act="gerar" ${o.busy || !sample || !sel.length ? "disabled" : ""}>${o.busy ? esc(o.prog || "A pensar…") : o.modo === "semana" && sel.length > 1 ? `Gerar ${sel.length} semanas` : "Gerar"}</button>${o.busy ? `<button class="btn" data-act="parar">Parar</button>` : ""}${!sample ? `<span class="small muted">Só funciona dentro do claude.ai.</span>` : ""}</div>
     ${o.err ? `<p class="small" style="color:var(--bad)">${esc(o.err)}</p>` : ""}</div>
-  ${o.out.length ? `<div class="card"><div class="spread"><h2>Proposta</h2><div class="row"><button class="btn primary" data-act="enviarTodos">Enviar tudo para o quadro (Ideia)</button><button class="btn" data-act="guardarRasc">Guardar rascunho</button><button class="btn ghost" data-act="descartar">Descartar</button></div></div>
+  ${o.out.length ? `<div class="card"><div class="spread"><h2>Proposta</h2><div class="row"><button class="btn primary" data-act="enviarTodos">Enviar tudo para o quadro (Ideia)</button><button class="btn" data-act="guardarRasc">Guardar tudo</button><button class="btn ghost danger" data-act="descartar">Eliminar tudo</button></div></div>
     ${o.out.map((g,gi) => `<h3 class="serif" style="font-size:24px">${esc(g.titulo)}</h3>${g.nota ? `<p class="chip warn" style="white-space:normal">${esc(g.nota)}</p>` : ""}${g.cartoes.map((c,i) => previewCartao(c,gi,i)).join("")}`).join("")}</div>` : ""}
   ${S.rascunhos.length ? `<div class="card"><h3>Rascunhos guardados</h3>${[...S.rascunhos].sort((a,b) => (b.em||"").localeCompare(a.em||"")).map(r => `<div class="spread" style="border-top:1px solid var(--line);padding-top:8px"><span>${esc(fmtQuando(r.em))} · ${esc((r.out||[]).map(g => g.titulo).join(", "))}</span><span class="row"><button class="btn sm" data-act="abrirRasc" data-id="${esc(r.id)}">Abrir</button><button class="btn ghost sm danger" data-act="apagarRasc" data-id="${esc(r.id)}">Apagar</button></span></div>`).join("")}</div>` : ""}`;
 }
 function previewCartao(c,gi,i){
   const f = (l,v,cls) => v ? `<div style="display:grid;gap:2px"><span class="lbl">${l}</span><p class="readv ${cls||""}" style="${cls?"font-size:17px":""}">${esc(v)}</p></div>` : "";
-  return `<div class="sec"><div class="spread"><div><span class="small muted">${esc(c.data ? fmtDia(c.data) : "")}</span><h3>${esc(c.titulo || c.tipo)}${c.formato ? " · " + esc(c.formato) : ""}</h3></div><button class="btn sm" data-act="enviarUm" data-g="${gi}" data-i="${i}">Enviar para o quadro</button></div>
+  const k = `${gi}-${i}`; const busy = UI.of.ret === k;
+  return `<div class="sec"><div class="spread"><div><span class="small muted">${esc(c.data ? fmtDia(c.data) : "")}</span><h3>${esc(c.titulo || c.tipo)}${c.formato ? " · " + esc(c.formato) : ""}</h3></div>
+      <div class="row"><button class="btn primary sm" data-act="enviarUm" data-g="${gi}" data-i="${i}">Enviar para o quadro</button><button class="btn sm" data-act="guardarRasc">Guardar</button><button class="btn ghost sm danger" data-act="eliminarUm" data-g="${gi}" data-i="${i}">Eliminar</button></div></div>
     ${f("Intenção",c.intencao)}${f("Estratégia",c.estrategia)}${f("Tema",c.tema)}${f("Como fazer",c.comoFazer)}${f("Inspiração",c.inspiracao)}${f("Legenda",c.legenda,"hand")}
-    ${(c.stories||[]).map((s,j) => `<div class="sec story"><h4>Storie ${j+1} · ${s.media==="foto"?"foto":"vídeo"}</h4>${f("Intenção",s.intencao)}${f("Estratégia",s.estrategia)}${f("Tema",s.tema)}${f("Texto",s.texto,"hand")}${f("Como fazer",s.comoFazer)}</div>`).join("")}</div>`;
+    ${(c.stories||[]).map((s,j) => `<div class="sec story"><h4>Storie ${j+1} · ${s.media==="foto"?"foto":"vídeo"}</h4>${f("Intenção",s.intencao)}${f("Estratégia",s.estrategia)}${f("Tema",s.tema)}${f("Texto",s.texto,"hand")}${f("Como fazer",s.comoFazer)}</div>`).join("")}
+    ${(c._pedidos||[]).length ? `<div class="coms">${c._pedidos.map(t => `<div class="com"><span class="who">Tu <span class="role dona">pedido de retificação</span></span><p class="readv">${esc(t)}</p></div>`).join("")}</div>` : ""}
+    <div class="sec priv" style="gap:8px"><label class="f">Comentário para retificar este conteúdo<textarea id="ret-${k}" data-ret="${k}" style="min-height:60px" placeholder="Ex.: a legenda está demasiado poética, quero o preço na 2.ª linha; o storie 2 tem de ser sondagem, não link.">${esc((UI.of.retTxt||{})[k]||"")}</textarea></label>
+      <div class="row"><button class="btn sm" data-act="retificar" data-g="${gi}" data-i="${i}" ${busy || UI.of.busy || !sample ? "disabled" : ""}>${busy ? "A retificar… (até 1 minuto)" : "Retificar"}</button></div></div>
+  </div>`;
+}
+async function retificar(gi, i){
+  const o = UI.of; const g = o.out[gi]; const c = g.cartoes[i]; const k = `${gi}-${i}`;
+  const pedido = ((o.retTxt||{})[k]||"").trim(); if (!pedido) { toast("Escreve o que queres mudar."); return; }
+  const w = S.semanas.find(x => x.id === g.semana) || semanaDe(c.data) || semanasOrd()[0];
+  o.ret = k; renderMain();
+  const limpo = { ...c }; delete limpo._pedidos;
+  try {
+    const res = await sample.json(`És a estrategista de conteúdos sénior da Tânia Silveira para a marca Traços D'Amor. Escreve em português de Portugal.\n\nMARCA\n${MARCA}\n\n${w ? blocoSemana(w) : ""}\n\nCARTÃO ATUAL (JSON):\n${JSON.stringify(limpo)}\n\n${(c._pedidos||[]).length ? "PEDIDOS ANTERIORES DA TÂNIA (continuam válidos):\n" + c._pedidos.map(t => "- " + t).join("\n") + "\n\n" : ""}NOVO PEDIDO DA TÂNIA:\n${pedido}\n\nRetifica o cartão exatamente como ela pede. Mantém o que ela não mandou mudar. Mantém a mesma data e o mesmo tipo, salvo se ela pedir outra coisa. Nunca inventes preços, tecidos ou tamanhos: usa [parênteses retos].\nResponde só com o cartão em JSON, com as mesmas chaves: {"data","tipo","formato","titulo","intencao","estrategia","tema","comoFazer","inspiracao","legenda","stories":[{"intencao","estrategia","tema","texto","comoFazer","media"}]}`, { modelTier:"complex", cache:false });
+    if (!res || typeof res !== "object" || Array.isArray(res)) throw { code:"invalid_json" };
+    g.cartoes[i] = { ...res, _pedidos:[...(c._pedidos||[]), pedido] };
+    o.retTxt[k] = ""; toast("Retificado.");
+  } catch(e){ toast(e?.code === "not_granted" ? "Não deste permissão para usar o Claude nesta página." : "Não consegui retificar. Tenta outra vez."); }
+  o.ret = null; renderMain();
 }
 let genCtl = null;
 async function gerar(){
   if (!sample) return; const o = UI.of; const sel = semanasOrd().filter(w => o.semanas.includes(w.id)); if (!sel.length) return;
   const alvo = o.modo === "semana" ? sel : [sel[0]];
-  o.busy = true; o.err = ""; o.out = []; genCtl = new AbortController();
+  o.busy = true; o.err = ""; o.out = []; o.rascId = null; o.retTxt = {}; genCtl = new AbortController();
   for (let k = 0; k < alvo.length; k++) {
     const w = alvo[k]; o.prog = alvo.length > 1 ? `A gerar ${k+1} de ${alvo.length}… (1 a 2 min cada)` : "A pensar… (1 a 2 minutos)"; renderMain();
     try { const res = await sample.json(promptOficina(w), { signal: genCtl.signal, modelTier:"complex", cache:false });
@@ -856,11 +876,13 @@ document.addEventListener("click", async e => {
       if (UI.of.modo === "dia") UI.of.semanas = [id]; else UI.of.semanas = s.includes(id) ? s.filter(x => x !== id) : [...s, id]; renderMain(); break; }
     case "gerar": gerar(); break;
     case "parar": genCtl?.abort(); break;
-    case "descartar": UI.of.out = []; renderMain(); break;
-    case "enviarUm": { const g = UI.of.out[Number(el.dataset.g)]; const i = Number(el.dataset.i); if (await enviarParaQuadro(g.cartoes[i])) { g.cartoes.splice(i,1); if (!g.cartoes.length) UI.of.out.splice(Number(el.dataset.g),1); toast("Enviado para Ideia."); renderMain(); } break; }
+    case "descartar": UI.of.out = []; UI.of.rascId = null; renderMain(); break;
+    case "eliminarUm": { const g = UI.of.out[Number(el.dataset.g)]; g.cartoes.splice(Number(el.dataset.i),1); if (!g.cartoes.length) UI.of.out.splice(Number(el.dataset.g),1); UI.of.retTxt = {}; renderMain(); break; }
+    case "retificar": retificar(Number(el.dataset.g), Number(el.dataset.i)); break;
+    case "enviarUm": { const g = UI.of.out[Number(el.dataset.g)]; const i = Number(el.dataset.i); if (await enviarParaQuadro(g.cartoes[i])) { g.cartoes.splice(i,1); UI.of.retTxt = {}; if (!g.cartoes.length) UI.of.out.splice(Number(el.dataset.g),1); toast("Enviado para Ideia."); renderMain(); } break; }
     case "enviarTodos": { let n = 0; for (const g of UI.of.out) for (const c of g.cartoes) if (await enviarParaQuadro(c)) n++; UI.of.out = []; toast(`${n} cartões enviados para Ideia.`); renderMain(); break; }
-    case "guardarRasc": { if (await write(`data/users/${S.me.id}/r-${uidShort()}`, { em:new Date().toISOString(), brief:UI.of.brief, semanas:UI.of.semanas, out:UI.of.out })) toast("Rascunho guardado."); break; }
-    case "abrirRasc": { const r = S.rascunhos.find(x => x.id === el.dataset.id); if (r) { UI.of.out = r.out || []; UI.of.brief = r.brief || ""; if (r.semanas) UI.of.semanas = r.semanas; renderMain(); } break; }
+    case "guardarRasc": { const id = UI.of.rascId || `r-${uidShort()}`; if (await write(`data/users/${S.me.id}/${id}`, { em:new Date().toISOString(), brief:UI.of.brief, semanas:UI.of.semanas, out:UI.of.out })) { UI.of.rascId = id; toast("Guardado nos rascunhos."); } break; }
+    case "abrirRasc": { const r = S.rascunhos.find(x => x.id === el.dataset.id); if (r) { UI.of.rascId = r.id; UI.of.retTxt = {}; UI.of.out = r.out || []; UI.of.brief = r.brief || ""; if (r.semanas) UI.of.semanas = r.semanas; renderMain(); } break; }
     case "apagarRasc": { try { await db.doc(`data/users/${S.me.id}/${el.dataset.id}`).delete(); } catch(x){} break; }
   }
 });
@@ -872,7 +894,7 @@ document.addEventListener("change", async e => {
   else if (t.matches("[data-act=moverSel]")) { const c = S.cartoes.find(x => x.id === UI.cardId); if (c && t.value !== c.etapa) await mover(c, t.value); }
   else if (t.matches("[data-of]")) { UI.of[t.dataset.of] = t.value; if (t.tagName === "SELECT") { t.blur(); renderMain(); } }
 });
-document.addEventListener("input", e => { const t = e.target; if (t.matches("[data-of]")) UI.of[t.dataset.of] = t.value; if (t.matches("[data-qa]")) UI.qaTxt = t.value; });
+document.addEventListener("input", e => { const t = e.target; if (t.matches("[data-of]")) UI.of[t.dataset.of] = t.value; if (t.matches("[data-qa]")) UI.qaTxt = t.value; if (t.matches("[data-ret]")) { UI.of.retTxt[t.dataset.ret] = t.value; } });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && UI.cardId) closeCard(); });
 
 document.addEventListener("submit", async e => {
