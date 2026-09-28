@@ -1,0 +1,271 @@
+<title>Traços D'Amor Outubro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;700&family=Patrick+Hand&display=swap">
+<style>
+:root{
+  --bg:#FBF8F6; --surface:#FFFFFF; --ink:#3B2E2A; --muted:#7A6862; --line:#E8DDD8;
+  --terra:#C9785D; --terra-soft:#F4DDD3; --salvia:#CBD2CA; --salvia-ink:#4E5E4E;
+  --azul:#AABDD4; --azul-ink:#3E5673; --castanho:#AA867D;
+  --warn-bg:#FFF4E5; --warn-ink:#7A4B12;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#1E1917; --surface:#28211E; --ink:#F1E8E4; --muted:#B7A69F; --line:#3D3330;
+    --terra:#E0A18A; --terra-soft:#43302A; --salvia:#3A4339; --salvia-ink:#CBD2CA;
+    --azul:#33415A; --azul-ink:#C9D6E6; --castanho:#C9A79E;
+    --warn-bg:#3A2C18; --warn-ink:#F2C98A;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#1E1917; --surface:#28211E; --ink:#F1E8E4; --muted:#B7A69F; --line:#3D3330;
+  --terra:#E0A18A; --terra-soft:#43302A; --salvia:#3A4339; --salvia-ink:#CBD2CA;
+  --azul:#33415A; --azul-ink:#C9D6E6; --castanho:#C9A79E;
+  --warn-bg:#3A2C18; --warn-ink:#F2C98A;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 Karla,system-ui,sans-serif;padding-inline:16px;padding-block:32px 64px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:40px}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:clamp(28px,5vw,42px);font-weight:700}
+h2{font-size:24px;font-weight:700}
+h3{font-size:17px;font-weight:700}
+p{margin:0}
+.hand{font-family:"Patrick Hand",Karla,cursive}
+.eyebrow{font-family:"Patrick Hand",Karla,cursive;font-size:20px;color:var(--terra)}
+.lead{font-size:18px;color:var(--muted);max-width:68ch}
+section{display:grid;gap:16px}
+.note{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:14px 16px;font-size:15px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:8px;align-content:start}
+.box ul,.box ol{margin:0;padding-left:20px;display:grid;gap:6px}
+.rules{display:grid;gap:10px;counter-reset:r;margin:0;padding:0;list-style:none}
+.rules li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 50px;position:relative}
+.rules li::before{counter-increment:r;content:counter(r);position:absolute;left:14px;top:11px;width:24px;height:24px;border-radius:50%;background:var(--terra);color:#fff;font-weight:700;font-size:13px;display:grid;place-items:center}
+.rules b{display:block}
+.rhythm{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.rhythm div{border-radius:8px;padding:10px 6px;text-align:center;font-size:13px;display:grid;gap:2px}
+.rhythm .f{background:var(--terra-soft)} .rhythm .s{background:var(--salvia);color:var(--salvia-ink)}
+.rhythm strong{font-size:15px}
+nav.weeks{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;display:flex;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--line)}
+nav.weeks a{color:var(--ink);text-decoration:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-size:14px}
+nav.weeks a:hover,nav.weeks a:focus-visible{border-color:var(--terra);outline:none}
+.week{display:grid;gap:14px;scroll-margin-top:70px}
+.weekhead{display:grid;gap:4px;border-left:4px solid var(--terra);padding-left:14px}
+.weekhead p{color:var(--muted)}
+.days{display:grid;gap:12px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:12px;display:grid;grid-template-columns:92px 1fr;overflow:hidden}
+.date{padding:14px 10px;border-right:1px solid var(--line);display:grid;align-content:start;gap:6px;text-align:center}
+.date .n{font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.date .w{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;letter-spacing:.03em}
+.p-reel{background:var(--terra);color:#fff}
+.p-car{background:var(--azul);color:var(--azul-ink)}
+.p-foto{background:var(--castanho);color:#fff}
+.p-st{background:var(--salvia);color:var(--salvia-ink)}
+.body{padding:14px 16px;display:grid;gap:10px;min-width:0}
+.row{display:grid;grid-template-columns:96px 1fr;gap:10px;font-size:15px}
+.row .k{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:2px}
+.cap{font-family:"Patrick Hand",Karla,cursive;font-size:17px;line-height:1.45;background:var(--bg);border-radius:8px;padding:10px 12px;white-space:pre-line}
+.story{display:grid;gap:4px}
+.story div{padding-left:14px;position:relative}
+.story div::before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;border-radius:50%;background:var(--salvia-ink)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:15px;background:var(--surface)}
+th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+td.num{font-variant-numeric:tabular-nums}
+.fix{display:grid;gap:10px}
+.fix div{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:15px}
+.fix .bad{color:var(--muted)} .fix .bad::before{content:"Mal: ";font-weight:700;color:var(--terra)}
+.fix .good::before{content:"Faz: ";font-weight:700;color:var(--salvia-ink)}
+@media (max-width:560px){
+  .day{grid-template-columns:1fr}
+  .date{border-right:0;border-bottom:1px solid var(--line);grid-template-columns:auto auto 1fr;align-items:center;text-align:left;gap:10px}
+  .row{grid-template-columns:1fr;gap:2px}
+  .fix div{grid-template-columns:1fr}
+  .rhythm{grid-template-columns:repeat(4,1fr)}
+}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<div class="wrap">
+
+<header style="display:grid;gap:12px">
+  <p class="eyebrow">Traços D'Amor · Outubro 2026</p>
+  <h1>Calendário de venda: 5 de outubro a 1 de novembro</h1>
+  <p class="lead">Um objetivo: vendas online. Cada publicação mostra a peça, diz o preço e pede a compra. O tom continua a ser da marca, mas nenhum conteúdo sai sem um pedido claro de venda.</p>
+  <p class="note"><b>Antes de usares:</b> não tive acesso ao site nem ao Instagram (bloqueados no meu ambiente). A estratégia assenta no manual de marca e na coleção Jardim das Descobertas. Tudo o que está entre [parênteses retos] é para preencher: preços, tecidos, tamanhos, nomes dos conjuntos. Manda-me prints dos stories e do site e eu faço a auditoria real.</p>
+</header>
+
+<section>
+  <h2>Porque é que não está a vender</h2>
+  <p class="lead">Zero vendas online desde maio não se explica só pelo conteúdo. Normalmente é a soma disto:</p>
+  <div class="grid2">
+    <div class="box"><h3>1. Fala de sentimento, não de produto</h3><p>Legendas bonitas que não dizem o que é, quanto custa e onde se compra. A mãe gosta, faz like e segue em frente.</p></div>
+    <div class="box"><h3>2. Não pede a venda</h3><p>Sem preço à vista e sem instrução clara, ninguém pergunta. Numa marca premium, esconder o preço afasta quem compra por impulso consciente.</p></div>
+    <div class="box"><h3>3. Não há alcance</h3><p>Com uma conta pequena, o orgânico sozinho não chega a quem compra. Sem investimento em anúncios, zero vendas é o resultado esperado.</p></div>
+    <div class="box"><h3>4. Falta prova</h3><p>Ninguém viu a peça numa criança real, em movimento, com medidas e com a opinião de outra mãe. Sem isso não há confiança para pagar preço de luxo online.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>As regras do mês</h2>
+  <ol class="rules">
+    <li><b>Preço sempre visível.</b> Na legenda, na última imagem do carrossel e no story. Luxo não é esconder o preço. É justificá-lo.</li>
+    <li><b>Um pedido por publicação.</b> "Comenta TRAÇO e envio-te os tamanhos e o link." A palavra muda por semana (TRAÇO, TRILHA, OUTONO, LOOK). Os comentários aumentam o alcance e cada um é uma conversa de venda.</li>
+    <li><b>Todos os stories vendem.</b> Cada story tem link direto para a página da peça (nunca para a página inicial) ou uma sondagem ou caixa de pergunta. Nenhum story é só bonito.</li>
+    <li><b>DMs respondidas em menos de 1 hora.</b> Com foto da peça, medidas em cm e link. A venda online desta marca vai acontecer primeiro por mensagem.</li>
+    <li><b>Oferta de outubro sem cheiro a saldo:</b> portes grátis e embrulho de oferta em todas as encomendas online até 1 de novembro. Na última semana, condição especial no Look Trilha completo. Sem percentagens gritadas.</li>
+    <li><b>Anúncios: 5 a 10 € por dia.</b> Não é opcional. Promove o reel da semana para mães 25–45 em Portugal e faz remarketing a quem visitou o site ou interagiu. São 150–300 € no mês. Sem isto, o calendário fala para as mesmas pessoas de sempre.</li>
+    <li><b>Três mães com 3 a 15 mil seguidores.</b> Norte (Guimarães, Braga, Porto). Oferecem-se peças em troca de 1 reel e 3 stories com link. Contactar esta semana para publicarem nas semanas 2 e 3.</li>
+    <li><b>A fundadora aparece.</b> Pelo menos uma vez por semana, a Sílvia fala para a câmara. As marcas pequenas vendem porque há uma pessoa por trás.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>Ritmo semanal</h2>
+  <p class="lead">Feed às segundas, quartas, sextas e domingos, com 1 story. Terças, quintas e sábados só com 2 stories. Por semana: 2 reels, 2 carrosséis ou fotos e 10 stories.</p>
+  <div class="rhythm">
+    <div class="f"><strong>Seg</strong>Feed + 1 story</div>
+    <div class="s"><strong>Ter</strong>2 stories</div>
+    <div class="f"><strong>Qua</strong>Feed + 1 story</div>
+    <div class="s"><strong>Qui</strong>2 stories</div>
+    <div class="f"><strong>Sex</strong>Feed + 1 story</div>
+    <div class="s"><strong>Sáb</strong>2 stories</div>
+    <div class="f"><strong>Dom</strong>Feed + 1 story</div>
+  </div>
+</section>
+
+<nav class="weeks" aria-label="Semanas">
+  <a href="#s1">5–11 · Conjuntos</a>
+  <a href="#s2">12–18 · Casaco Trilha</a>
+  <a href="#s3">19–25 · Camisa + Calça</a>
+  <a href="#s4">26 out–1 nov · Look completo</a>
+  <a href="#stories">Stories: o que melhorar</a>
+</nav>
+
+<div id="calendar" style="display:grid;gap:40px"></div>
+
+<section id="stories" style="scroll-margin-top:70px">
+  <h2>Stories: o que melhorar já</h2>
+  <p class="lead">Sem ver os stories, estes são os erros que mais travam vendas em marcas como esta. Confirma com os prints e digo-te quais se aplicam.</p>
+  <div class="fix">
+    <div><p class="bad">Story sem link, ou "link na bio".</p><p class="good">Link direto para a página da peça em todos os stories de produto.</p></div>
+    <div><p class="bad">Frase poética sem dizer o que é a peça.</p><p class="good">Uma linha de sensação, nome da peça, preço. Nesta ordem.</p></div>
+    <div><p class="bad">Foto de catálogo parada.</p><p class="good">Vídeo de 5–8 s: mão a tocar no tecido, criança a correr, fecho a abrir. Movimento no primeiro segundo.</p></div>
+    <div><p class="bad">Texto pequeno, em cima da peça ou colado ao topo e ao fundo.</p><p class="good">Texto grande em Patrick Hand, na zona central, sem tapar o produto.</p></div>
+    <div><p class="bad">Nenhuma interação.</p><p class="good">Uma sondagem ou caixa de pergunta por dia. Quem responde volta a ver os stories seguintes.</p></div>
+    <div><p class="bad">Nunca aparece ninguém.</p><p class="good">A Sílvia uma vez por semana, 15 segundos, a falar de uma peça.</p></div>
+    <div><p class="bad">Destaques desarrumados ou antigos.</p><p class="good">Cinco destaques: Comprar · Tamanhos · Casaco Trilha · Portes e trocas · Clientes.</p></div>
+    <div><p class="bad">Stories só sobre inspiração e bastidores.</p><p class="good">Bastidores só quando levam à peça: "é por isto que custa [preço]" + link.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Para fazer até 4 de outubro</h2>
+  <div class="grid2">
+    <div class="box"><h3>Site</h3><ul>
+      <li>Fazer uma compra completa no telemóvel e cronometrar. Se passar de 2 minutos, há fricção.</li>
+      <li>Tabela de medidas em cm em cada peça, não só a idade.</li>
+      <li>5 fotos por peça, com pelo menos 1 numa criança vestida.</li>
+      <li>Portes, prazo de entrega e trocas escritos na página do produto.</li>
+      <li>MB WAY ativo.</li>
+    </ul></div>
+    <div class="box"><h3>Instagram</h3><ul>
+      <li>Bio: o que é, para quem, oferta do mês. Ex.: "Moda infantil de autor · [2–8 anos] · Portes grátis em outubro".</li>
+      <li>Link da bio direto para a coleção, não para a página inicial.</li>
+      <li>Refazer os 5 destaques.</li>
+      <li>Automação de palavra-chave nos comentários (ManyChat tem versão gratuita) ou resposta manual.</li>
+    </ul></div>
+    <div class="box"><h3>Produção</h3><ul>
+      <li>1 dia de gravação para o mês: 8 reels, fotos de detalhe, vídeos curtos para stories.</li>
+      <li>Criança real, em movimento. Nada de poses.</li>
+      <li>Gravar a Sílvia: 4 vídeos de 15–30 s.</li>
+      <li>Preencher preços, tamanhos e stock de cada peça.</li>
+    </ul></div>
+    <div class="box"><h3>Alcance</h3><ul>
+      <li>Conta de anúncios pronta, com cartão e público definido.</li>
+      <li>Contactar 3 mães criadoras de conteúdo com peças para oferecer.</li>
+      <li>Lista VIP: quem responder 🧡 ao teaser recebe o Casaco Trilha por DM 2 horas antes.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>Números a medir todas as segundas</h2>
+  <p class="lead">Se ao fim da semana 2 não houver cliques nem DMs, o problema é o alcance. Se houver DMs e não houver vendas, o problema é o preço, o site ou a resposta.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Indicador</th><th>Onde ver</th><th>Meta mínima por semana</th></tr></thead>
+    <tbody>
+      <tr><td>Cliques no link (stories + bio)</td><td>Estatísticas do Instagram</td><td class="num">50+</td></tr>
+      <tr><td>Conversas por DM iniciadas</td><td>Caixa de mensagens</td><td class="num">15+</td></tr>
+      <tr><td>Comentários com palavra-chave</td><td>Publicações</td><td class="num">10+</td></tr>
+      <tr><td>Carrinhos criados</td><td>Painel da loja</td><td class="num">5+</td></tr>
+      <tr><td>Vendas online</td><td>Painel da loja</td><td class="num">2+ (8+ no mês)</td></tr>
+    </tbody>
+  </table></div>
+  <p style="font-size:14px;color:var(--muted)">Metas propostas por mim como ponto de partida, sem dados reais da conta. Ajustar depois da semana 1.</p>
+</section>
+
+</div>
+
+<script>
+const W = [
+ {id:"s1", t:"Semana 1 · Conjuntos", g:"5 a 11 de outubro", o:"Primeiras vendas. Mostrar que cada conjunto resolve o dia inteiro e que o preço é por conjunto. No domingo, lançar o teaser do Casaco Trilha e abrir a lista VIP.", kw:"TRAÇO", d:[
+  {n:5,w:"Seg",f:"Reel",c:"p-reel",tema:"1 conjunto, 3 momentos: escola, lanche na avó, parque.",hook:"Texto no 1.º segundo: \"Um conjunto. Três dias diferentes.\"",cap:"Vestir de manhã e não pensar mais nisso.\n[Conjunto 1]: [peças], em [tecido].\n[preço] o conjunto · [2–8 anos]\nPortes grátis em outubro.\nComenta TRAÇO e envio-te os tamanhos e o link.",st:["Partilha do reel + link \"Ver o conjunto\"."]},
+  {n:6,w:"Ter",f:"2 stories",c:"p-st",st:["Sondagem: \"Qual vestias esta semana?\" com [Conjunto 1] vs [Conjunto 2], preço em cada um.","Vídeo de detalhe (costura, botão, monograma): \"É isto que não se vê à distância.\" + link."]},
+  {n:7,w:"Qua",f:"Carrossel",c:"p-car",tema:"Porque é que este conjunto custa [preço].",hook:"Capa: \"Quanto custa um conjunto que passa para o irmão?\"",cap:"Tecido escolhido um a um.\nCosturas que aguentam o recreio.\nUm corte que cresce com a criança.\n[preço] · feito em [local]\nComenta TRAÇO e envio-te o link.",st:["Partilha do carrossel + caixa de pergunta: \"Pergunta-me tudo sobre tamanhos.\""]},
+  {n:8,w:"Qui",f:"2 stories",c:"p-st",st:["A Sílvia para a câmara (15 s): \"Este é o conjunto que mais gosto de ver vestido. E porquê.\"","Link para o conjunto + \"Portes grátis e embrulho de oferta até 1 de novembro.\""]},
+  {n:9,w:"Sex",f:"Reel",c:"p-reel",tema:"Como escolher o tamanho certo sem errar: mãe mede a criança, mostra a tabela.",hook:"\"Não sabes o tamanho? Em 20 segundos sabes.\"",cap:"O tamanho certo é o que deixa correr.\nMede a altura, vê a tabela, escolhe.\nOu manda-nos a idade e a altura por mensagem e nós dizemos-te.\nComenta TRAÇO.",st:["Partilha + caixa: \"Diz-me idade e altura, eu digo-te o tamanho.\""]},
+  {n:10,w:"Sáb",f:"2 stories",c:"p-st",st:["Bastidores: uma encomenda a ser embrulhada (vídeo 8 s).","\"Encomendas até segunda saem na terça.\" + link."]},
+  {n:11,w:"Dom",f:"Carrossel",c:"p-car",tema:"Todos os conjuntos lado a lado. Um por slide, com preço e tamanhos.",hook:"Capa: \"Os conjuntos Traços D'Amor. Escolhe o teu.\"",cap:"Cada conjunto pensado para um dia inteiro.\nPreços e tamanhos em cada imagem.\nComenta TRAÇO e envio-te o link do teu.",st:["Teaser: \"Amanhã chega uma peça nova. Queres ver primeiro? Responde 🧡\" (lista VIP)."]}
+ ]},
+ {id:"s2", t:"Semana 2 · Casaco Trilha", g:"12 a 18 de outubro", o:"Lançamento com procura criada. A lista VIP recebe por DM 2 horas antes da publicação. Primeiros conteúdos de mães criadoras a sair nesta semana.", kw:"TRILHA", d:[
+  {n:12,w:"Seg",f:"Reel",c:"p-reel",tema:"Lançamento: criança a correr num caminho de folhas com o Casaco Trilha.",hook:"\"Chegou o Casaco Trilha.\"",cap:"Para os dias em que o caminho é o melhor sítio.\nCasaco Trilha, em [tecido], [detalhe principal].\n[preço] · [tamanhos]\nComenta TRILHA e envio-te o link.",st:["Partilha + link \"Casaco Trilha\"."]},
+  {n:13,w:"Ter",f:"2 stories",c:"p-st",st:["Vídeo de detalhes em sequência: fecho, forro, bolsos, gola.","Sondagem: \"[cor A] ou [cor B]?\" + link."]},
+  {n:14,w:"Qua",f:"Carrossel",c:"p-car",tema:"6 detalhes do Casaco Trilha que não se veem à primeira.",hook:"Capa: \"O casaco que se veste a correr.\"",cap:"Cada detalhe tem uma razão.\nO último slide diz o preço.\nComenta TRILHA.",st:["Partilha do carrossel + link."]},
+  {n:15,w:"Qui",f:"2 stories",c:"p-st",st:["A Sílvia: porque se chama Trilha (a história da peça, 20 s).","Primeira reação real de cliente ou criadora (com autorização) + link."]},
+  {n:16,w:"Sex",f:"Reel",c:"p-reel",tema:"O casaco posto à prova: poças, relva, recreio. Ou reel de uma mãe criadora.",hook:"\"Testámos o Casaco Trilha onde ele vai viver.\"",cap:"Poças, relva, bancos de jardim.\nEle aguenta. Eles divertem-se.\n[preço] · Comenta TRILHA.",st:["Partilha + link."]},
+  {n:17,w:"Sáb",f:"2 stories",c:"p-st",st:["Caixa: \"Dúvidas sobre o Casaco Trilha? Pergunta aqui.\"","Resposta à melhor pergunta + link."]},
+  {n:18,w:"Dom",f:"Foto",c:"p-foto",tema:"Com o que se usa o Casaco Trilha: por cima dos conjuntos da semana 1.",hook:"Foto editorial com casaco + conjunto.",cap:"Um casaco, muitos dias.\nPor cima do [Conjunto 1] ou do [Conjunto 2].\nComenta TRILHA e mando-te os dois links.",st:["Teaser: \"Para a semana: o que vai por baixo do casaco.\""]}
+ ]},
+ {id:"s3", t:"Semana 3 · Camisa e calça de outono", g:"19 a 25 de outubro", o:"Apresentar o par camisa + calça como a base do outono. Primeira menção ao Natal: as fotos de família já se preparam agora.", kw:"OUTONO", d:[
+  {n:19,w:"Seg",f:"Reel",c:"p-reel",tema:"Lançamento da camisa e da calça em movimento, ao ar livre.",hook:"\"O conjunto de outono.\"",cap:"Tecido que acompanha o dia inteiro.\nCamisa [nome] · [preço]\nCalça [nome] · [preço]\nComenta OUTONO e envio-te os links.",st:["Partilha + link."]},
+  {n:20,w:"Ter",f:"2 stories",c:"p-st",st:["Close da mão a passar pelo tecido (vídeo, sem música alta).","Tabela de medidas da camisa e da calça + link."]},
+  {n:21,w:"Qua",f:"Carrossel",c:"p-car",tema:"3 formas de usar a camisa: escola, almoço de família, com o Casaco Trilha.",hook:"Capa: \"Uma camisa, três ocasiões.\"",cap:"Quanto mais se usa, mais vale.\n[preço] · Comenta OUTONO.",st:["Partilha + link."]},
+  {n:22,w:"Qui",f:"2 stories",c:"p-st",st:["Bastidores de produção: onde é feita e quem costura.","\"Portes grátis e embrulho de oferta até 1 de novembro.\" + link."]},
+  {n:23,w:"Sex",f:"Reel",c:"p-reel",tema:"Um dia inteiro com a mesma roupa: pequeno-almoço, escola, jantar na avó. Ou reel de criadora.",hook:"\"De manhã à noite, sem trocar.\"",cap:"Veste de manhã. Chega à noite igual.\nCamisa + calça · [preço do par]\nComenta OUTONO.",st:["Partilha + link."]},
+  {n:24,w:"Sáb",f:"2 stories",c:"p-st",st:["Sondagem: \"Já pensaste na roupa das fotos de Natal?\" Sim / Ainda não.","\"Faltam 2 meses. Este é o nosso conjunto para esse dia.\" + link."]},
+  {n:25,w:"Dom",f:"Carrossel",c:"p-car",tema:"Perguntas frequentes: tamanhos, portes, prazos, trocas, lavagem.",hook:"Capa: \"Tudo o que precisas de saber antes de encomendar.\"",cap:"Sem dúvidas, sem surpresas.\nSe faltar alguma, pergunta aqui em baixo.",st:["Teaser: \"Amanhã: o Look Trilha completo. Com uma condição até 1 de novembro.\""]}
+ ]},
+ {id:"s4", t:"Semana 4 · Look Trilha completo", g:"26 de outubro a 1 de novembro", o:"Fecho do mês. Casaco + camisa + calça vendidos como um só look, com condição especial e data de fim real. 1 de novembro é feriado: pessoas em casa, no telemóvel.", kw:"LOOK", d:[
+  {n:26,w:"Seg",f:"Reel",c:"p-reel",tema:"Transição: do pijama ao Look Trilha completo.",hook:"\"O outono inteiro num look.\"",cap:"Casaco Trilha, camisa e calça.\nJuntos: [preço do look]. Separados: [soma].\nCondição válida até 1 de novembro.\nComenta LOOK e envio-te o link.",st:["Partilha + link + contagem decrescente até 1 de novembro."]},
+  {n:27,w:"Ter",f:"2 stories",c:"p-st",st:["As contas à vista: \"O look completo: [preço]. Em separado: [soma].\"","Link + contagem decrescente."]},
+  {n:28,w:"Qua",f:"Carrossel",c:"p-car",tema:"O look das fotos de Natal, do aniversário, do batizado.",hook:"Capa: \"O look para os dias que ficam na fotografia.\"",cap:"Há dias que se guardam para sempre.\nEste look foi feito para eles.\n[preço] até 1 de novembro · Comenta LOOK.",st:["Partilha + link."]},
+  {n:29,w:"Qui",f:"2 stories",c:"p-st",st:["Compilação de fotos de clientes, feira e criadoras.","\"Faltam 3 dias.\" + link."]},
+  {n:30,w:"Sex",f:"Reel",c:"p-reel",tema:"A Sílvia para a câmara (30 s): porque criou a Traços D'Amor e o que quer que fique destas peças.",hook:"Primeira frase dela, sem introdução.",cap:"Cada peça começou num traço.\nO Look Trilha fica com [condição] só até domingo.\nComenta LOOK.",st:["Partilha + link."]},
+  {n:31,w:"Sáb",f:"2 stories",c:"p-st",st:["Stock real por tamanho (só se for verdade): \"Restam [n] no tamanho [x].\"","\"Termina amanhã.\" + link."]},
+  {n:1,w:"Dom",f:"Foto",c:"p-foto",tema:"Último dia do Look Trilha completo.",hook:"Foto do look inteiro, fundo limpo.",cap:"Último dia.\nLook Trilha completo: [preço], com portes grátis e embrulho de oferta.\nAté à meia-noite. Comenta LOOK.",st:["\"Termina hoje à meia-noite.\" + link."]}
+ ]}
+];
+const esc=s=>s.replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const cal=document.getElementById("calendar");
+cal.innerHTML=W.map(wk=>`
+<section class="week" id="${wk.id}">
+  <div class="weekhead"><p class="eyebrow">${wk.g} · palavra-chave ${wk.kw}</p><h2>${wk.t}</h2><p>${esc(wk.o)}</p></div>
+  <div class="days">${wk.d.map(d=>`
+    <article class="day">
+      <div class="date"><span class="n">${d.n}</span><span class="w">${d.w}</span><span><span class="pill ${d.c}">${d.f}</span></span></div>
+      <div class="body">
+        ${d.tema?`<div class="row"><span class="k">Conteúdo</span><span>${esc(d.tema)}</span></div>`:""}
+        ${d.hook?`<div class="row"><span class="k">Gancho</span><span>${esc(d.hook)}</span></div>`:""}
+        ${d.cap?`<div class="row"><span class="k">Legenda base</span><p class="cap">${esc(d.cap)}</p></div>`:""}
+        <div class="row"><span class="k">${d.st.length>1?"Stories":"Story"}</span><div class="story">${d.st.map(s=>`<div>${esc(s)}</div>`).join("")}</div></div>
+      </div>
+    </article>`).join("")}
+  </div>
+</section>`).join("");
+</script>
