@@ -229,8 +229,9 @@ ul.clean,ol.clean{margin:0;padding-left:18px;display:grid;gap:6px}
 <script>
 const CLIENTE = "tracosdamor";
 const PRIV = `privado/${CLIENTE}`;
-const ETAPAS = [["ideia","Ideia"],["copy","Copy"],["criativo","Criativo"],["revisao","Revisão Tânia"],["cliente","Aprovação cliente"],["drive","Aprovado · Drive"],["aprovado","Aprovado"],["publicado","Publicado"]];
+const ETAPAS = [["ideia","Ideia"],["criativo","Criativo"],["revisao","Revisão estratégica"],["cliente","Aprovação cliente"],["aprovado","Aprovado"],["publicado","Publicado"]];
 const ETQ = Object.fromEntries(ETAPAS);
+const normEtapa = e => e === "copy" ? "ideia" : e === "drive" ? "aprovado" : e;
 const IDX = Object.fromEntries(ETAPAS.map(([k],i)=>[k,i]));
 const FORMATOS = ["Reel","Carrossel","Estático"];
 const PASTAS = [["reels","Vídeos Reels"],["capas","Capas Reels"],["storyVideo","Vídeos Story"],["storyFoto","Fotos Story"],["feedFoto","Estáticos / Carrosséis"]];
@@ -287,7 +288,7 @@ async function write(path, data, merge){
   try { const r = db.doc(path); if (merge) await r.update(data); else await r.set(data); return true; }
   catch(e){ toast(e && e.code === "invalid_argument" ? "Não tens permissão para isto." : "Não gravou. Tenta outra vez."); return false; }
 }
-function sub(name, q){ q.onSnapshot(snap => { S[name] = snap.docs.map(d => ({ id:d.id, ...d.data() })); S.loaded[name] = true; onData(name); }, () => { S.loaded[name] = true; onData(name); }); }
+function sub(name, q){ q.onSnapshot(snap => { S[name] = snap.docs.map(d => { const o = { id:d.id, ...d.data() }; if (name === "cartoes") o.etapa = normEtapa(o.etapa); return o; }); S.loaded[name] = true; onData(name); }, () => { S.loaded[name] = true; onData(name); }); }
 function isEditing(){ const a = document.activeElement; return UI.editSem || UI.editEst || UI.editDados || UI.editMelh || (a && $("#main").contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)); }
 function onData(name){
   if (["comentarios","pessoas","inspiracoes"].includes(name)) resolveNames();
@@ -330,7 +331,8 @@ function renderMainSafe(){ if (isEditing()) { UI.pend = true; } else renderMain(
 })();
 
 /* ---------- chrome ---------- */
-function paraTi(){ const p = papel(); const alvo = p === "dona" ? ["revisao"] : p === "equipa" ? ["criativo","drive"] : ["cliente"]; return S.cartoes.filter(c => alvo.includes(c.etapa)); }
+function paraTi(){ const p = papel(); if (p === "equipa") return S.cartoes.filter(c => c.etapa === "criativo" || (c.etapa === "aprovado" && faltaDrive(c).length)); const alvo = p === "dona" ? ["revisao"] : ["cliente"]; return S.cartoes.filter(c => alvo.includes(c.etapa)); }
+const avaliado = c => { const r = S.resultados.find(x => x.id === c.id); return !!r && ((r.feed && Object.values(r.feed).some(v => v != null)) || (r.stories||[]).some(m => m && Object.values(m).some(v => v != null))); };
 function renderChrome(){
   const c = S.cliente;
   if (c) { $("#clientName").textContent = c.nome || "Traços D'Amor"; $("#clientMeta").textContent = [c.instagram, c.site].filter(Boolean).join(" · "); }
@@ -373,7 +375,7 @@ function tile(c, drag){
     <span class="meta"><span class="et et-${esc(c.etapa)}">${esc(ETQ[c.etapa])}</span><span>${esc(fmtCurto(c.data))}</span></span>
     <span class="t">${esc(tituloCartao(c))}${c.tipo==="Feed" && c.formato ? ` <span class="muted" style="font-weight:400">· ${esc(c.formato)}</span>` : ""}</span>
     ${(c.tema || c.stories?.[0]?.tema) ? `<span class="small muted">${esc(c.tema || c.stories[0].tema)}</span>` : ""}
-    <span class="meta"><span>☑ ${ch.filter(x=>x[1]).length}/${ch.length}</span>${nComs(c.id) ? `<span>💬 ${nComs(c.id)}</span>` : ""}${c.alteracoes ? `<span class="chip bad" style="padding:0 6px">alterações</span>` : ""}</span>
+    <span class="meta"><span>☑ ${ch.filter(x=>x[1]).length}/${ch.length}</span>${nComs(c.id) ? `<span>💬 ${nComs(c.id)}</span>` : ""}${c.alteracoes ? `<span class="chip bad" style="padding:0 6px">alterações</span>` : ""}${isDona() && c.etapa === "publicado" ? (avaliado(c) ? `<span class="chip ok" style="padding:0 6px">avaliado</span>` : `<span class="chip warn" style="padding:0 6px">avaliação pendente</span>`) : ""}</span>
   </button>`;
 }
 
@@ -501,23 +503,20 @@ function renderModalLive(){
   $("#mComs").innerHTML = comsHtml(S.comentarios.filter(x => x.cartao === c.id).sort((a,b) => (a.em||"").localeCompare(b.em||"")));
   const p = papel(); const e = c.etapa; const btns = [];
   if (p === "dona") {
-    if (e === "ideia") btns.push(["mover","copy","Passar a copy"]);
-    if (e === "copy") btns.push(["mover","criativo","Enviar para a criativa"]);
-    if (e === "criativo") btns.push(["mover","revisao","Passar a revisão"]);
+    if (e === "ideia") btns.push(["mover","criativo","Enviar para a criativa"]);
+    if (e === "criativo") btns.push(["mover","revisao","Passar a revisão estratégica"]);
     if (e === "revisao") { btns.push(["mover","cliente","Aprovar e enviar à cliente"]); btns.push(["pedir","","Pedir alterações"]); }
     if (e === "cliente") { btns.push(["ok","","Dar OK pela cliente"]); btns.push(["pedir","","Pedir alterações"]); }
-    if (e === "drive") btns.push(["mover","aprovado","Ficheiros na Drive → Aprovado"]);
     if (e === "aprovado") btns.push(["mover","publicado","Marcar como publicado"]);
   } else if (p === "equipa") {
-    if (e === "criativo") btns.push(["mover","revisao","Enviar para revisão da Tânia"]);
-    if (e === "drive") btns.push(["mover","aprovado","Ficheiros na Drive → Aprovado"]);
+    if (e === "criativo") btns.push(["mover","revisao","Enviar para revisão estratégica"]);
     if (e === "aprovado") btns.push(["mover","publicado","Marcar como publicado"]);
   } else if (e === "cliente") { btns.push(["ok","","Dar OK"]); btns.push(["pedir","","Pedir alterações"]); }
-  const falta = e === "criativo" ? faltaCriativo(c) : e === "drive" ? faltaDrive(c) : [];
-  const guia = { ideia:"Ideia. A Tânia escreve o copy completo.", copy:"Copy em curso. Quando estiver fechado, segue para a criativa.",
-    criativo:"A criativa faz o conteúdo no Canva ou CapCut, cola os links e envia para revisão.", revisao:"A Tânia revê. Se estiver bem, segue para a cliente.",
-    cliente:"A cliente vê, comenta e dá OK ou pede alterações.", drive:"Aprovado pela cliente. A criativa guarda cada ficheiro na pasta certa da Drive, com o nome indicado, e cola o link.",
-    aprovado:"Tudo na Drive. Pronto a descarregar e publicar.", publicado:"Publicado." }[e];
+  const falta = e === "criativo" ? faltaCriativo(c) : e === "aprovado" ? faltaDrive(c) : [];
+  const guia = { ideia:"Ideia. A Tânia escreve o copy completo e envia para a criativa.",
+    criativo:"A criativa faz o conteúdo no Canva ou CapCut, cola os links e envia para revisão estratégica.", revisao:"A Tânia revê. Se estiver bem, segue para a cliente.",
+    cliente:"A cliente vê, comenta e dá OK ou pede alterações.", aprovado:"Aprovado pela cliente. A criativa guarda cada ficheiro na pasta certa da Drive, com o nome indicado, e cola o link. Depois de publicado, marca como publicado.",
+    publicado: p === "dona" ? (avaliado(c) ? "Publicado e avaliado. Os números estão nos Resultados, mais abaixo." : "Publicado. Falta a avaliação dos dados no Meta, que faço eu. Os números aparecem nos Resultados, mais abaixo.") : "Publicado." }[e];
   const pedir = UI.pedir ? `<label class="f">O que tem de mudar?<textarea id="pedirTxt" style="min-height:60px"></textarea></label><div class="row"><button class="btn primary" data-act="pedirEnviar">Enviar pedido de alterações</button><button class="btn" data-act="pedirCancelar">Cancelar</button></div>` : "";
   $("#mActions").innerHTML = `<div class="actions"><p>${esc(guia)}</p>${falta.length ? `<p class="small" style="color:var(--warn)">Falta: ${esc(falta.join(", "))}</p>` : ""}
     ${btns.length && !UI.pedir ? `<div class="row">${btns.map(([a,to,l],i) => `<button class="btn ${i===0?"primary":""}" data-act="${a}" data-to="${to}">${esc(l)}</button>`).join("")}</div>` : ""}${pedir}
@@ -635,6 +634,7 @@ function renderDados(main){
     <tbody>${rows.map((r,i) => { const id = ws[i].id;
       if (UI.editDados === id) return `<tr><td>${esc(fmtCurto(r.inicio))}</td>${METRICAS_SEM.map(([k]) => `<td class="n"><input type="number" min="0" data-k="${k}" value="${r[k] ?? ""}" id="d-${k}" aria-label="${k}"></td>`).join("")}<td style="white-space:nowrap"><button class="btn primary sm" data-act="saveDados" data-id="${esc(id)}" data-ini="${esc(r.inicio)}" data-fim="${esc(r.fim)}">Guardar</button> <button class="btn sm" data-act="cancelDados">✕</button></td></tr>`;
       return `<tr><td style="white-space:nowrap">${esc(nomeSemana(ws[i]))} · ${esc(fmtCurto(r.inicio))}</td>${METRICAS_SEM.map(([k]) => `<td class="n">${fmtN(r[k])}</td>`).join("")}<td><button class="btn sm" data-act="editDados" data-id="${esc(id)}">Editar</button></td></tr>`; }).join("")}</tbody></table></div></div>
+  ${(() => { const pend = S.cartoes.filter(c => c.etapa === "publicado" && !avaliado(c)); return pend.length ? `<div class="card"><h3>Publicados à espera de avaliação</h3><div class="row">${pend.map(c => `<button class="chip warn" data-open="${esc(c.id)}">${esc(fmtCurto(c.data))} · ${esc(tituloCartao(c))}</button>`).join("")}</div></div>` : ""; })()}
   <div class="card"><h3>Cada publicação</h3>
     ${lr.length ? `<div class="tbl"><table><thead><tr><th>Dia</th><th>Peça</th><th>Conteúdo</th>${METRICAS_POST.map(([,l]) => `<th class="n">${l}</th>`).join("")}</tr></thead><tbody>${lr.map(x => `<tr><td>${esc(fmtCurto(x.c.data))}</td><td>${esc(x.tipo)}</td><td><button class="btn ghost" style="padding:0;font-weight:400;text-align:left" data-open="${esc(x.c.id)}">${esc(x.c.tema || x.c.stories?.[0]?.tema || tituloCartao(x.c))}</button></td>${METRICAS_POST.map(([k]) => `<td class="n">${fmtN(x.m[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : `<p class="muted">Ainda sem resultados por publicação.</p>`}</div>
   <div class="card"><div class="spread"><h3>Perguntas sobre os dados</h3><span class="small muted">Respondo com os números que estão aqui.</span></div>
@@ -758,7 +758,7 @@ function renderOficina(main){
     <label class="f">O que queres que eu faça<textarea id="of-brief" data-of="brief" style="min-height:130px" placeholder="Ex.: temos vídeos da Sílvia a abrir caixas e fotos dos conjuntos no jardim. Quero spoiler na segunda e revelação na quarta às 10h.">${esc(o.brief)}</textarea></label>
     <div class="row"><button class="btn primary" data-act="gerar" ${o.busy || !sample || !sel.length ? "disabled" : ""}>${o.busy ? esc(o.prog || "A pensar…") : o.modo === "semana" && sel.length > 1 ? `Gerar ${sel.length} semanas` : "Gerar"}</button>${o.busy ? `<button class="btn" data-act="parar">Parar</button>` : ""}${!sample ? `<span class="small muted">Só funciona dentro do claude.ai.</span>` : ""}</div>
     ${o.err ? `<p class="small" style="color:var(--bad)">${esc(o.err)}</p>` : ""}</div>
-  ${o.out.length ? `<div class="card"><div class="spread"><h2>Proposta</h2><div class="row"><button class="btn primary" data-act="enviarTodos">Enviar tudo para o quadro (Copy)</button><button class="btn" data-act="guardarRasc">Guardar rascunho</button><button class="btn ghost" data-act="descartar">Descartar</button></div></div>
+  ${o.out.length ? `<div class="card"><div class="spread"><h2>Proposta</h2><div class="row"><button class="btn primary" data-act="enviarTodos">Enviar tudo para o quadro (Ideia)</button><button class="btn" data-act="guardarRasc">Guardar rascunho</button><button class="btn ghost" data-act="descartar">Descartar</button></div></div>
     ${o.out.map((g,gi) => `<h3 class="serif" style="font-size:24px">${esc(g.titulo)}</h3>${g.nota ? `<p class="chip warn" style="white-space:normal">${esc(g.nota)}</p>` : ""}${g.cartoes.map((c,i) => previewCartao(c,gi,i)).join("")}`).join("")}</div>` : ""}
   ${S.rascunhos.length ? `<div class="card"><h3>Rascunhos guardados</h3>${[...S.rascunhos].sort((a,b) => (b.em||"").localeCompare(a.em||"")).map(r => `<div class="spread" style="border-top:1px solid var(--line);padding-top:8px"><span>${esc(fmtQuando(r.em))} · ${esc((r.out||[]).map(g => g.titulo).join(", "))}</span><span class="row"><button class="btn sm" data-act="abrirRasc" data-id="${esc(r.id)}">Abrir</button><button class="btn ghost sm danger" data-act="apagarRasc" data-id="${esc(r.id)}">Apagar</button></span></div>`).join("")}</div>` : ""}`;
 }
@@ -787,7 +787,7 @@ async function enviarParaQuadro(c){
   return write(`cartoes/${id}`, { cliente:CLIENTE, data, semana: w ? w.id : null, tipo, formato: tipo === "Feed" ? (FORMATOS.includes(c.formato) ? c.formato : "Reel") : null,
     titulo:c.titulo||"", intencao:c.intencao||"", estrategia:c.estrategia||"", tema:c.tema||"", comoFazer:c.comoFazer||"", inspiracao:c.inspiracao||"", legenda:c.legenda||"",
     stories:(c.stories||[]).map(s => ({ intencao:s.intencao||"", estrategia:s.estrategia||"", tema:s.tema||"", texto:s.texto||"", comoFazer:s.comoFazer||"", media:s.media==="foto"?"foto":"video", linkCriativo:"", linkDrive:"" })),
-    linkCriativo:"", capaCriativo:"", linkDrive:"", capaDrive:"", etapa:"copy", historico:[{ etapa:"copy", por:S.me.id, em:new Date().toISOString() }], criadoEm:new Date().toISOString() });
+    linkCriativo:"", capaCriativo:"", linkDrive:"", capaDrive:"", etapa:"ideia", historico:[{ etapa:"ideia", por:S.me.id, em:new Date().toISOString() }], criadoEm:new Date().toISOString() });
 }
 
 /* ---------- events ---------- */
@@ -815,8 +815,8 @@ document.addEventListener("click", async e => {
       if (await write(`cartoes/${id}`, body)) { if (!S.cartoes.find(x => x.id === id)) S.cartoes.push({ id, ...body }); openCard(id); }
       break;
     }
-    case "mover": { const c = card(); if (c) await mover(c, el.dataset.to); break; }
-    case "ok": { const c = card(); if (c) await mover(c, "drive", { aprovadoPor:S.me.id, aprovadoEm:new Date().toISOString(), alteracoes:false }); break; }
+    case "mover": { const c = card(); if (c) await mover(c, el.dataset.to, el.dataset.to === "publicado" ? { publicadoEm:new Date().toISOString() } : undefined); break; }
+    case "ok": { const c = card(); if (c) await mover(c, "aprovado", { aprovadoPor:S.me.id, aprovadoEm:new Date().toISOString(), alteracoes:false }); break; }
     case "pedir": UI.pedir = true; renderModalLive(); setTimeout(() => $("#pedirTxt")?.focus(), 30); break;
     case "pedirCancelar": UI.pedir = false; renderModalLive(); break;
     case "pedirEnviar": { const c = card(); const t = $("#pedirTxt")?.value.trim(); if (!t) { toast("Escreve o que tem de mudar."); break; }
@@ -857,8 +857,8 @@ document.addEventListener("click", async e => {
     case "gerar": gerar(); break;
     case "parar": genCtl?.abort(); break;
     case "descartar": UI.of.out = []; renderMain(); break;
-    case "enviarUm": { const g = UI.of.out[Number(el.dataset.g)]; const i = Number(el.dataset.i); if (await enviarParaQuadro(g.cartoes[i])) { g.cartoes.splice(i,1); if (!g.cartoes.length) UI.of.out.splice(Number(el.dataset.g),1); toast("Enviado para Copy."); renderMain(); } break; }
-    case "enviarTodos": { let n = 0; for (const g of UI.of.out) for (const c of g.cartoes) if (await enviarParaQuadro(c)) n++; UI.of.out = []; toast(`${n} cartões enviados para Copy.`); renderMain(); break; }
+    case "enviarUm": { const g = UI.of.out[Number(el.dataset.g)]; const i = Number(el.dataset.i); if (await enviarParaQuadro(g.cartoes[i])) { g.cartoes.splice(i,1); if (!g.cartoes.length) UI.of.out.splice(Number(el.dataset.g),1); toast("Enviado para Ideia."); renderMain(); } break; }
+    case "enviarTodos": { let n = 0; for (const g of UI.of.out) for (const c of g.cartoes) if (await enviarParaQuadro(c)) n++; UI.of.out = []; toast(`${n} cartões enviados para Ideia.`); renderMain(); break; }
     case "guardarRasc": { if (await write(`data/users/${S.me.id}/r-${uidShort()}`, { em:new Date().toISOString(), brief:UI.of.brief, semanas:UI.of.semanas, out:UI.of.out })) toast("Rascunho guardado."); break; }
     case "abrirRasc": { const r = S.rascunhos.find(x => x.id === el.dataset.id); if (r) { UI.of.out = r.out || []; UI.of.brief = r.brief || ""; if (r.semanas) UI.of.semanas = r.semanas; renderMain(); } break; }
     case "apagarRasc": { try { await db.doc(`data/users/${S.me.id}/${el.dataset.id}`).delete(); } catch(x){} break; }

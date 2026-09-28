@@ -23,3 +23,14 @@ Base de dados da app: coleções `clientes`, `semanas`, `cartoes`, `comentarios`
    - `mostrarMais` / `mostrarMenos`: o que a audiência pediu com os números e o que não funciona.
    - `acoes`: 3 a 5 ações concretas para a semana que começa.
 7. Nunca inventar números. O que não vier do Metricool fica `null` e é assinalado nas notas.
+
+## Avaliação diária dos publicados
+
+Etapas do quadro: Ideia → Criativo → Revisão estratégica → Aprovação cliente → Aprovado → Publicado.
+
+Todos os dias (rotina diária, depois de o Metricool estar ligado):
+1. Ler os `cartoes` com `etapa: "publicado"` que ainda não têm documento em `privado/tracosdamor/resultados/<id do cartão>`, ou cuja avaliação tem menos de 48 horas.
+2. No Metricool, encontrar a publicação do mesmo dia e formato (feed) e os stories do mesmo dia.
+3. Escrever `privado/tracosdamor/resultados/<id>` com `{feed:{alcance, visualizacoes, gostos, comentarios, partilhas, guardados, cliques, respostas}, stories:[{...}], linkPost, atualizadoEm}`. O que não existir fica `null`.
+4. Stories: avaliar no próprio dia ou no dia seguinte, antes de desaparecerem.
+5. Feed: reavaliar 48 horas depois de publicar. Os números ainda crescem.
