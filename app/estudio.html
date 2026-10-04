@@ -8,7 +8,7 @@
   --terra:#B8674C; --terra-soft:#F4DDD3;
   --ok:#2F7A4A; --ok-bg:#E3F2E8; --warn:#8A5A00; --warn-bg:#FFF1D6; --bad:#A33A2B; --bad-bg:#FBE3DF;
   --td-terra:#E0A18A; --td-salvia:#CBD2CA; --td-azul:#AABDD4; --td-castanho:#AA867D;
-  --mk-reels:#B8674C; --mk-stories:#5F7F5B; --mk-estaticos:#4F6F99;
+  --mk-reels:#B8674C; --mk-stories:#5F7F5B; --mk-estaticos:#4F6F99; --mk-ig:#B8674C; --mk-fb:#4F6F99;
   --cover:#76543F; --cover-ink:#F3E6DC; --cover-light:#F1ECE6; --cover-light-ink:#5B4337;
   --e-ideia:#F6EDCF; --e-ideia-ink:#6E5410; --e-copy:#ECE3F5; --e-copy-ink:#5B3F7A;
   --e-criativo:#DCE7F4; --e-criativo-ink:#2F4E73; --e-revisao:#FBE2CC; --e-revisao-ink:#8A4A12;
@@ -22,7 +22,7 @@
     --bg:#1C1816; --surface:#26201D; --sunk:#2F2825; --ink:#F1E8E4; --muted:#B5A49D; --line:#3D3330;
     --terra:#E3A58D; --terra-soft:#4A3129;
     --ok:#8FD4A6; --ok-bg:#1F3527; --warn:#F2C77A; --warn-bg:#3A2E16; --bad:#F2A596; --bad-bg:#43241F;
-    --mk-reels:#E3A58D; --mk-stories:#A9C3A5; --mk-estaticos:#A7BDDB;
+    --mk-reels:#E3A58D; --mk-stories:#A9C3A5; --mk-estaticos:#A7BDDB; --mk-ig:#E3A58D; --mk-fb:#A7BDDB;
     --cover:#5E4333; --cover-light:#3A302B; --cover-light-ink:#EADBD0;
     --e-ideia:#3B331C; --e-ideia-ink:#F0D98E; --e-copy:#352B40; --e-copy-ink:#D9C3F0;
     --e-criativo:#26344A; --e-criativo-ink:#BFD3EE; --e-revisao:#452F1D; --e-revisao-ink:#F6C69B;
@@ -36,7 +36,7 @@
   --bg:#1C1816; --surface:#26201D; --sunk:#2F2825; --ink:#F1E8E4; --muted:#B5A49D; --line:#3D3330;
   --terra:#E3A58D; --terra-soft:#4A3129;
   --ok:#8FD4A6; --ok-bg:#1F3527; --warn:#F2C77A; --warn-bg:#3A2E16; --bad:#F2A596; --bad-bg:#43241F;
-  --mk-reels:#E3A58D; --mk-stories:#A9C3A5; --mk-estaticos:#A7BDDB;
+  --mk-reels:#E3A58D; --mk-stories:#A9C3A5; --mk-estaticos:#A7BDDB; --mk-ig:#E3A58D; --mk-fb:#A7BDDB;
   --cover:#5E4333; --cover-light:#3A302B; --cover-light-ink:#EADBD0;
   --e-ideia:#3B331C; --e-ideia-ink:#F0D98E; --e-copy:#352B40; --e-copy-ink:#D9C3F0;
   --e-criativo:#26344A; --e-criativo-ink:#BFD3EE; --e-revisao:#452F1D; --e-revisao-ink:#F6C69B;
@@ -180,6 +180,13 @@ td.n input{width:90px;text-align:right;background:var(--bg);border:1px solid var
 .chart text{fill:var(--muted);font:11px Karla,system-ui,sans-serif}
 .chart .val{fill:var(--ink);font-weight:700}
 .chart rect.b{fill:var(--terra)}
+.chart rect.ig{fill:var(--mk-ig)} .chart rect.fb{fill:var(--mk-fb)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted)} .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.dl{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap} .dl.up{color:var(--ok)} .dl.down{color:var(--bad)} .dl.eq{color:var(--muted)}
+table.cmp th.grp{text-align:center;border-bottom:3px solid var(--line)} table.cmp th.grp.ig{border-bottom-color:var(--mk-ig)} table.cmp th.grp.fb{border-bottom-color:var(--mk-fb)}
+table.cmp td.sep,table.cmp th.sep{border-left:1px solid var(--line)}
+.redebox{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.redebox .sec{border-top:4px solid var(--mk-ig)} .redebox .sec.fb{border-top-color:var(--mk-fb)}
 .chart line{stroke:var(--line)}
 .hbars{display:grid;gap:8px}
 .hbar{display:grid;grid-template-columns:90px 1fr auto;gap:8px;align-items:center;font-size:13px}
@@ -257,7 +264,24 @@ const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","ag
 const cap1 = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 const DIAS = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
 const DIAS_L = ["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
-const METRICAS_SEM = [["seguidores","Seguidores"],["novosSeguidores","Novos seguidores"],["alcance","Alcance"],["visualizacoes","Visualizações"],["interacoes","Interações"],["visitasPerfil","Visitas ao perfil"],["cliquesLink","Cliques no link"],["dms","DMs de venda"],["vendasOnline","Vendas online"],["receita","Receita (€)"]];
+const REDES = [["instagram","Instagram","ig"],["facebook","Facebook","fb"]];
+const METRICAS_REDE = [["seguidores","Seguidores"],["novosSeguidores","Novos seguidores"],["alcance","Alcance"],["visualizacoes","Visualizações"],["interacoes","Interações"],["visitasPerfil","Visitas ao perfil / página"],["cliquesLink","Cliques no link"],["mensagens","Mensagens / DMs de venda"]];
+const METRICAS_NEG = [["vendasOnline","Vendas online"],["receita","Receita (€)"]];
+/* métricas semanais: { instagram:{…}, facebook:{…}, vendasOnline, receita }. Documentos antigos tinham as chaves do Instagram soltas. */
+function redeSem(m, rede){
+  if (!m) return {};
+  if (m[rede]) return m[rede];
+  if (rede !== "instagram") return {};
+  const o = {}; METRICAS_REDE.forEach(([k]) => { if (m[k] != null) o[k] = m[k]; }); if (o.mensagens == null && m.dms != null) o.mensagens = m.dms; return o;
+}
+const somaRedes = (m, k) => { const a = redeSem(m,"instagram")[k], b = redeSem(m,"facebook")[k]; return a == null && b == null ? null : (Number(a)||0) + (Number(b)||0); };
+function delta(a, b){
+  if (a == null || b == null || a === "" || b === "") return `<span class="dl eq">—</span>`;
+  a = Number(a); b = Number(b);
+  if (b === 0) return a === 0 ? `<span class="dl eq">=</span>` : `<span class="dl up">▲ novo</span>`;
+  const pc = Math.round((a - b) / b * 100);
+  return pc > 0 ? `<span class="dl up">▲ +${pc}%</span>` : pc < 0 ? `<span class="dl down">▼ ${pc}%</span>` : `<span class="dl eq">= 0%</span>`;
+}
 const METRICAS_POST = [["alcance","Alcance"],["visualizacoes","Visualizações"],["gostos","Gostos"],["comentarios","Comentários"],["partilhas","Partilhas"],["guardados","Guardados"],["cliques","Cliques no link"],["respostas","Respostas / DMs"]];
 const PAPEL_TXT = { dona:"Estratega", equipa:"Equipa criativa", cliente:"Cliente" };
 
@@ -353,7 +377,7 @@ function renderMainSafe(){ if (isEditing()) { UI.pend = true; } else renderMain(
 
 /* ---------- chrome ---------- */
 function paraTi(){ const p = papel(); if (p === "equipa") return S.cartoes.filter(c => c.etapa === "criativo" || (c.etapa === "aprovado" && faltaDrive(c).length)); const alvo = p === "dona" ? ["revisao"] : ["cliente"]; return S.cartoes.filter(c => alvo.includes(c.etapa)); }
-const avaliado = c => { const r = S.resultados.find(x => x.id === c.id); return !!r && ((r.feed && Object.values(r.feed).some(v => v != null)) || (r.stories||[]).some(m => m && Object.values(m).some(v => v != null))); };
+const avaliado = c => { const r = S.resultados.find(x => x.id === c.id); return !!r && [r.feed, r.feedFb, ...(r.stories||[]), ...(r.storiesFb||[])].some(m => m && Object.values(m).some(v => v != null)); };
 function notificacoes(){
   const me = S.me.id; if (!me) return [];
   const lidas = new Set(S.estado?.lidas || []); const out = [];
@@ -554,8 +578,9 @@ function renderModal(){
       ${eLinks ? `<div class="row"><button class="btn primary" type="submit">Guardar</button>${eCopy ? `<span style="flex:1"></span><span id="delZone"><button type="button" class="btn ghost danger" data-act="askDel">Apagar cartão</button></span>` : ""}</div>` : ""}
     </form>
     ${p === "dona" ? `<form id="resForm" class="sec priv"><div class="spread"><h3>Resultados 🔒</h3><span class="hint">Só tu vês.</span></div>
-      ${feed ? `<span class="lbl">${esc(c.formato||"Feed")}</span>${resFields("f_", res.feed)}<label class="f">Link da publicação<input name="linkPost" value="${esc(res.linkPost)}" id="fld-linkPost"></label>` : ""}
-      ${(c.stories||[]).map((s,i) => `<span class="lbl">Storie ${i+1}</span>${resFields(`s${i}_`, res.stories?.[i])}`).join("")}
+      <div class="redebox">${REDES.map(([rk,rl,rc]) => { const fb = rk === "facebook"; return `<div class="sec ${rc}"><h4>${rl}</h4>
+        ${feed ? `<span class="lbl">${esc(c.formato||"Feed")}</span>${resFields(fb?"ff_":"f_", fb?res.feedFb:res.feed)}<label class="f">Link da publicação<input name="${fb?"linkPostFb":"linkPost"}" value="${esc(fb?res.linkPostFb:res.linkPost)}" id="fld-${fb?"linkPostFb":"linkPost"}"></label>` : ""}
+        ${(c.stories||[]).map((s,i) => `<span class="lbl">Storie ${i+1}</span>${resFields(fb?`sf${i}_`:`s${i}_`, (fb?res.storiesFb:res.stories)?.[i])}`).join("")}</div>`; }).join("")}</div>
       <div class="row"><button class="btn" type="submit">Guardar resultados</button></div></form>` : ""}
   </div></div>`;
   renderModalLive();
@@ -685,6 +710,7 @@ function sugestoesHtml(){
 }
 
 /* ---------- dados (privado) ---------- */
+const isoHoje = () => new Date().toISOString().slice(0,10);
 function barChart(title, rows, key){
   const vals = rows.map(r => r[key] == null ? null : Number(r[key]));
   if (!vals.some(v => v != null)) return `<div class="chart"><h3>${title}</h3><p class="small muted">Sem dados ainda.</p></div>`;
@@ -693,49 +719,84 @@ function barChart(title, rows, key){
     return `${v != null ? `<rect class="b" x="${x}" y="${y}" width="${w}" height="${h}" rx="4"><title>${esc(fmtCurto(r.inicio))}: ${fmtN(v)}</title></rect><text class="val" x="${x+w/2}" y="${y-4}" text-anchor="middle">${fmtN(v)}</text>` : ""}<text x="${x+w/2}" y="${H-6}" text-anchor="middle">${esc(fmtCurto(r.inicio))}</text>`; }).join("");
   return `<div class="chart"><h3>${title}</h3><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title} por semana"><line x1="${pl}" x2="${W-pl}" y1="${H-pb}" y2="${H-pb}"/>${bars}</svg></div>`;
 }
+/* barras agrupadas: Instagram ao lado do Facebook, por semana */
+function redesChart(title, rows, key){
+  const v = (r, rede) => { const x = redeSem(r, rede)[key]; return x == null ? null : Number(x); };
+  const all = rows.flatMap(r => [v(r,"instagram"), v(r,"facebook")]);
+  if (!all.some(x => x != null)) return `<div class="chart"><h3>${title}</h3><p class="small muted">Sem dados ainda.</p></div>`;
+  const W = 320, H = 160, pl = 8, pb = 22, pt = 18, max = Math.max(1, ...all.filter(x => x != null)), bw = (W - pl*2) / rows.length;
+  const bars = rows.map((r,i) => REDES.map(([rk,rl,rc],j) => { const val = v(r,rk); if (val == null) return "";
+    const w = bw*.34, x = pl + i*bw + bw*.14 + j*(w+2), h = Math.max(2, val/max*(H-pb-pt)), y = H-pb-h;
+    return `<rect class="${rc}" x="${x}" y="${y}" width="${w}" height="${h}" rx="3"><title>${rl} ${esc(fmtCurto(r.inicio))}: ${fmtN(val)}</title></rect><text class="val" x="${x+w/2}" y="${y-4}" text-anchor="middle" style="font-size:10px">${fmtN(val)}</text>`; }).join("")
+    + `<text x="${pl + i*bw + bw/2}" y="${H-6}" text-anchor="middle">${esc(fmtCurto(r.inicio))}</text>`).join("");
+  return `<div class="chart"><div class="spread"><h3>${title}</h3><div class="legend"><span><i style="background:var(--mk-ig)"></i>Instagram</span><span><i style="background:var(--mk-fb)"></i>Facebook</span></div></div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}: Instagram e Facebook por semana"><line x1="${pl}" x2="${W-pl}" y1="${H-pb}" y2="${H-pb}"/>${bars}</svg></div>`;
+}
 function linhasResultados(){
-  const out = [];
+  const out = [], tem = m => m && Object.values(m).some(v => v != null);
   for (const r of S.resultados) { const c = S.cartoes.find(x => x.id === r.id); if (!c) continue;
-    if (r.feed && Object.values(r.feed).some(v => v != null)) out.push({ c, tipo:c.formato||"Feed", m:r.feed });
-    (r.stories||[]).forEach((m,i) => { if (m && Object.values(m).some(v => v != null)) out.push({ c, tipo:`Storie ${i+1}`, m }); }); }
+    if (tem(r.feed)) out.push({ c, tipo:c.formato||"Feed", rede:"instagram", m:r.feed });
+    if (tem(r.feedFb)) out.push({ c, tipo:c.formato||"Feed", rede:"facebook", m:r.feedFb });
+    (r.stories||[]).forEach((m,i) => { if (tem(m)) out.push({ c, tipo:`Storie ${i+1}`, rede:"instagram", m }); });
+    (r.storiesFb||[]).forEach((m,i) => { if (tem(m)) out.push({ c, tipo:`Storie ${i+1}`, rede:"facebook", m }); }); }
   return out;
 }
 function renderDados(main){
   const ws = semanasOrd();
-  const rows = ws.map(w => ({ inicio:w.inicio, fim:w.fim, ...(S.metricas.find(m => m.id === w.id) || {}) }));
+  const rows = ws.map(w => ({ id:w.id, inicio:w.inicio, fim:w.fim, ...(S.metricas.find(m => m.id === w.id) || {}) }));
+  const comDados = rows.filter(r => S.metricas.some(m => m.id === r.id));
+  if (!rows.some(r => r.id === UI.dSem)) UI.dSem = (comDados[comDados.length-1] || rows.find(r => r.fim >= isoHoje()) || rows[rows.length-1] || {}).id;
+  const iS = rows.findIndex(r => r.id === UI.dSem), cur = rows[iS] || {}, ant = iS > 0 ? rows[iS-1] : null;
+  const rede = UI.dRede || "instagram";
   const lr = linhasResultados().sort((a,b) => (b.m.cliques||0)-(a.m.cliques||0) || (b.m.alcance||0)-(a.m.alcance||0));
   const soma = (arr,k) => arr.reduce((s,x) => s + (Number(x.m[k])||0), 0);
-  const grp = { Reels: lr.filter(x => x.tipo === "Reel"), Stories: lr.filter(x => /^Storie/.test(x.tipo)), "Estáticos": lr.filter(x => x.tipo === "Carrossel" || x.tipo === "Estático") };
+  const grupos = { Reels: x => x.tipo === "Reel", Stories: x => /^Storie/.test(x.tipo), "Estáticos": x => x.tipo === "Carrossel" || x.tipo === "Estático" };
+  const ligado = S.priv?.ligacaoInstagram === "metricool";
+  const cmpRow = (k, l) => { const ig = redeSem(cur,"instagram")[k], igA = redeSem(ant,"instagram")[k], fb = redeSem(cur,"facebook")[k], fbA = redeSem(ant,"facebook")[k], t = somaRedes(cur,k), tA = ant && REDES.every(([rk]) => (redeSem(cur,rk)[k] == null) === (redeSem(ant,rk)[k] == null)) ? somaRedes(ant,k) : null;
+    return `<tr><td>${l}</td><td class="n sep">${fmtN(ig)}</td><td class="n">${fmtN(igA)}</td><td class="n">${delta(ig,igA)}</td><td class="n sep">${fmtN(fb)}</td><td class="n">${fmtN(fbA)}</td><td class="n">${delta(fb,fbA)}</td><td class="n sep"><b>${fmtN(t)}</b></td><td class="n">${delta(t,tA)}</td></tr>`; };
+  const negRow = (k, l) => `<tr><td>${l}</td><td class="n sep" colspan="6"></td><td class="n sep"><b>${fmtN(cur[k])}</b></td><td class="n">${delta(cur[k], ant?.[k])}</td></tr>`;
+  const quota = k => { const ig = Number(redeSem(cur,"instagram")[k])||0, fb = Number(redeSem(cur,"facebook")[k])||0; return ig+fb ? Math.round(ig/(ig+fb)*100) : null; };
+  const cols = rede === "negocio" ? METRICAS_NEG : METRICAS_REDE;
+  const valDe = (r, k) => rede === "negocio" ? r[k] : redeSem(r, rede)[k];
   main.innerHTML = `<div class="priv-banner">🔒 <b>Área privada.</b> Os números são carregados por mim. A equipa e a cliente não veem este separador.</div>
-  <div class="spread"><h2>Dados do Instagram</h2>${S.priv?.ligacaoInstagram === "metricool" ? `<span class="chip ok">Instagram ligado</span>` : `<span class="chip warn">Instagram por ligar: números carregados à mão</span>`}</div>
-  <div class="card"><h3>Resumo por formato</h3>
-    <div class="tbl"><table><thead><tr><th>Formato</th><th class="n">Publicações</th><th class="n">Alcance</th><th class="n">Cliques no link</th><th class="n">Respostas / DMs</th><th class="n">Guardados</th></tr></thead>
-    <tbody>${Object.entries(grp).map(([k,a]) => `<tr><td>${k}</td><td class="n">${a.length}</td><td class="n">${fmtN(soma(a,"alcance"))}</td><td class="n">${fmtN(soma(a,"cliques"))}</td><td class="n">${fmtN(soma(a,"respostas"))}</td><td class="n">${fmtN(soma(a,"guardados"))}</td></tr>`).join("")}</tbody></table></div></div>
-  <div class="charts">${barChart("Alcance", rows, "alcance")}${barChart("Cliques no link", rows, "cliquesLink")}${barChart("DMs de venda", rows, "dms")}${barChart("Vendas online", rows, "vendasOnline")}</div>
-  <div class="card"><h3>Números por semana</h3>
-    <div class="tbl"><table><thead><tr><th>Semana</th>${METRICAS_SEM.map(([,l]) => `<th class="n">${l}</th>`).join("")}<th></th></tr></thead>
-    <tbody>${rows.map((r,i) => { const id = ws[i].id;
-      if (UI.editDados === id) return `<tr><td>${esc(fmtCurto(r.inicio))}</td>${METRICAS_SEM.map(([k]) => `<td class="n"><input type="number" min="0" data-k="${k}" value="${r[k] ?? ""}" id="d-${k}" aria-label="${k}"></td>`).join("")}<td style="white-space:nowrap"><button class="btn primary sm" data-act="saveDados" data-id="${esc(id)}" data-ini="${esc(r.inicio)}" data-fim="${esc(r.fim)}">Guardar</button> <button class="btn sm" data-act="cancelDados">✕</button></td></tr>`;
-      return `<tr><td style="white-space:nowrap">${esc(nomeSemana(ws[i]))} · ${esc(fmtCurto(r.inicio))}</td>${METRICAS_SEM.map(([k]) => `<td class="n">${fmtN(r[k])}</td>`).join("")}<td><button class="btn sm" data-act="editDados" data-id="${esc(id)}">Editar</button></td></tr>`; }).join("")}</tbody></table></div></div>
+  <div class="spread"><h2>Dados: Instagram e Facebook</h2><div class="row">${ligado ? `<span class="chip ok">Metricool ligado</span>` : `<span class="chip warn">Metricool por ligar: números carregados à mão</span>`}</div></div>
+  <div class="card"><div class="spread"><h3>Comparação da semana</h3>
+    <select class="inp" style="width:auto" data-act="dSem" aria-label="Semana a comparar">${rows.map(r => `<option value="${esc(r.id)}"${r.id===UI.dSem?" selected":""}>${esc(nomeSemana(ws.find(w => w.id===r.id)))} · ${esc(fmtCurto(r.inicio))} – ${esc(fmtCurto(r.fim))}</option>`).join("")}</select></div>
+    <p class="small muted">${ant ? `Contra a semana anterior (${esc(fmtCurto(ant.inicio))} – ${esc(fmtCurto(ant.fim))}).` : "Primeira semana: ainda não há semana anterior para comparar."}</p>
+    <div class="tbl"><table class="cmp"><thead><tr><th></th><th colspan="3" class="grp ig sep">Instagram</th><th colspan="3" class="grp fb sep">Facebook</th><th colspan="2" class="grp sep">Total</th></tr>
+      <tr><th>Métrica</th><th class="n sep">Semana</th><th class="n">Anterior</th><th class="n">Δ</th><th class="n sep">Semana</th><th class="n">Anterior</th><th class="n">Δ</th><th class="n sep">Semana</th><th class="n">Δ</th></tr></thead>
+    <tbody>${METRICAS_REDE.map(([k,l]) => cmpRow(k,l)).join("")}${METRICAS_NEG.map(([k,l]) => negRow(k,l)).join("")}</tbody></table></div>
+    ${["alcance","cliquesLink","mensagens"].some(k => quota(k) != null) ? `<p class="small">Peso do Instagram no total: ${[["alcance","alcance"],["cliquesLink","cliques"],["mensagens","mensagens"]].filter(([k]) => quota(k) != null).map(([k,l]) => `<b>${quota(k)}%</b> do ${l}`).join(" · ")}. O resto vem do Facebook.</p>` : ""}</div>
+  <div class="charts">${redesChart("Alcance", rows, "alcance")}${redesChart("Cliques no link", rows, "cliquesLink")}${redesChart("Mensagens / DMs de venda", rows, "mensagens")}${redesChart("Novos seguidores", rows, "novosSeguidores")}${barChart("Vendas online", rows, "vendasOnline")}</div>
+  <div class="card"><div class="spread"><h3>Números por semana</h3>
+    <div class="seg" role="group" aria-label="Rede">${[["instagram","Instagram"],["facebook","Facebook"],["negocio","Vendas"]].map(([k,l]) => `<button data-act="dRede" data-v="${k}" aria-pressed="${rede===k}">${l}</button>`).join("")}</div></div>
+    <div class="tbl"><table><thead><tr><th>Semana</th>${cols.map(([,l]) => `<th class="n">${l}</th>`).join("")}<th></th></tr></thead>
+    <tbody>${rows.map((r,i) => { const id = r.id, p = i > 0 ? rows[i-1] : null;
+      if (UI.editDados === id) return `<tr><td>${esc(fmtCurto(r.inicio))}</td>${cols.map(([k]) => `<td class="n"><input type="number" min="0" data-k="${k}" value="${valDe(r,k) ?? ""}" id="d-${k}" aria-label="${k}"></td>`).join("")}<td style="white-space:nowrap"><button class="btn primary sm" data-act="saveDados" data-id="${esc(id)}" data-rede="${rede}" data-ini="${esc(r.inicio)}" data-fim="${esc(r.fim)}">Guardar</button> <button class="btn sm" data-act="cancelDados">✕</button></td></tr>`;
+      return `<tr><td style="white-space:nowrap">${esc(nomeSemana(ws[i]))} · ${esc(fmtCurto(r.inicio))}</td>${cols.map(([k]) => `<td class="n">${fmtN(valDe(r,k))}${p && valDe(r,k) != null && valDe(p,k) != null ? `<br>${delta(valDe(r,k), valDe(p,k))}` : ""}</td>`).join("")}<td><button class="btn sm" data-act="editDados" data-id="${esc(id)}">Editar</button></td></tr>`; }).join("")}</tbody></table></div></div>
   ${(() => { const pend = S.cartoes.filter(c => c.etapa === "publicado" && !avaliado(c)); return pend.length ? `<div class="card"><h3>Publicados à espera de avaliação</h3><div class="row">${pend.map(c => `<button class="chip warn" data-open="${esc(c.id)}">${esc(fmtCurto(c.data))} · ${esc(tituloCartao(c))}</button>`).join("")}</div></div>` : ""; })()}
+  <div class="card"><h3>Resumo por formato</h3>
+    <div class="tbl"><table class="cmp"><thead><tr><th></th><th colspan="4" class="grp ig sep">Instagram</th><th colspan="4" class="grp fb sep">Facebook</th></tr>
+      <tr><th>Formato</th>${REDES.map(() => `<th class="n sep">Publicações</th><th class="n">Alcance</th><th class="n">Cliques</th><th class="n">Respostas</th>`).join("")}</tr></thead>
+    <tbody>${Object.entries(grupos).map(([k,f]) => `<tr><td>${k}</td>${REDES.map(([rk]) => { const a = lr.filter(x => x.rede === rk && f(x)); return `<td class="n sep">${a.length}</td><td class="n">${fmtN(soma(a,"alcance"))}</td><td class="n">${fmtN(soma(a,"cliques"))}</td><td class="n">${fmtN(soma(a,"respostas"))}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div></div>
   <div class="card"><h3>Cada publicação</h3>
-    ${lr.length ? `<div class="tbl"><table><thead><tr><th>Dia</th><th>Peça</th><th>Conteúdo</th>${METRICAS_POST.map(([,l]) => `<th class="n">${l}</th>`).join("")}</tr></thead><tbody>${lr.map(x => `<tr><td>${esc(fmtCurto(x.c.data))}</td><td>${esc(x.tipo)}</td><td><button class="btn ghost" style="padding:0;font-weight:400;text-align:left" data-open="${esc(x.c.id)}">${esc(x.c.tema || x.c.stories?.[0]?.tema || tituloCartao(x.c))}</button></td>${METRICAS_POST.map(([k]) => `<td class="n">${fmtN(x.m[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : `<p class="muted">Ainda sem resultados por publicação.</p>`}</div>
+    ${lr.length ? `<div class="tbl"><table><thead><tr><th>Dia</th><th>Peça</th><th>Rede</th><th>Conteúdo</th>${METRICAS_POST.map(([,l]) => `<th class="n">${l}</th>`).join("")}</tr></thead><tbody>${lr.map(x => `<tr><td>${esc(fmtCurto(x.c.data))}</td><td>${esc(x.tipo)}</td><td><span class="legend"><span><i style="background:var(--mk-${x.rede==="facebook"?"fb":"ig"})"></i>${x.rede==="facebook"?"Facebook":"Instagram"}</span></span></td><td><button class="btn ghost" style="padding:0;font-weight:400;text-align:left" data-open="${esc(x.c.id)}">${esc(x.c.tema || x.c.stories?.[0]?.tema || tituloCartao(x.c))}</button></td>${METRICAS_POST.map(([k]) => `<td class="n">${fmtN(x.m[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : `<p class="muted">Ainda sem resultados por publicação.</p>`}</div>
   <div class="card"><div class="spread"><h3>Perguntas sobre os dados</h3><span class="small muted">Respondo com os números que estão aqui.</span></div>
-    <div class="qa">${[...S.perguntas].sort((a,b) => (a.em||"").localeCompare(b.em||"")).map(q => `<p class="q">${esc(q.pergunta)}</p><p class="a">${esc(q.resposta)}</p>`).join("") || `<p class="muted small">Pergunta o que quiseres: "porque é que os stories de terça não tiveram cliques?", "que formato devo repetir?"</p>`}
+    <div class="qa">${[...S.perguntas].sort((a,b) => (a.em||"").localeCompare(b.em||"")).map(q => `<p class="q">${esc(q.pergunta)}</p><p class="a">${esc(q.resposta)}</p>`).join("") || `<p class="muted small">Pergunta o que quiseres: "o Facebook está a trazer cliques?", "que formato devo repetir?"</p>`}
       ${UI.qaBusy ? `<p class="a muted">A pensar…</p>` : ""}</div>
     <label class="f">A tua pergunta<textarea id="qaTxt" data-qa="1" style="min-height:60px">${esc(UI.qaTxt)}</textarea></label>
     <div class="row"><button class="btn primary" data-act="perguntar" ${UI.qaBusy || !sample ? "disabled" : ""}>Perguntar</button>${!sample ? `<span class="small muted">Só funciona dentro do claude.ai.</span>` : ""}</div></div>`;
 }
 function contextoDados(){
-  const ws = semanasOrd().map(w => ({ semana:nomeSemana(w), inicio:w.inicio, tema:w.titulo, objetivo:w.objetivo, oferta:w.oferta, metricas: S.metricas.find(m => m.id === w.id) || null }));
-  const pubs = linhasResultados().map(x => ({ dia:x.c.data, peca:x.tipo, tema:x.c.tema || x.c.stories?.[0]?.tema || "", etapa:x.c.etapa, ...x.m }));
+  const ws = semanasOrd().map(w => { const m = S.metricas.find(x => x.id === w.id);
+    return { semana:nomeSemana(w), inicio:w.inicio, tema:w.titulo, objetivo:w.objetivo, oferta:w.oferta, metricas: m ? { instagram:redeSem(m,"instagram"), facebook:redeSem(m,"facebook"), vendasOnline:m.vendasOnline ?? null, receita:m.receita ?? null } : null }; });
+  const pubs = linhasResultados().map(x => ({ dia:x.c.data, peca:x.tipo, rede:x.rede, tema:x.c.tema || x.c.stories?.[0]?.tema || "", etapa:x.c.etapa, ...x.m }));
   return JSON.stringify({ objetivo:S.priv?.objetivo, metas:S.priv?.metas, semanas:ws, publicacoes:pubs, ultimoRelatorio: [...S.relatorios].sort((a,b) => (b.inicio||"").localeCompare(a.inicio||""))[0] || null });
 }
 async function perguntar(){
   const q = UI.qaTxt.trim(); if (!q || !sample) return;
   UI.qaBusy = true; renderMain();
   try {
-    const { text } = await sample(`És a analista de dados e estratega de conteúdos da Tânia Silveira para a marca Traços D'Amor (moda infantil premium, objetivo: vendas online). Responde em português de Portugal, direta, sem floreados, com números concretos. Se os dados não chegam para responder, diz exatamente o que falta. Nunca inventes números.\n\nDADOS:\n${contextoDados()}\n\nPERGUNTA DA TÂNIA:\n${q}`, { cache:false, modelTier:"default" });
+    const { text } = await sample(`És a analista de dados e estratega de conteúdos da Tânia Silveira para a marca Traços D'Amor (moda infantil premium, objetivo: vendas online). Os dados têm Instagram e Facebook em separado: compara as duas redes e a semana com a anterior sempre que fizer sentido. Responde em português de Portugal, direta, sem floreados, com números concretos. Se os dados não chegam para responder, diz exatamente o que falta. Nunca inventes números.\n\nDADOS:\n${contextoDados()}\n\nPERGUNTA DA TÂNIA:\n${q}`, { cache:false, modelTier:"default" });
     await write(`${PRIV}/perguntas/q-${uidShort()}`, { pergunta:q, resposta:text, em:new Date().toISOString() });
     UI.qaTxt = "";
   } catch(e){ toast(e?.code === "not_granted" ? "Não deste permissão para usar o Claude nesta página." : "Não consegui responder. Tenta outra vez."); }
@@ -749,6 +810,15 @@ function hbars(title, pf, key){
   if (!items.some(i => i.v != null)) return "";
   const max = Math.max(1, ...items.map(i => Number(i.v)||0));
   return `<div class="chart"><h3>${title}</h3><div class="hbars">${items.map(i => `<div class="hbar"><span>${i.l}</span><span class="tr"><span style="width:${(Number(i.v)||0)/max*100}%;background:var(${i.c})"></span></span><span class="v">${fmtN(i.v)}</span></div>`).join("")}</div></div>`;
+}
+function porRedeHtml(pr){
+  if (!pr || (!pr.instagram && !pr.facebook)) return "";
+  const ms = [["alcance","Alcance"],["cliquesLink","Cliques no link"],["mensagens","Mensagens / DMs"],["novosSeguidores","Novos seguidores"]].filter(([k]) => pr.instagram?.[k] != null || pr.facebook?.[k] != null);
+  return `<div class="card"><div class="spread"><h3>Instagram vs Facebook</h3><div class="legend"><span><i style="background:var(--mk-ig)"></i>Instagram</span><span><i style="background:var(--mk-fb)"></i>Facebook</span></div></div>
+    <div class="tbl"><table class="cmp"><thead><tr><th></th><th colspan="2" class="grp ig sep">Instagram</th><th colspan="2" class="grp fb sep">Facebook</th></tr>
+      <tr><th>Métrica</th><th class="n sep">Semana</th><th class="n">vs anterior</th><th class="n sep">Semana</th><th class="n">vs anterior</th></tr></thead>
+    <tbody>${ms.map(([k,l]) => `<tr><td>${l}</td>${REDES.map(([rk]) => `<td class="n sep"><b>${fmtN(pr[rk]?.[k])}</b></td><td class="n">${delta(pr[rk]?.[k], pr.anterior?.[rk]?.[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    ${pr.leitura ? `<p class="readv">${esc(pr.leitura)}</p>` : ""}</div>`;
 }
 function renderRelatorios(main){
   const rs = [...S.relatorios].sort((a,b) => (b.inicio||"").localeCompare(a.inicio||""));
@@ -767,6 +837,7 @@ function renderRelatorios(main){
   <div class="rep-hero"><span class="v">${esc(ver)} · ${esc(fmtLongo(r.inicio))} a ${esc(fmtLongo(r.fim))}</span><h2>${esc(r.titulo || "Relatório da semana")}</h2><p class="readv" style="max-width:70ch">${esc(r.resumo)}</p></div>
   ${(r.kpis||[]).length ? `<div class="kpis">${r.kpis.map(k => { const d = (k.valor != null && k.anterior != null) ? k.valor - k.anterior : null;
     return `<div class="kpi"><span class="lbl">${esc(k.nome)}</span><span class="v">${fmtN(k.valor)}</span><span class="d">${d == null ? "sem semana anterior" : (d>0?"▲ +":d<0?"▼ ":"= ") + fmtN(d) + " vs semana anterior"}</span>${k.meta != null ? (k.valor >= k.meta ? `<span class="chip ok">✓ meta ${fmtN(k.meta)}</span>` : `<span class="chip bad">✕ meta ${fmtN(k.meta)}</span>`) : ""}</div>`; }).join("")}</div>` : ""}
+  ${porRedeHtml(r.porRede)}
   <div class="charts">${hbars("Alcance médio por publicação", pf, "alcanceMedio")}${hbars("Cliques no link", pf, "cliques")}${hbars("Respostas e DMs", pf, "respostas")}</div>
   <div class="grid2">${fmtCard("stories","Stories")}${fmtCard("reels","Reels")}${fmtCard("estaticos","Estáticos e carrosséis")}</div>
   ${(r.conclusoes||[]).length ? `<div class="card"><h3>O que os dados nos dizem</h3><ol class="clean">${r.conclusoes.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>` : ""}
@@ -965,9 +1036,12 @@ document.addEventListener("click", async e => {
     case "savePessoa": { const id = el.dataset.id; if (await write(`pessoas/${id}`, { nome: $(`#pn-${CSS.escape(id)}`).value.trim(), papel: $(`#pp-${CSS.escape(id)}`).value }, true)) toast("Guardado."); break; }
     case "editDados": UI.editDados = el.dataset.id; renderMain(); break;
     case "cancelDados": UI.editDados = null; renderMain(); break;
-    case "saveDados": { const tr = el.closest("tr"); const prev = { ...(S.metricas.find(m => m.id === el.dataset.id) || {}) }; delete prev.id;
+    case "dRede": UI.dRede = el.dataset.v; UI.editDados = null; renderMain(); break;
+    case "saveDados": { const tr = el.closest("tr"); const prev = JSON.parse(JSON.stringify(S.metricas.find(m => m.id === el.dataset.id) || {})); delete prev.id;
       const body = { ...prev, inicio:el.dataset.ini, fim:el.dataset.fim, fonte: prev.fonte || "manual", atualizadoEm:new Date().toISOString() };
-      tr.querySelectorAll("input[data-k]").forEach(i => { body[i.dataset.k] = i.value === "" ? null : Number(i.value); });
+      if (!prev.instagram) { const ig = redeSem(prev, "instagram"); if (Object.keys(ig).length) body.instagram = ig; [...METRICAS_REDE.map(([k]) => k), "dms"].forEach(k => delete body[k]); }
+      const alvo = el.dataset.rede === "negocio" ? body : (body[el.dataset.rede] = { ...(body[el.dataset.rede] || {}) });
+      tr.querySelectorAll("input[data-k]").forEach(i => { alvo[i.dataset.k] = i.value === "" ? null : Number(i.value); });
       if (await write(`${PRIV}/metricas/${el.dataset.id}`, body)) { UI.editDados = null; toast("Guardado."); renderMain(); } break; }
     case "perguntar": UI.qaTxt = $("#qaTxt")?.value || UI.qaTxt; perguntar(); break;
     case "editMelh": UI.editMelh = el.dataset.id; renderMain(); break;
@@ -997,6 +1071,7 @@ document.addEventListener("change", async e => {
   else if (t.matches("[data-act=semAbrir]")) { UI.semAberta = t.value; UI.editSem = null; t.blur(); renderMain(); }
   else if (t.matches("[data-act=sugSel]")) { UI.sugId = t.value; t.blur(); renderMain(); }
   else if (t.matches("[data-act=relSel]")) { UI.relId = t.value; t.blur(); renderMain(); }
+  else if (t.matches("[data-act=dSem]")) { UI.dSem = t.value; t.blur(); renderMain(); }
   else if (t.matches("[data-act=moverSel]")) { const c = S.cartoes.find(x => x.id === UI.cardId); if (c && t.value !== c.etapa) await mover(c, t.value); }
   else if (t.matches("[data-of]")) { UI.of[t.dataset.of] = t.value; if (t.tagName === "SELECT") { t.blur(); renderMain(); } }
 });
@@ -1008,8 +1083,9 @@ document.addEventListener("submit", async e => {
   if (f.id === "cardForm") { const c = S.cartoes.find(x => x.id === UI.cardId); const body = lerForm(c); if (await write(`cartoes/${c.id}`, body, true)) { localMerge(c.id, body); toast("Guardado."); renderModal(); } return; }
   if (f.id === "resForm") {
     const c = S.cartoes.find(x => x.id === UI.cardId); const fd = new FormData(f); const num = k => { const v = fd.get(k); return v === "" || v == null ? null : Number(v); };
-    const body = { atualizadoEm:new Date().toISOString(), stories:(c.stories||[]).map((s,i) => Object.fromEntries(METRICAS_POST.map(([k]) => [k, num(`s${i}_${k}`)]))) };
-    if (c.tipo === "Feed") { body.feed = Object.fromEntries(METRICAS_POST.map(([k]) => [k, num(`f_${k}`)])); body.linkPost = fd.get("linkPost") || ""; }
+    const grupo = pref => Object.fromEntries(METRICAS_POST.map(([k]) => [k, num(`${pref}${k}`)]));
+    const body = { atualizadoEm:new Date().toISOString(), stories:(c.stories||[]).map((s,i) => grupo(`s${i}_`)), storiesFb:(c.stories||[]).map((s,i) => grupo(`sf${i}_`)) };
+    if (c.tipo === "Feed") { body.feed = grupo("f_"); body.feedFb = grupo("ff_"); body.linkPost = fd.get("linkPost") || ""; body.linkPostFb = fd.get("linkPostFb") || ""; }
     if (await write(`${PRIV}/resultados/${c.id}`, body)) toast("Resultados guardados.");
     return;
   }
