@@ -17,8 +17,8 @@ Base de dados da app: coleções `clientes`, `semanas`, `cartoes`, `comentarios`
    - `veredito`: bom | atencao | critico (face às metas de cliques, DMs e vendas).
    - `titulo`: uma frase que diz o que aconteceu.
    - `resumo`: 3 a 5 linhas diretas.
-   - `kpis`: [{nome, valor, anterior, meta}] com alcance, cliques no link, visitas ao perfil, novos seguidores, DMs, vendas.
-   - `porFormato`: {stories:{funcionou:[],naoFuncionou:[]}, reels:{...}, estaticos:{...}}.
+   - Tudo Instagram vs Facebook. `kpis`: [{nome, meta, instagram:{valor, anterior}, facebook:{valor, anterior}}] para alcance, cliques no link, visitas ao perfil, novos seguidores e mensagens/DMs; vendas online e receita ficam em total: {nome, valor, anterior, meta}.
+   - `porFormato`: {stories:{funcionou:[], naoFuncionou:[], numeros:{instagram:{publicacoes, alcanceMedio, cliques, respostas}, facebook:{...}}}, reels:{...}, estaticos:{...}}.
    - `porRede`: {instagram:{alcance, cliquesLink, mensagens, novosSeguidores}, facebook:{...}, anterior:{instagram:{...}, facebook:{...}}, leitura:"o que a comparação Instagram vs Facebook diz e o que fazer em cada rede"}.
    - `melhorias`: [{acao, porque, como}], o bloco principal, com 3 a 5 melhorias concretas para a semana seguinte.
    - `mostrarMais` / `mostrarMenos`: o que a audiência pediu com os números e o que não funciona.

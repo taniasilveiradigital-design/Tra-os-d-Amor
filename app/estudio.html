@@ -8,7 +8,7 @@
   --terra:#B8674C; --terra-soft:#F4DDD3;
   --ok:#2F7A4A; --ok-bg:#E3F2E8; --warn:#8A5A00; --warn-bg:#FFF1D6; --bad:#A33A2B; --bad-bg:#FBE3DF;
   --td-terra:#E0A18A; --td-salvia:#CBD2CA; --td-azul:#AABDD4; --td-castanho:#AA867D;
-  --mk-reels:#B8674C; --mk-stories:#5F7F5B; --mk-estaticos:#4F6F99; --mk-ig:#B8674C; --mk-fb:#4F6F99;
+  --mk-reels:#B8674C; --mk-stories:#5F7F5B; --mk-estaticos:#4F6F99; --mk-ig:#B8674C; --mk-fb:#3D6CA8;
   --cover:#76543F; --cover-ink:#F3E6DC; --cover-light:#F1ECE6; --cover-light-ink:#5B4337;
   --e-ideia:#F6EDCF; --e-ideia-ink:#6E5410; --e-copy:#ECE3F5; --e-copy-ink:#5B3F7A;
   --e-criativo:#DCE7F4; --e-criativo-ink:#2F4E73; --e-revisao:#FBE2CC; --e-revisao-ink:#8A4A12;
@@ -22,7 +22,7 @@
     --bg:#1C1816; --surface:#26201D; --sunk:#2F2825; --ink:#F1E8E4; --muted:#B5A49D; --line:#3D3330;
     --terra:#E3A58D; --terra-soft:#4A3129;
     --ok:#8FD4A6; --ok-bg:#1F3527; --warn:#F2C77A; --warn-bg:#3A2E16; --bad:#F2A596; --bad-bg:#43241F;
-    --mk-reels:#E3A58D; --mk-stories:#A9C3A5; --mk-estaticos:#A7BDDB; --mk-ig:#E3A58D; --mk-fb:#A7BDDB;
+    --mk-reels:#E3A58D; --mk-stories:#A9C3A5; --mk-estaticos:#A7BDDB; --mk-ig:#CF7C5F; --mk-fb:#5E8FD3;
     --cover:#5E4333; --cover-light:#3A302B; --cover-light-ink:#EADBD0;
     --e-ideia:#3B331C; --e-ideia-ink:#F0D98E; --e-copy:#352B40; --e-copy-ink:#D9C3F0;
     --e-criativo:#26344A; --e-criativo-ink:#BFD3EE; --e-revisao:#452F1D; --e-revisao-ink:#F6C69B;
@@ -36,7 +36,7 @@
   --bg:#1C1816; --surface:#26201D; --sunk:#2F2825; --ink:#F1E8E4; --muted:#B5A49D; --line:#3D3330;
   --terra:#E3A58D; --terra-soft:#4A3129;
   --ok:#8FD4A6; --ok-bg:#1F3527; --warn:#F2C77A; --warn-bg:#3A2E16; --bad:#F2A596; --bad-bg:#43241F;
-  --mk-reels:#E3A58D; --mk-stories:#A9C3A5; --mk-estaticos:#A7BDDB; --mk-ig:#E3A58D; --mk-fb:#A7BDDB;
+  --mk-reels:#E3A58D; --mk-stories:#A9C3A5; --mk-estaticos:#A7BDDB; --mk-ig:#CF7C5F; --mk-fb:#5E8FD3;
   --cover:#5E4333; --cover-light:#3A302B; --cover-light-ink:#EADBD0;
   --e-ideia:#3B331C; --e-ideia-ink:#F0D98E; --e-copy:#352B40; --e-copy-ink:#D9C3F0;
   --e-criativo:#26344A; --e-criativo-ink:#BFD3EE; --e-revisao:#452F1D; --e-revisao-ink:#F6C69B;
@@ -180,7 +180,17 @@ td.n input{width:90px;text-align:right;background:var(--bg);border:1px solid var
 .chart text{fill:var(--muted);font:11px Karla,system-ui,sans-serif}
 .chart .val{fill:var(--ink);font-weight:700}
 .chart rect.b{fill:var(--terra)}
-.chart rect.ig{fill:var(--mk-ig)} .chart rect.fb{fill:var(--mk-fb)}
+.chart rect.ig{fill:var(--mk-ig)} .chart rect.fb{fill:var(--mk-fb)} .chart rect.ant{opacity:.45}
+.chart g.hit:hover rect{stroke:var(--ink);stroke-width:1.5}
+.charts.big{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.chart.big h3{font-size:17px} .chart.big text{font-size:13px} .chart.big .val{font-size:14px}
+.fgrp{display:grid;gap:12px} .fg{display:grid;gap:4px} .fgl{font-weight:700;font-size:14px}
+.chart.big .hbar{grid-template-columns:76px 1fr 56px} .chart.big .hbar .tr{height:16px} .chart.big .hbar .v{font-size:15px;text-align:right}
+.kpi.rede{gap:6px} .kpi .kr{display:grid;grid-template-columns:10px 1fr auto auto;gap:6px;align-items:center;font-size:14px} .kpi .kr i,i.dot{display:inline-block;width:10px;height:10px;border-radius:3px} i.dot{margin-right:5px;vertical-align:-1px}
+.kpi .kr b{font-variant-numeric:tabular-nums}
+.share{display:flex;gap:2px;height:8px;border-radius:4px;overflow:hidden} .share span{display:block;height:100%}
+table.mini{width:100%;border-collapse:collapse;font-size:14px} table.mini td,table.mini th{padding:3px 0;border-bottom:1px solid var(--line)} table.mini .n{text-align:right;padding-left:10px}
+.card.leitura{border-left:5px solid var(--mk-fb)}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--muted)} .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .dl{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap} .dl.up{color:var(--ok)} .dl.down{color:var(--bad)} .dl.eq{color:var(--muted)}
 table.cmp th.grp{text-align:center;border-bottom:3px solid var(--line)} table.cmp th.grp.ig{border-bottom-color:var(--mk-ig)} table.cmp th.grp.fb{border-bottom-color:var(--mk-fb)}
@@ -805,40 +815,71 @@ async function perguntar(){
 
 /* ---------- relatórios ---------- */
 function lst(t, arr, ordered){ if (!arr || !arr.length) return ""; const tag = ordered ? "ol" : "ul"; return `<div class="card"><h3>${t}</h3><${tag} class="clean">${arr.map(x => `<li>${esc(x)}</li>`).join("")}</${tag}></div>`; }
-function hbars(title, pf, key){
-  const items = [["reels","Reels","--mk-reels"],["stories","Stories","--mk-stories"],["estaticos","Estáticos","--mk-estaticos"]].map(([k,l,c]) => ({ l, c, v: pf?.[k]?.numeros?.[key] }));
-  if (!items.some(i => i.v != null)) return "";
-  const max = Math.max(1, ...items.map(i => Number(i.v)||0));
-  return `<div class="chart"><h3>${title}</h3><div class="hbars">${items.map(i => `<div class="hbar"><span>${i.l}</span><span class="tr"><span style="width:${(Number(i.v)||0)/max*100}%;background:var(${i.c})"></span></span><span class="v">${fmtN(i.v)}</span></div>`).join("")}</div></div>`;
+/* relatório: tudo Instagram vs Facebook. Relatórios antigos (valores soltos) contam como Instagram. */
+const FORMATOS_REL = [["reels","Reels"],["stories","Stories"],["estaticos","Estáticos"]];
+const redeNum = (o, rk) => o?.[rk] ? o[rk] : (rk === "instagram" && o && !o.facebook ? o : {});
+const temRedes = k => k && (k.instagram || k.facebook);
+const legendaRedes = `<div class="legend"><span><i style="background:var(--mk-ig)"></i>Instagram</span><span><i style="background:var(--mk-fb)"></i>Facebook</span></div>`;
+function kpiHtml(k){
+  const meta = (v) => k.meta != null && v != null ? (v >= k.meta ? `<span class="chip ok">✓ meta ${fmtN(k.meta)}</span>` : `<span class="chip bad">✕ meta ${fmtN(k.meta)}</span>`) : "";
+  if (!temRedes(k)) return `<div class="kpi"><span class="lbl">${esc(k.nome)}</span><span class="v">${fmtN(k.valor)}</span><span class="d">${delta(k.valor, k.anterior)} vs semana anterior</span>${meta(k.valor)}</div>`;
+  const ig = Number(k.instagram?.valor)||0, fb = Number(k.facebook?.valor)||0, t = ig + fb, pc = t ? Math.round(ig/t*100) : null;
+  return `<div class="kpi rede"><span class="lbl">${esc(k.nome)}</span><span class="v">${fmtN(t)}</span>
+    ${REDES.map(([rk,rl,rc]) => `<div class="kr"><i style="background:var(--mk-${rc})"></i><span>${rl}</span><b>${fmtN(k[rk]?.valor)}</b>${delta(k[rk]?.valor, k[rk]?.anterior)}</div>`).join("")}
+    ${pc != null ? `<div class="share" title="Instagram ${pc}% · Facebook ${100-pc}%"><span style="width:${pc}%;background:var(--mk-ig)"></span><span style="width:${100-pc}%;background:var(--mk-fb)"></span></div><span class="d">${pc}% Instagram · ${100-pc}% Facebook</span>` : ""}${meta(t)}</div>`;
 }
-function porRedeHtml(pr){
-  if (!pr || (!pr.instagram && !pr.facebook)) return "";
-  const ms = [["alcance","Alcance"],["cliquesLink","Cliques no link"],["mensagens","Mensagens / DMs"],["novosSeguidores","Novos seguidores"]].filter(([k]) => pr.instagram?.[k] != null || pr.facebook?.[k] != null);
-  return `<div class="card"><div class="spread"><h3>Instagram vs Facebook</h3><div class="legend"><span><i style="background:var(--mk-ig)"></i>Instagram</span><span><i style="background:var(--mk-fb)"></i>Facebook</span></div></div>
-    <div class="tbl"><table class="cmp"><thead><tr><th></th><th colspan="2" class="grp ig sep">Instagram</th><th colspan="2" class="grp fb sep">Facebook</th></tr>
-      <tr><th>Métrica</th><th class="n sep">Semana</th><th class="n">vs anterior</th><th class="n sep">Semana</th><th class="n">vs anterior</th></tr></thead>
-    <tbody>${ms.map(([k,l]) => `<tr><td>${l}</td>${REDES.map(([rk]) => `<td class="n sep"><b>${fmtN(pr[rk]?.[k])}</b></td><td class="n">${delta(pr[rk]?.[k], pr.anterior?.[rk]?.[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
-    ${pr.leitura ? `<p class="readv">${esc(pr.leitura)}</p>` : ""}</div>`;
+/* barras agrupadas: semana anterior vs esta semana, Instagram ao lado do Facebook */
+function kpiChart(k){
+  const grupos = [["Semana anterior","anterior"],["Esta semana","valor"]];
+  const vals = grupos.flatMap(([,g]) => REDES.map(([rk]) => k[rk]?.[g])).filter(v => v != null).map(Number);
+  if (!vals.length) return "";
+  const W = 340, H = 210, pb = 26, pt = 22, max = Math.max(1, ...vals), gw = W/2, bw = 54;
+  const bars = grupos.map(([gl,g],gi) => REDES.map(([rk,rl,rc],ri) => { const v = k[rk]?.[g]; if (v == null) return "";
+      const x = gi*gw + gw/2 - bw - 1 + ri*(bw+2), h = Math.max(2, v/max*(H-pb-pt)), y = H-pb-h;
+      return `<g class="hit"><rect class="${rc}${g==="anterior"?" ant":""}" x="${x}" y="${y}" width="${bw}" height="${h}" rx="4"/><text class="val" x="${x+bw/2}" y="${y-6}" text-anchor="middle">${fmtN(v)}</text><title>${rl} · ${gl}: ${fmtN(v)}</title></g>`; }).join("")
+    + `<text x="${gi*gw + gw/2}" y="${H-7}" text-anchor="middle">${gl}</text>`).join("");
+  return `<div class="chart big"><div class="spread"><h3>${esc(k.nome)}</h3>${legendaRedes}</div>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(k.nome)}: Instagram e Facebook, semana anterior e esta semana"><line x1="0" x2="${W}" y1="${H-pb}" y2="${H-pb}"/>${bars}</svg>
+    <p class="small">${REDES.map(([rk,rl]) => `${rl} ${delta(k[rk]?.valor, k[rk]?.anterior)}`).join(" · ")}</p></div>`;
+}
+/* por formato: cada formato com a barra do Instagram e a do Facebook */
+function formatoChart(title, pf, key){
+  const linhas = FORMATOS_REL.map(([fk,fl]) => ({ fl, v: REDES.map(([rk]) => redeNum(pf?.[fk]?.numeros, rk)[key]) }));
+  const all = linhas.flatMap(l => l.v).filter(v => v != null).map(Number);
+  if (!all.length) return "";
+  const max = Math.max(1, ...all);
+  return `<div class="chart big"><div class="spread"><h3>${title}</h3>${legendaRedes}</div><div class="fgrp">${linhas.map(l => `<div class="fg"><span class="fgl">${l.fl}</span>${REDES.map(([rk,rl,rc],i) => `<div class="hbar" title="${l.fl} · ${rl}: ${fmtN(l.v[i])}"><span class="small muted">${rl}</span><span class="tr"><span style="width:${(Number(l.v[i])||0)/max*100}%;background:var(--mk-${rc})"></span></span><span class="v">${fmtN(l.v[i])}</span></div>`).join("")}</div>`).join("")}</div></div>`;
+}
+function kpisDoRelatorio(r){
+  const ks = r.kpis || [];
+  if (ks.some(temRedes) || !r.porRede) return ks;
+  const pr = r.porRede, nomes = { alcance:"Alcance", cliquesLink:"Cliques no link", mensagens:"Mensagens / DMs", novosSeguidores:"Novos seguidores", visitasPerfil:"Visitas ao perfil" };
+  return Object.keys(nomes).filter(m => pr.instagram?.[m] != null || pr.facebook?.[m] != null).map(m => ({ nome:nomes[m], instagram:{ valor:pr.instagram?.[m], anterior:pr.anterior?.instagram?.[m] }, facebook:{ valor:pr.facebook?.[m], anterior:pr.anterior?.facebook?.[m] } }))
+    .concat(ks.filter(k => /venda|receita/i.test(k.nome)));
 }
 function renderRelatorios(main){
   const rs = [...S.relatorios].sort((a,b) => (b.inicio||"").localeCompare(a.inicio||""));
-  if (!rs.length) { main.innerHTML = `<div class="rep-hero"><span class="v">Relatório semanal</span><h2>O primeiro relatório chega na segunda-feira</h2><p>O que funcionou em stories, reels e estáticos, os números da semana e as melhorias para a semana seguinte.</p></div>`; return; }
+  if (!rs.length) { main.innerHTML = `<div class="rep-hero"><span class="v">Relatório semanal</span><h2>O primeiro relatório chega na segunda-feira</h2><p>Instagram e Facebook lado a lado: o que funcionou em stories, reels e estáticos, os números da semana e as melhorias para a semana seguinte.</p></div>`; return; }
   const r = rs.find(x => x.id === UI.relId) || rs[0]; const dona = isDona();
   const ver = { bom:"Semana a correr bem", atencao:"Atenção", critico:"Semana crítica" }[r.veredito] || "Análise";
   const pf = r.porFormato || {};
+  const ks = kpisDoRelatorio(r), ksRede = ks.filter(temRedes);
   const fmtCard = (k, t) => { const o = pf[k]; if (!o) return ""; const n = o.numeros || {};
+    const linhas = [["publicacoes","Publicações"],["alcanceMedio","Alcance médio"],["cliques","Cliques"],["respostas","Respostas"]].filter(([m]) => REDES.some(([rk]) => redeNum(n, rk)[m] != null));
     return `<div class="fmtcard ${k}"><h3>${t}</h3>
-      ${Object.keys(n).length ? `<div class="nums">${n.publicacoes != null ? `<div><span class="lbl">Publicações</span><b>${fmtN(n.publicacoes)}</b></div>` : ""}${n.alcanceMedio != null ? `<div><span class="lbl">Alcance médio</span><b>${fmtN(n.alcanceMedio)}</b></div>` : ""}${n.cliques != null ? `<div><span class="lbl">Cliques</span><b>${fmtN(n.cliques)}</b></div>` : ""}${n.respostas != null ? `<div><span class="lbl">Respostas</span><b>${fmtN(n.respostas)}</b></div>` : ""}</div>` : ""}
+      ${linhas.length ? `<table class="mini"><thead><tr><th></th>${REDES.map(([,rl,rc]) => `<th class="n"><i class="dot" style="background:var(--mk-${rc})"></i>${rl}</th>`).join("")}</tr></thead><tbody>${linhas.map(([m,l]) => `<tr><td>${l}</td>${REDES.map(([rk]) => `<td class="n"><b>${fmtN(redeNum(n, rk)[m])}</b></td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}
       ${(o.funcionou||[]).length ? `<span class="lbl" style="color:var(--ok)">Funcionou</span><ul class="clean">${o.funcionou.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
       ${(o.naoFuncionou||[]).length ? `<span class="lbl" style="color:var(--bad)">Não funcionou</span><ul class="clean">${o.naoFuncionou.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</div>`; };
   const melh = r.melhorias || [];
   main.innerHTML = `<div class="row" style="justify-content:flex-end"><select class="inp" style="width:auto" data-act="relSel" id="relSel" aria-label="Semana do relatório">${rs.map(x => `<option value="${esc(x.id)}"${x.id===r.id?" selected":""}>${esc(fmtCurto(x.inicio))} – ${esc(fmtCurto(x.fim))}</option>`).join("")}</select></div>
   ${r.exemplo ? `<div class="exemplo">EXEMPLO com dados fictícios. Serve para veres o formato do relatório de cada segunda-feira às 8h.</div>` : ""}
   <div class="rep-hero"><span class="v">${esc(ver)} · ${esc(fmtLongo(r.inicio))} a ${esc(fmtLongo(r.fim))}</span><h2>${esc(r.titulo || "Relatório da semana")}</h2><p class="readv" style="max-width:70ch">${esc(r.resumo)}</p></div>
-  ${(r.kpis||[]).length ? `<div class="kpis">${r.kpis.map(k => { const d = (k.valor != null && k.anterior != null) ? k.valor - k.anterior : null;
-    return `<div class="kpi"><span class="lbl">${esc(k.nome)}</span><span class="v">${fmtN(k.valor)}</span><span class="d">${d == null ? "sem semana anterior" : (d>0?"▲ +":d<0?"▼ ":"= ") + fmtN(d) + " vs semana anterior"}</span>${k.meta != null ? (k.valor >= k.meta ? `<span class="chip ok">✓ meta ${fmtN(k.meta)}</span>` : `<span class="chip bad">✕ meta ${fmtN(k.meta)}</span>`) : ""}</div>`; }).join("")}</div>` : ""}
-  ${porRedeHtml(r.porRede)}
-  <div class="charts">${hbars("Alcance médio por publicação", pf, "alcanceMedio")}${hbars("Cliques no link", pf, "cliques")}${hbars("Respostas e DMs", pf, "respostas")}</div>
+  ${ks.length ? `<div class="kpis">${ks.map(kpiHtml).join("")}</div>` : ""}
+  ${ksRede.length ? `<div class="spread"><h2>Instagram vs Facebook</h2>${legendaRedes}</div>
+    ${r.porRede?.leitura ? `<div class="card leitura"><p class="readv">${esc(r.porRede.leitura)}</p></div>` : ""}
+    <div class="charts big">${ksRede.map(kpiChart).join("")}</div>` : ""}
+  ${["alcanceMedio","cliques","respostas"].some(m => FORMATOS_REL.some(([fk]) => REDES.some(([rk]) => redeNum(pf[fk]?.numeros, rk)[m] != null))) ? `<h2>Por formato</h2>
+    <div class="charts big">${formatoChart("Alcance médio por publicação", pf, "alcanceMedio")}${formatoChart("Cliques no link", pf, "cliques")}${formatoChart("Respostas e DMs", pf, "respostas")}</div>` : ""}
   <div class="grid2">${fmtCard("stories","Stories")}${fmtCard("reels","Reels")}${fmtCard("estaticos","Estáticos e carrosséis")}</div>
   ${(r.conclusoes||[]).length ? `<div class="card"><h3>O que os dados nos dizem</h3><ol class="clean">${r.conclusoes.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>` : ""}
   <div class="card"><div class="spread"><h3>Melhorias para a próxima semana</h3>${dona && UI.editMelh !== r.id ? `<button class="btn sm" data-act="editMelh" data-id="${esc(r.id)}">Editar melhorias</button>` : ""}</div>
