@@ -35,10 +35,19 @@ const path = require('path');
     await page.click('[data-act=vista][data-v=semanas]');
     // semanas: add inspiration + comment
     await page.click('#tabs [data-tab="semanas"]'); await page.waitForTimeout(200);
-    await page.fill('#inspUrl','https://exemplo.pt/x'); await page.fill('#inspNota','nota '+role); await page.click('[data-act=addInsp]'); await page.waitForTimeout(200);
-    await page.fill('#semCom','comentário semana '+role); await page.click('[data-act=comSemana]'); await page.waitForTimeout(200);
-    log.push(`[${role}] semana insp: ${(await page.$$('.insp a.il')).length} coms: ${(await page.$$('.coms .com')).length}`);
+    log.push(`[${role}] semana boxes: ${(await page.$$('.box')).length} insp inputs: ${(await page.$$('#inspUrl')).length}`);
     await page.screenshot({ path:`shot-${role}-semanas2.png`, fullPage:true });
+    log.push(`[${role}] bell: ${(await page.textContent('[data-act=notif]')).trim()}`);
+    await page.click('[data-act=notif]'); await page.waitForTimeout(150);
+    const ns = await page.$$('[data-act=abrirNotif]'); log.push(`[${role}] notifs: ${ns.length}`);
+    if (ns.length) { await ns[0].click(); await page.waitForTimeout(300);
+      const okb = await page.$('[data-act=darOkCom]'); if (okb) { await okb.click(); await page.waitForTimeout(200); log.push(`[${role}] gave OK: ${(await page.textContent('#mComs')).includes('OK de')}`); }
+      const insp = await page.$$eval('.drawer .lbl', l=>l.filter(x=>x.textContent==='Inspiração').length); log.push(`[${role}] inspiração blocks in card: ${insp}`);
+      await page.screenshot({path:`shot-${role}-notifcard.png`});
+      // mention someone + comment
+      const mc = await page.$('[data-act=menc]'); if (mc) { await mc.click(); await page.fill('#novoCom','@ teste'); await page.click('[data-act=comentar]'); await page.waitForTimeout(200); log.push(`[${role}] mention comment tags: ${(await page.$$('.com .mtags')).length}`); }
+      await page.keyboard.press('Escape'); }
+    log.push(`[${role}] bell after: ${(await page.textContent('[data-act=notif]')).trim()}`);
     const errs = await page.evaluate(()=>window.__errors); if (errs.length) log.push(`[${role}] window errors: ${errs.join(' || ')}`);
     await page.close();
   }
@@ -67,12 +76,13 @@ const path = require('path');
   await page.click('[data-act=novoCartao]'); await page.waitForTimeout(300); log.push('[flow] new card modal: '+ !!(await page.$('.drawer'))); await page.keyboard.press('Escape');
   // oficina
   await page.click('#tabs [data-tab="oficina"]'); await page.waitForTimeout(200);
-  await page.click('[data-act=gerar]'); await page.waitForTimeout(500);
+  await page.fill('#of-insp','https://x.pt → storie'); await page.click('[data-act=gerar]'); await page.waitForTimeout(500);
   log.push('[flow] oficina proposals: '+(await page.$$('[data-act=enviarUm]')).length);
   await page.fill('#ret-0-0','muda a legenda'); await page.click('[data-act=retificar]'); await page.waitForTimeout(400);
   log.push('[flow] after retificar pedidos: '+(await page.$$('.com')).length);
   await page.click('[data-act=guardarRasc]'); await page.waitForTimeout(200);
-  await page.click('[data-act=enviarTodos]'); await page.waitForTimeout(300);
+  await page.click('[data-act=askSub]'); await page.waitForTimeout(100); await page.click('[data-act=substituir]'); await page.waitForTimeout(500);
+  log.push('[flow] after substituir ideia cards in week of 12: '+ await page.evaluate(()=>Object.entries(window.__store).filter(([k,v])=>k.startsWith('cartoes/')&&v.data>='2026-10-12'&&v.data<='2026-10-18').length));
   log.push('[flow] rascunhos: '+(await page.$$('[data-act=abrirRasc]')).length);
   await page.screenshot({ path:'shot-flow-oficina.png', fullPage:true });
   // dados: pergunta
@@ -87,6 +97,8 @@ const path = require('path');
   await page.screenshot({ path:'shot-flow-relatorio.png', fullPage:true });
   // estrategia edit + pessoas
   await page.click('#tabs [data-tab="estrategia"]'); await page.waitForTimeout(200);
+  const sb = await page.$$('[data-act=sugEstado]'); log.push('[flow] sugestao buttons: '+sb.length); await sb[2].click(); await page.waitForTimeout(200);
+  log.push('[flow] sug estado: '+ await page.evaluate(()=>window.__store['privado/tracosdamor/sugestoes/s1'].itens[0].estado));
   await page.screenshot({ path:'shot-flow-estrategia.png', fullPage:true });
   log.push('[flow] errors: '+(await page.evaluate(()=>window.__errors)).join(' || '));
   // mobile

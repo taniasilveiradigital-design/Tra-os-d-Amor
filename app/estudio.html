@@ -163,7 +163,7 @@ th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;verti
 th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;background:var(--sunk);white-space:nowrap}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 tr:last-child td{border-bottom:0}
-td input{width:90px;text-align:right;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+td.n input{width:90px;text-align:right;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:4px;border-top:4px solid var(--td-castanho)}
 .kpi:nth-child(4n+1){border-top-color:var(--td-terra)} .kpi:nth-child(4n+2){border-top-color:var(--td-salvia)} .kpi:nth-child(4n+3){border-top-color:var(--td-azul)}
@@ -197,6 +197,19 @@ ul.clean,ol.clean{margin:0;padding-left:18px;display:grid;gap:6px}
 .qa .q{justify-self:end;background:var(--terra-soft);border-radius:12px 12px 2px 12px;padding:10px 12px;max-width:85%}
 .qa .a{background:var(--bg);border:1px solid var(--line);border-radius:12px 12px 12px 2px;padding:10px 12px;max-width:92%;white-space:pre-line}
 .empty{border:1px dashed var(--line);border-radius:12px;padding:24px;text-align:center;color:var(--muted);display:grid;gap:8px;justify-items:center}
+.mchips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.mchip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted)}
+.mchip[aria-pressed="true"]{background:var(--terra-soft);color:var(--terra);border-color:var(--terra)}
+.com .mtags{font-size:12px;color:var(--terra);font-weight:700}
+.com .oks{font-size:12px;color:var(--ok);font-weight:700}
+.notif{display:grid;gap:8px}
+.notif button.n{display:grid;gap:2px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;cursor:pointer;width:100%}
+.notif button.n:hover{border-color:var(--terra)}
+.sug{display:grid;gap:4px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg)}
+.sug.aplicada{opacity:.6} .sug.descartada{opacity:.45;text-decoration:line-through}
+.prio{font-size:11px;font-weight:700;border-radius:999px;padding:1px 7px}
+.prio.alta{background:var(--bad-bg);color:var(--bad)} .prio.media{background:var(--warn-bg);color:var(--warn)} .prio.baixa{background:var(--sunk);color:var(--muted)}
+.exemplo{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-weight:700;font-size:14px}
 .priv-banner{background:var(--terra-soft);border-radius:12px;padding:12px 14px;font-size:14px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:700;z-index:60;max-width:calc(100% - 32px)}
 @media (max-width:600px){
@@ -244,9 +257,9 @@ const METRICAS_POST = [["alcance","Alcance"],["visualizacoes","Visualizações"]
 const PAPEL_TXT = { dona:"Estratega", equipa:"Equipa criativa", cliente:"Cliente" };
 
 let db = null, userCap = null, sample = null;
-const S = { cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
-const UI = { tab:"quadro", vista:"semanas", semana:"todas", semAberta:null, mes:"2026-10", cardId:null, pend:false, editSem:null, editEst:false, editDados:null, relId:null, editMelh:null, qaBusy:false, qaTxt:"",
-  of:{ modo:"semana", semanas:[], data:"", tipo:"Feed", formato:"Reel", brief:"", busy:false, prog:"", out:[], err:"", ret:null, retTxt:{}, rascId:null } };
+const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
+const UI = { menc:[], notif:false, sugId:null, tab:"quadro", vista:"semanas", semana:"todas", semAberta:null, mes:"2026-10", cardId:null, pend:false, editSem:null, editEst:false, editDados:null, relId:null, editMelh:null, qaBusy:false, qaTxt:"",
+  of:{ modo:"semana", semanas:[], data:"", tipo:"Feed", formato:"Reel", brief:"", busy:false, prog:"", out:[], err:"", ret:null, retTxt:{}, rascId:null, insp:"", confSub:false } };
 try { if (!localStorage.getItem("td-ajuda-vista")) UI.ajuda = true; } catch(e){}
 try { const t = localStorage.getItem("td-tab3"); if (t) UI.tab = t; const v = localStorage.getItem("td-vista"); if (v) UI.vista = v; } catch(e){}
 
@@ -320,9 +333,11 @@ function renderMainSafe(){ if (isEditing()) { UI.pend = true; } else renderMain(
     sub("metricas", db.collection(`${PRIV}/metricas`));
     sub("resultados", db.collection(`${PRIV}/resultados`));
     sub("perguntas", db.collection(`${PRIV}/perguntas`));
+    sub("sugestoes", db.collection(`${PRIV}/sugestoes`));
     if (S.me.id) sub("rascunhos", db.collection(`data/users/${S.me.id}`));
     sample = await window.claude?.use?.("sample") ?? null;
   }
+  if (S.me.id) db.doc(`data/users/${S.me.id}/estado`).onSnapshot(s => { S.estado = s.exists ? s.data() : { lidas:[] }; onData("estado"); }, () => {});
   if (S.me.id) {
     try { const s = await db.doc(`pessoas/${S.me.id}`).get();
       if (!s.exists) await db.doc(`pessoas/${S.me.id}`).set({ cliente:CLIENTE, papel: S.me.isOwner ? "dona" : null, nome: S.me.isOwner ? "Tânia" : "", desde:new Date().toISOString() });
@@ -334,11 +349,35 @@ function renderMainSafe(){ if (isEditing()) { UI.pend = true; } else renderMain(
 /* ---------- chrome ---------- */
 function paraTi(){ const p = papel(); if (p === "equipa") return S.cartoes.filter(c => c.etapa === "criativo" || (c.etapa === "aprovado" && faltaDrive(c).length)); const alvo = p === "dona" ? ["revisao"] : ["cliente"]; return S.cartoes.filter(c => alvo.includes(c.etapa)); }
 const avaliado = c => { const r = S.resultados.find(x => x.id === c.id); return !!r && ((r.feed && Object.values(r.feed).some(v => v != null)) || (r.stories||[]).some(m => m && Object.values(m).some(v => v != null))); };
+function notificacoes(){
+  const me = S.me.id; if (!me) return [];
+  const lidas = new Set(S.estado?.lidas || []); const out = [];
+  for (const c of S.comentarios) {
+    if (c.autor !== me && (c.mencoes||[]).includes(me) && !lidas.has(c.id)) out.push({ key:c.id, tipo:"mencao", c });
+    if (c.autor === me) for (const o of (c.oks||[])) if (o !== me && !lidas.has(`ok:${c.id}:${o}`)) out.push({ key:`ok:${c.id}:${o}`, tipo:"ok", c, por:o });
+  }
+  return out.sort((a,b) => (b.c.em||"").localeCompare(a.c.em||""));
+}
+async function marcarLidas(keys){
+  if (!S.me.id || !keys.length) return;
+  const lidas = [...new Set([...(S.estado?.lidas || []), ...keys])].slice(-600);
+  S.estado = { ...(S.estado||{}), lidas };
+  try { await db.doc(`data/users/${S.me.id}/estado`).set({ lidas }); } catch(e){}
+  renderChrome();
+}
+function notifHtml(){
+  if (!UI.notif) return "";
+  const ns = notificacoes();
+  return `<div class="card" style="border-left:4px solid var(--terra)"><div class="spread"><h3>Notificações</h3><div class="row">${ns.length ? `<button class="btn sm" data-act="lerTodas">Marcar todas como lidas</button>` : ""}<button class="btn sm" data-act="notif">Fechar</button></div></div>
+    <div class="notif">${ns.length ? ns.map(n => { const card = S.cartoes.find(x => x.id === n.c.cartao);
+      return `<button class="n" data-act="abrirNotif" data-key="${esc(n.key)}" data-card="${esc(n.c.cartao||"")}"><span class="small"><b>${n.tipo === "ok" ? `${esc(nomeDe(n.por))} deu OK` : `${esc(nomeDe(n.c.autor))} identificou-te`}</b> · ${esc(fmtQuando(n.c.em))}</span><span class="small muted">${card ? esc(fmtCurto(card.data) + " · " + tituloCartao(card)) : ""}</span><span>${esc((n.c.texto||"").slice(0,140))}</span></button>`; }).join("") : `<p class="muted small">Sem notificações novas.</p>`}</div></div>`;
+}
 function renderChrome(){
   const c = S.cliente;
   if (c) { $("#clientName").textContent = c.nome || "Traços D'Amor"; $("#clientMeta").textContent = [c.instagram, c.site].filter(Boolean).join(" · "); }
   const p = papel(); const pt = paraTi();
-  $("#statusChips").innerHTML = `<button class="chip neutral" data-act="ajuda" aria-expanded="${!!UI.ajuda}">? Como funciona</button><span class="chip neutral">${esc(PAPEL_TXT[p])}</span>` +
+  const nn = notificacoes().length;
+  $("#statusChips").innerHTML = `<button class="chip ${nn ? "bad" : "neutral"}" data-act="notif" aria-expanded="${!!UI.notif}">🔔 ${nn}</button><button class="chip neutral" data-act="ajuda" aria-expanded="${!!UI.ajuda}">? Como funciona</button><span class="chip neutral">${esc(PAPEL_TXT[p])}</span>` +
     (pt.length ? `<button class="chip bad" data-act="paraTi">● ${pt.length} à tua espera</button>` : `<span class="chip ok">Nada à tua espera</span>`);
   const pub = [["quadro","Quadro"],["calendario","Calendário"],["semanas","Semanas"],["relatorios","Relatórios"]];
   const priv = p === "dona" ? [["estrategia","Estratégia 🔒"],["dados","Dados 🔒"],["oficina","Oficina 🔒"]] : [];
@@ -347,9 +386,9 @@ function renderChrome(){
     (priv.length ? `<span class="sep" aria-hidden="true"></span>` + priv.map(([k,l]) => `<button role="tab" data-tab="${k}" aria-selected="${UI.tab===k}" class="priv">${l}</button>`).join("") : "");
 }
 const AJUDA = {
-  dona: ["Planeias cada semana em Semanas (objetivo, oferta, estratégia do feed e dos stories). Só tu editas.", "Na Oficina 🔒 geras conteúdos para uma ou várias semanas, retificas com comentários e envias para o quadro (coluna Ideia).", "Revês cada cartão e envias para a criativa. Quando volta em Revisão estratégica, aprovas e segue para a cliente.", "Depois do OK da cliente, a criativa põe os ficheiros na Drive. Quando é publicado, eu avalio os números (aparece \"avaliação pendente\").", "Estratégia, Dados e Oficina só tu vês. Em Estratégia → Pessoas dás nome e papel a quem entra."],
-  equipa: ["No Quadro vês todos os cartões por semana. O chip \"à tua espera\" no topo leva-te ao que é teu.", "Abre o cartão: tens intenção, tema, como fazer, legenda e os stories. Faz no Canva ou CapCut e cola os links.", "Quando estiver pronto, carrega em \"Enviar para revisão estratégica\".", "Se vier com \"alterações pedidas\", o pedido está nos comentários do cartão.", "Depois do OK da cliente: exporta cada ficheiro, guarda-o na pasta indicada da Drive com o nome indicado e cola o link. Depois de publicar, marca como publicado."],
-  cliente: ["No topo, \"à tua espera\" mostra os conteúdos que precisam do teu OK.", "Abre o cartão, vê o texto e o criativo (botão Abrir nos links).", "Se estiver bem, carrega em \"Dar OK\". Se não, \"Pedir alterações\" e escreve o que queres mudar.", "Em Semanas vês o objetivo e a oferta de cada semana. Podes deixar comentários e links de inspiração.", "Em Relatórios vês como correu cada semana."]
+  dona: ["Planeias cada semana em Semanas (objetivo, oferta, estratégia do feed e dos stories). Só tu editas.", "Na Oficina 🔒 geras conteúdos para uma ou várias semanas, retificas com comentários e envias para o quadro (coluna Ideia).", "Revês cada cartão e envias para a criativa. Quando volta em Revisão estratégica, aprovas e segue para a cliente.", "Depois do OK da cliente, a criativa põe os ficheiros na Drive. Quando é publicado, eu avalio os números (aparece \"avaliação pendente\").", "Estratégia, Dados e Oficina só tu vês. Em Estratégia → Pessoas dás nome e papel a quem entra. Todas as segundas às 8h tens lá as minhas sugestões para aplicar.", "Nos comentários de cada cartão podes identificar pessoas (@). Recebem a notificação no sino 🔔 e respondem com OK."],
+  equipa: ["No Quadro vês todos os cartões por semana. O chip \"à tua espera\" no topo leva-te ao que é teu.", "Abre o cartão: tens intenção, tema, como fazer, legenda e os stories. Faz no Canva ou CapCut e cola os links.", "Quando estiver pronto, carrega em \"Enviar para revisão estratégica\".", "Se vier com \"alterações pedidas\", o pedido está nos comentários do cartão, logo no topo. Quando te identificarem (@), aparece no sino 🔔: responde com ✓ OK.", "Depois do OK da cliente: exporta cada ficheiro, guarda-o na pasta indicada da Drive com o nome indicado e cola o link. Depois de publicar, marca como publicado."],
+  cliente: ["No topo, \"à tua espera\" mostra os conteúdos que precisam do teu OK.", "Abre o cartão, vê o texto e o criativo (botão Abrir nos links).", "Se estiver bem, carrega em \"Dar OK\". Se não, \"Pedir alterações\" e escreve o que queres mudar.", "Em Semanas vês o objetivo, a oferta e a estratégia de cada semana.", "Nos comentários de cada cartão podes identificar a Tânia ou a Ângela (@). Quando te identificam, aparece no sino 🔔.", "Em Relatórios vês como correu cada semana."]
 };
 function ajudaHtml(){ if (!UI.ajuda) return ""; const p = papel();
   return `<div class="card" style="border-left:4px solid var(--terra)"><div class="spread"><h3>Como funciona · ${esc(PAPEL_TXT[p])}</h3><button class="btn sm" data-act="ajuda">Fechar</button></div><ol class="clean">${AJUDA[p].map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>`; }
@@ -361,6 +400,7 @@ function renderMain(){
   if (priv[UI.tab] && !isDona()) UI.tab = "quadro";
   ({quadro:renderQuadro, calendario:renderCal, semanas:renderSemanas, relatorios:renderRelatorios, ...priv}[UI.tab] || renderQuadro)(main);
   if (UI.ajuda) main.insertAdjacentHTML("afterbegin", ajudaHtml());
+  if (UI.notif) main.insertAdjacentHTML("afterbegin", notifHtml());
 }
 
 /* ---------- cartões ---------- */
@@ -450,7 +490,8 @@ function renderCal(main){
 }
 
 /* ---------- modal cartão ---------- */
-function openCard(id){ UI.cardId = id; UI.pedir = false; renderModal(); }
+function openCard(id){ UI.cardId = id; UI.pedir = false; UI.menc = []; renderModal();
+  const ks = notificacoes().filter(n => n.c.cartao === id).map(n => n.key); if (ks.length) marcarLidas(ks); }
 function closeCard(){ UI.cardId = null; $("#modal").innerHTML = ""; if (UI.pend && !isEditing()) { UI.pend = false; renderMain(); } }
 const pastaUrl = k => S.cliente?.pastas?.[k] || "";
 const nomeFicheiro = (c, suf) => `TDA_${c.data}_${suf}`;
@@ -459,11 +500,16 @@ function linkField(name, label, val, pastaKey, fname, editable){
   return `<div style="display:grid;gap:4px"><div class="linkrow"><label class="f">${label}<input name="${name}" value="${esc(val)}" placeholder="https://…" ${editable?"":"readonly"} id="fld-${name}"></label>${val ? `<a class="btn" href="${esc(val)}" target="_blank" rel="noopener">Abrir</a>` : `<span></span>`}</div>
     ${pastaKey ? `<p class="hint">Pasta: ${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(pn)}</a>` : `${esc(pn)}`} · nome do ficheiro <code>${esc(fname)}</code></p>` : ""}</div>`;
 }
+const linkify = t => esc(t).replace(/(https?:\/\/[^\s<]+)/g, u => `<a href="${u}" target="_blank" rel="noopener">${u.length > 60 ? u.slice(0,57) + "…" : u}</a>`);
+const linksDe = t => (String(t||"").match(/https?:\/\/[^\s<]+/g) || []);
 function renderModal(){
   const c = S.cartoes.find(x => x.id === UI.cardId); if (!c) { closeCard(); return; }
   const p = papel(); const eCopy = p === "dona"; const eLinks = p !== "cliente"; const feed = c.tipo === "Feed";
   const ta = (name, label, val, cls, h) => (p === "cliente" && /estrategia$/.test(name)) ? "" : eCopy ? `<label class="f">${label}<textarea name="${name}" class="${cls||""}" id="fld-${name}" ${h?`style="min-height:${h}px"`:""}>${esc(val)}</textarea></label>`
-    : (val ? `<div style="display:grid;gap:2px"><span class="lbl">${label}</span><p class="readv${cls==="cap"?" hand":""}" style="${cls==="cap"?"font-size:17px":""}">${esc(val)}</p></div>` : "");
+    : (val ? `<div style="display:grid;gap:2px"><span class="lbl">${label}</span><p class="readv${cls==="cap"?" hand":""}" style="${cls==="cap"?"font-size:17px":""}">${/comoFazer$|inspiracao$/.test(name) ? linkify(val) : esc(val)}</p></div>` : "");
+  const insp = (name, val) => eCopy
+    ? `<label class="f">Inspiração (link + o que copiar)<textarea name="${name}" id="fld-${name}" style="min-height:44px">${esc(val)}</textarea></label>${linksDe(val).length ? `<p class="hint">${linksDe(val).map(u => `<a href="${esc(u)}" target="_blank" rel="noopener">Abrir inspiração</a>`).join(" · ")}</p>` : ""}`
+    : (val ? `<div style="display:grid;gap:2px;background:var(--terra-soft);border-radius:8px;padding:8px 10px"><span class="lbl">Inspiração</span><p class="readv">${linkify(val)}</p></div>` : "");
   const res = S.resultados.find(r => r.id === c.id) || {};
   const resFields = (pref, obj) => `<div class="fgrid">${METRICAS_POST.map(([k,l]) => `<label class="f">${l}<input type="number" min="0" name="${pref}${k}" value="${obj?.[k] ?? ""}" id="fld-${pref}${k}"></label>`).join("")}</div>`;
   const w = semanaDe(c.data);
@@ -471,6 +517,10 @@ function renderModal(){
     <div class="spread"><div style="display:grid;gap:4px"><span id="mEtapa"></span><h2>${esc(tituloCartao(c))}</h2><p class="muted small">${esc(fmtDia(c.data))}${w ? " · " + esc(nomeSemana(w)) + " · " + esc(w.titulo) : ""}</p></div>
       <button class="btn" data-act="fechar" aria-label="Fechar">✕</button></div>
     <div id="mActions"></div>
+    <div class="sec"><h3>Comentários</h3><div class="coms" id="mComs"></div>
+      <label class="f">Escrever comentário<textarea id="novoCom" style="min-height:60px" placeholder="Escreve aqui…"></textarea></label>
+      <div class="mchips"><span class="lbl">Identificar</span>${S.pessoas.filter(x => x.id !== S.me.id).map(x => `<button type="button" class="mchip" data-act="menc" data-id="${esc(x.id)}" aria-pressed="${UI.menc.includes(x.id)}">@${esc(nomeDe(x.id))}</button>`).join("") || `<span class="small muted">Ainda não há outras pessoas na app.</span>`}</div>
+      <div class="row"><button class="btn primary" data-act="comentar">Comentar</button></div></div>
     <form id="cardForm" class="panel" style="gap:14px">
       ${eCopy ? `<div class="sec"><div class="fgrid">
         <label class="f">Dia<input type="date" name="data" value="${esc(c.data)}" id="fld-data"></label>
@@ -479,7 +529,7 @@ function renderModal(){
         <label class="f">Título<input name="titulo" value="${esc(c.titulo)}" placeholder="${esc(`${DIAS_L[dow(c.data)]}: ${c.tipo}`)}" id="fld-titulo"></label></div></div>` : ""}
       <div class="sec"><h3>Checklist</h3><div class="checks">${checklist(c).map(([n,ok]) => `<div><span class="${ok?"y":"x"}">${ok?"☑":"☐"}</span><span>${esc(n)}</span></div>`).join("")}</div><p class="hint">Marca-se sozinha quando o campo é preenchido.</p></div>
       ${feed ? `<div class="sec"><h3>${esc(c.formato || "Feed")}</h3>
-        ${ta("intencao","Intenção",c.intencao)}${ta("estrategia","Estratégia",c.estrategia)}${ta("tema","Tema",c.tema,"",44)}${ta("comoFazer","Como fazer",c.comoFazer)}${ta("inspiracao","Inspiração",c.inspiracao,"",44)}${ta("legenda","Legenda",c.legenda,"cap",120)}
+        ${ta("intencao","Intenção",c.intencao)}${ta("estrategia","Estratégia",c.estrategia)}${ta("tema","Tema",c.tema,"",44)}${ta("comoFazer","Como fazer",c.comoFazer)}${insp("inspiracao",c.inspiracao)}${ta("legenda","Legenda",c.legenda,"cap",120)}
         <h4 style="margin-top:6px">Criativo e ficheiros finais</h4>
         ${linkField("linkCriativo", c.formato==="Reel"?"Link Canva / CapCut do Reels":"Link Canva", c.linkCriativo, null, "", eLinks)}
         ${c.formato==="Reel" ? linkField("capaCriativo","Link Canva da capa",c.capaCriativo,null,"",eLinks) : ""}
@@ -487,7 +537,7 @@ function renderModal(){
         ${c.formato==="Reel" ? linkField("capaDrive","Capa final (Drive)",c.capaDrive,"capas",nomeFicheiro(c,"capa.png"),eLinks) : ""}</div>` : ""}
       ${(c.stories||[]).map((s,i) => `<div class="sec story">
         <div class="spread"><h3>Storie ${c.stories.length>1?i+1:""}</h3><div class="row">${eCopy ? `<select name="s${i}_media" aria-label="Tipo de ficheiro" class="inp" style="width:auto" id="fld-s${i}-media"><option value="video"${s.media!=="foto"?" selected":""}>Vídeo</option><option value="foto"${s.media==="foto"?" selected":""}>Foto</option></select><button type="button" class="btn ghost danger" data-act="rmStory" data-i="${i}">Remover</button>` : `<span class="chip neutral">${s.media==="foto"?"Foto":"Vídeo"}</span>`}</div></div>
-        ${ta(`s${i}_intencao`,"Intenção",s.intencao)}${ta(`s${i}_estrategia`,"Estratégia",s.estrategia)}${ta(`s${i}_tema`,"Tema",s.tema,"",44)}${ta(`s${i}_texto`,"Texto",s.texto,"cap",60)}${ta(`s${i}_comoFazer`,"Como fazer",s.comoFazer)}
+        ${ta(`s${i}_intencao`,"Intenção",s.intencao)}${ta(`s${i}_estrategia`,"Estratégia",s.estrategia)}${ta(`s${i}_tema`,"Tema",s.tema,"",44)}${ta(`s${i}_texto`,"Texto",s.texto,"cap",60)}${ta(`s${i}_comoFazer`,"Como fazer",s.comoFazer)}${insp(`s${i}_inspiracao`,s.inspiracao)}
         ${linkField(`s${i}_linkCriativo`,"Link Canva storie",s.linkCriativo,null,"",eLinks)}
         ${linkField(`s${i}_linkDrive`,"Link Storie Final (Drive)",s.linkDrive,s.media==="foto"?"storyFoto":"storyVideo",nomeFicheiro(c,`story${i+1}.${s.media==="foto"?"png":"mp4"}`),eLinks)}</div>`).join("")}
       ${eCopy ? `<button type="button" class="btn" data-act="addStory">+ Adicionar storie</button>` : ""}
@@ -497,14 +547,17 @@ function renderModal(){
       ${feed ? `<span class="lbl">${esc(c.formato||"Feed")}</span>${resFields("f_", res.feed)}<label class="f">Link da publicação<input name="linkPost" value="${esc(res.linkPost)}" id="fld-linkPost"></label>` : ""}
       ${(c.stories||[]).map((s,i) => `<span class="lbl">Storie ${i+1}</span>${resFields(`s${i}_`, res.stories?.[i])}`).join("")}
       <div class="row"><button class="btn" type="submit">Guardar resultados</button></div></form>` : ""}
-    <div class="sec"><h3>Comentários</h3><div class="coms" id="mComs"></div>
-      <label class="f">Escrever comentário<textarea id="novoCom" style="min-height:60px" placeholder="Escreve aqui…"></textarea></label>
-      <div class="row"><button class="btn primary" data-act="comentar">Comentar</button></div></div>
   </div></div>`;
   renderModalLive();
 }
 function comsHtml(list){
-  return list.length ? list.map(x => `<div class="com${x.sistema?" sys":""}"><span class="who">${quem(x.autor)} <span class="when">${esc(fmtQuando(x.em))}</span></span><p class="readv">${esc(x.texto)}</p></div>`).join("") : `<p class="muted small">Sem comentários.</p>`;
+  return list.length ? list.map(x => { const ms = x.mencoes || []; const oks = x.oks || [];
+    const podeOk = ms.includes(S.me.id) && !oks.includes(S.me.id) && x.autor !== S.me.id;
+    return `<div class="com${x.sistema?" sys":""}"><span class="who">${quem(x.autor)} <span class="when">${esc(fmtQuando(x.em))}</span></span>
+      ${ms.length ? `<span class="mtags">→ ${ms.map(m => "@" + esc(nomeDe(m))).join(" ")}</span>` : ""}
+      <p class="readv">${linkify(x.texto)}</p>
+      ${oks.length ? `<span class="oks">✓ OK de ${oks.map(o => esc(nomeDe(o))).join(", ")}</span>` : ""}
+      ${podeOk ? `<div class="row"><button class="btn sm" data-act="darOkCom" data-id="${esc(x.id)}">✓ OK</button></div>` : ""}</div>`; }).join("") : `<p class="muted small">Sem comentários.</p>`;
 }
 function renderModalLive(){
   const c = S.cartoes.find(x => x.id === UI.cardId); if (!c || !$("#mEtapa")) return;
@@ -544,7 +597,7 @@ function lerForm(c){
   ["data","tipo","formato","titulo","intencao","estrategia","tema","comoFazer","inspiracao","legenda","linkCriativo","capaCriativo","linkDrive","capaDrive"].forEach(k => { const v = g(k); if (v !== undefined) body[k] = v; });
   if (body.tipo === "Feed" && !body.formato) body.formato = c.formato || "Reel";
   if (body.tipo === "Storie") body.formato = null;
-  body.stories = (c.stories||[]).map((s,i) => { const o = { ...s }; ["intencao","estrategia","tema","texto","comoFazer","media","linkCriativo","linkDrive"].forEach(k => { const v = g(`s${i}_${k}`); if (v !== undefined) o[k] = v; }); return o; });
+  body.stories = (c.stories||[]).map((s,i) => { const o = { ...s }; ["intencao","estrategia","tema","texto","comoFazer","inspiracao","media","linkCriativo","linkDrive"].forEach(k => { const v = g(`s${i}_${k}`); if (v !== undefined) o[k] = v; }); return o; });
   if (body.data) { const w = semanaDe(body.data); body.semana = w ? w.id : null; }
   body.atualizadoEm = new Date().toISOString();
   return body;
@@ -557,8 +610,6 @@ function renderSemanas(main){
   const w = S.semanas.find(x => x.id === UI.semAberta) || semanaAtual(); UI.semAberta = w.id;
   const edit = UI.editSem === w.id;
   const its = S.cartoes.filter(c => c.data >= w.inicio && c.data <= w.fim && visivel(c));
-  const coms = S.comentarios.filter(x => x.semana === w.id).sort((a,b) => (a.em||"").localeCompare(b.em||""));
-  const insp = S.inspiracoes.filter(x => x.semana === w.id).sort((a,b) => (a.em||"").localeCompare(b.em||""));
   const box = (cls, t, v, k, h) => edit
     ? `<div class="box ${cls}"><label class="f">${t}<textarea name="${k}" form="semForm" id="s-${k}" style="min-height:${h||110}px">${esc(v)}</textarea></label></div>`
     : `<div class="box ${cls}"><h3>${t}</h3>${v ? `<p class="readv">${esc(v)}</p>` : `<p class="muted small">Por definir.</p>`}</div>`;
@@ -568,15 +619,7 @@ function renderSemanas(main){
   `<div class="wkhero"><span class="small" style="opacity:.85">${esc(cap1(MESES[parse(w.inicio).getMonth()]))} · ${esc(fmtLongo(w.inicio))} a ${esc(fmtLongo(w.fim))}${w.palavraChave ? ` · palavra-chave ${esc(w.palavraChave)}` : ""}</span><h2>${esc(nomeSemana(w))}</h2><p style="font-size:18px">${esc(w.titulo)}</p>
     <div class="row" style="margin-top:6px">${ETAPAS.map(([k,l]) => { const n = its.filter(c => c.etapa === k).length; return n ? `<span class="et et-${k}">${l} ${n}</span>` : ""; }).join("")}<button class="chip neutral" data-act="verSemana" data-id="${esc(w.id)}">Ver cartões no quadro →</button></div></div>`}
   <div class="wkgrid">${box("b-obj","Objetivo",w.objetivo,"objetivo",90)}${box("b-of","Oferta",w.oferta,"oferta",90)}${box("b-feed","Estratégia do feed",w.estrategiaFeed,"estrategiaFeed")}${box("b-st","Estratégia dos stories",w.estrategiaStories,"estrategiaStories")}</div>
-  <div class="grid2">
-    <div class="card"><div class="spread"><h3>Inspiração</h3><span class="small muted">Todos podem acrescentar</span></div>
-      <div class="insp">${insp.length ? insp.map(x => `<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:start"><a class="il" href="${esc(x.url)}" target="_blank" rel="noopener"><b>${esc(x.nota || "Referência")}</b><span class="u">${esc(x.url)}</span><span class="small muted">${quem(x.autor)}</span></a>${(dona || x.autor === S.me.id) ? `<button class="btn ghost sm danger" data-act="rmInsp" data-id="${esc(x.id)}" aria-label="Remover">✕</button>` : ""}</div>`).join("") : `<p class="muted small">Ainda sem referências.</p>`}</div>
-      <div class="fgrid"><label class="f">Link<input id="inspUrl" placeholder="https://instagram.com/p/…"></label><label class="f">O que tem de bom<input id="inspNota" placeholder="Ex.: a luz, o ritmo, a capa"></label></div>
-      <div class="row"><button class="btn" data-act="addInsp">Acrescentar referência</button></div></div>
-    <div class="card"><h3>Comentários da semana</h3><div class="coms">${comsHtml(coms)}</div>
-      <label class="f">Escrever<textarea id="semCom" style="min-height:60px" placeholder="Uma ideia, uma dúvida, uma data importante…"></textarea></label>
-      <div class="row"><button class="btn primary" data-act="comSemana">Comentar</button></div></div>
-  </div>`;
+`;
 }
 
 /* ---------- estratégia (privado) ---------- */
@@ -598,6 +641,7 @@ function renderEstrategia(main){
     return;
   }
   main.innerHTML = `<div class="priv-banner">🔒 <b>Área privada.</b> A equipa e a cliente não veem este separador.</div>
+  ${sugestoesHtml()}
   <div class="spread"><h2>Estratégia de conteúdos</h2><button class="btn" data-act="editEst">Editar</button></div>
   ${c.objetivo ? `<div class="rep-hero" style="padding:18px 20px 36px"><span class="lbl" style="color:var(--cover-ink)">Objetivo</span><p style="font-size:20px">${esc(c.objetivo)}</p></div>` : ""}
   <div class="grid2">${c.diagnostico ? `<div class="card"><h3>Diagnóstico</h3><p class="readv">${esc(c.diagnostico)}</p></div>` : ""}
@@ -608,6 +652,26 @@ function renderEstrategia(main){
   <div class="card"><h3>Pessoas com acesso</h3>
     <p class="small muted">Quem abre a app aparece aqui. Dá o nome e o papel a cada pessoa. É esse nome que aparece nos comentários. Partilha a app como <b>Contributor</b>, não como Editor.</p>
     ${pessoas.length ? `<div class="tbl"><table><thead><tr><th>Conta</th><th>Nome a mostrar</th><th>Papel</th><th></th></tr></thead><tbody>${pessoas.map(x => `<tr><td>${esc(S.names[x.id] || "Sem nome visível")}</td><td><input class="inp" style="max-width:200px" id="pn-${esc(x.id)}" value="${esc(x.nome)}" placeholder="Ex.: Sílvia"></td><td><select class="inp" style="width:auto" id="pp-${esc(x.id)}"><option value="cliente"${x.papel!=="equipa"?" selected":""}>Cliente</option><option value="equipa"${x.papel==="equipa"?" selected":""}>Equipa criativa</option></select></td><td><button class="btn sm" data-act="savePessoa" data-id="${esc(x.id)}">Guardar</button></td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">Ainda ninguém abriu a app além de ti. Partilha o link no menu Share.</p>`}</div>`;
+}
+
+const AREAS = [["instagram","Instagram"],["comunicacao","Comunicação"],["email","Email marketing"],["vendas","Vendas"],["atracao","Atração"]];
+const ESTADOS_SUG = [["aplicar","Por aplicar"],["curso","Em curso"],["aplicada","Aplicada"],["descartada","Descartada"]];
+function sugestoesHtml(){
+  const ss = [...S.sugestoes].sort((a,b) => (b.inicio||"").localeCompare(a.inicio||""));
+  if (!ss.length) return `<div class="card"><h2>Sugestões da semana</h2><p class="muted">Todas as segundas às 8h deixo aqui o que podes aplicar na marca: Instagram, comunicação, email marketing, vendas e atração.</p></div>`;
+  const g = ss.find(x => x.id === UI.sugId) || ss[0]; const its = g.itens || [];
+  const porAplicar = its.filter(x => (x.estado||"aplicar") === "aplicar").length;
+  return `<div class="card" style="border-top:4px solid var(--terra)">
+    <div class="spread"><div><span class="lbl">Sugestões da semana · ${esc(fmtLongo(g.inicio))}${g.exemplo ? " · EXEMPLO" : ""}</span><h2>${esc(g.titulo || "O que aplicar esta semana")}</h2></div>
+      <div class="row"><span class="chip ${porAplicar ? "warn" : "ok"}">${porAplicar} por aplicar</span>${ss.length > 1 ? `<select class="inp" style="width:auto" data-act="sugSel" id="sugSel">${ss.map(x => `<option value="${esc(x.id)}"${x.id===g.id?" selected":""}>${esc(fmtCurto(x.inicio))}</option>`).join("")}</select>` : ""}</div></div>
+    ${g.resumo ? `<p class="readv">${esc(g.resumo)}</p>` : ""}
+    <div class="grid2">${AREAS.map(([k,l]) => { const a = its.map((x,i) => ({...x, i})).filter(x => x.area === k); if (!a.length) return "";
+      return `<div style="display:grid;gap:8px;align-content:start"><h3>${l}</h3>${a.map(x => `<div class="sug ${esc(x.estado||"aplicar")}">
+        <div class="spread"><b>${esc(x.titulo)}</b><span class="prio ${esc(x.prioridade||"media")}">${{alta:"Prioridade alta",media:"Prioridade média",baixa:"Prioridade baixa"}[x.prioridade||"media"]}</span></div>
+        ${x.porque ? `<span class="small"><span class="lbl">Porquê</span> ${esc(x.porque)}</span>` : ""}
+        ${x.como ? `<span class="small readv"><span class="lbl">Como</span> ${linkify(x.como)}</span>` : ""}
+        <div class="seg" role="group" aria-label="Estado">${ESTADOS_SUG.map(([ek,el]) => `<button data-act="sugEstado" data-doc="${esc(g.id)}" data-i="${x.i}" data-v="${ek}" aria-pressed="${(x.estado||"aplicar")===ek}">${el}</button>`).join("")}</div>
+      </div>`).join("")}</div>`; }).join("")}</div></div>`;
 }
 
 /* ---------- dados (privado) ---------- */
@@ -689,11 +753,13 @@ function renderRelatorios(main){
       ${(o.naoFuncionou||[]).length ? `<span class="lbl" style="color:var(--bad)">Não funcionou</span><ul class="clean">${o.naoFuncionou.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</div>`; };
   const melh = r.melhorias || [];
   main.innerHTML = `<div class="row" style="justify-content:flex-end"><select class="inp" style="width:auto" data-act="relSel" id="relSel" aria-label="Semana do relatório">${rs.map(x => `<option value="${esc(x.id)}"${x.id===r.id?" selected":""}>${esc(fmtCurto(x.inicio))} – ${esc(fmtCurto(x.fim))}</option>`).join("")}</select></div>
+  ${r.exemplo ? `<div class="exemplo">EXEMPLO com dados fictícios. Serve para veres o formato do relatório de cada segunda-feira às 8h.</div>` : ""}
   <div class="rep-hero"><span class="v">${esc(ver)} · ${esc(fmtLongo(r.inicio))} a ${esc(fmtLongo(r.fim))}</span><h2>${esc(r.titulo || "Relatório da semana")}</h2><p class="readv" style="max-width:70ch">${esc(r.resumo)}</p></div>
   ${(r.kpis||[]).length ? `<div class="kpis">${r.kpis.map(k => { const d = (k.valor != null && k.anterior != null) ? k.valor - k.anterior : null;
     return `<div class="kpi"><span class="lbl">${esc(k.nome)}</span><span class="v">${fmtN(k.valor)}</span><span class="d">${d == null ? "sem semana anterior" : (d>0?"▲ +":d<0?"▼ ":"= ") + fmtN(d) + " vs semana anterior"}</span>${k.meta != null ? (k.valor >= k.meta ? `<span class="chip ok">✓ meta ${fmtN(k.meta)}</span>` : `<span class="chip bad">✕ meta ${fmtN(k.meta)}</span>`) : ""}</div>`; }).join("")}</div>` : ""}
   <div class="charts">${hbars("Alcance médio por publicação", pf, "alcanceMedio")}${hbars("Cliques no link", pf, "cliques")}${hbars("Respostas e DMs", pf, "respostas")}</div>
   <div class="grid2">${fmtCard("stories","Stories")}${fmtCard("reels","Reels")}${fmtCard("estaticos","Estáticos e carrosséis")}</div>
+  ${(r.conclusoes||[]).length ? `<div class="card"><h3>O que os dados nos dizem</h3><ol class="clean">${r.conclusoes.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>` : ""}
   <div class="card"><div class="spread"><h3>Melhorias para a próxima semana</h3>${dona && UI.editMelh !== r.id ? `<button class="btn sm" data-act="editMelh" data-id="${esc(r.id)}">Editar melhorias</button>` : ""}</div>
     ${UI.editMelh === r.id ? `<div id="melhEdit" class="panel" style="gap:10px">${melh.map((m,i) => `<div class="sec" data-mi="${i}"><div class="fgrid"><label class="f">Melhoria<input data-mk="acao" value="${esc(m.acao)}" id="m-a-${i}"></label><label class="f">Autor<select data-mk="autor" id="m-u-${i}"><option value="claude"${m.autor!=="tania"?" selected":""}>Claude</option><option value="tania"${m.autor==="tania"?" selected":""}>Tânia</option></select></label></div><label class="f">Porquê<textarea data-mk="porque" id="m-p-${i}" style="min-height:50px">${esc(m.porque)}</textarea></label><label class="f">Como<textarea data-mk="como" id="m-c-${i}" style="min-height:50px">${esc(m.como)}</textarea></label><div class="row"><button class="btn ghost sm danger" data-act="rmMelh" data-i="${i}">Remover</button></div></div>`).join("")}
       <div class="row"><button class="btn" data-act="addMelh">+ Acrescentar melhoria</button><button class="btn primary" data-act="saveMelh" data-id="${esc(r.id)}">Guardar</button><button class="btn" data-act="cancelMelh">Cancelar</button></div></div>`
@@ -717,9 +783,7 @@ Inspiração: referência descrita (sem inventar links).
 Legenda: Trazer, algo novo está a chegar.
 Storie — Intenção: Manter a caixa presente no dia do spoiler. Estratégia: Contagem decrescente passiva. A mãe só toca para receber o lembrete, não tem de responder a nada. Tema: Está a chegar a data para abrir a caixa. Texto: Vamos abrir quarta às 10h. Como fazer: Vídeo da caixa que temos de exterior.`;
 function blocoSemana(w){
-  const insp = S.inspiracoes.filter(x => x.semana === w.id).map(x => `- ${x.nota || ""} ${x.url}`).join("\n");
-  const coms = S.comentarios.filter(x => x.semana === w.id).map(x => `- ${nomeDe(x.autor)}: ${x.texto}`).join("\n");
-  return `SEMANA ${nomeSemana(w)} (${w.inicio} a ${w.fim}): ${w.titulo}\nObjetivo: ${w.objetivo||"-"}\nPalavra-chave: ${w.palavraChave||"-"}\nOferta: ${w.oferta||"-"}\nEstratégia do feed: ${w.estrategiaFeed||"-"}\nEstratégia dos stories: ${w.estrategiaStories||"-"}${insp ? `\nInspiração deixada pela equipa:\n${insp}` : ""}${coms ? `\nComentários da semana:\n${coms}` : ""}`;
+  return `SEMANA ${nomeSemana(w)} (${w.inicio} a ${w.fim}): ${w.titulo}\nObjetivo: ${w.objetivo||"-"}\nPalavra-chave: ${w.palavraChave||"-"}\nOferta: ${w.oferta||"-"}\nEstratégia do feed: ${w.estrategiaFeed||"-"}\nEstratégia dos stories: ${w.estrategiaStories||"-"}`;
 }
 function promptOficina(w){
   const o = UI.of; const c = S.priv || {};
@@ -743,12 +807,17 @@ ${EXEMPLO}
 PEDIDO DA TÂNIA
 ${o.brief || "(sem notas adicionais: segue a estratégia da semana)"}
 
+INSPIRAÇÃO DADA PELA TÂNIA
+${o.insp || "(nenhuma)"}
+Coloca cada link no campo "inspiracao" do conteúdo (feed ou storie) a que melhor se aplica, com uma frase sobre o que copiar dessa referência. Nunca inventes links: se não houver link para um conteúdo, descreve a referência visual sem URL.
+
 TAREFA
 ${alvo}
+Todos os conteúdos (feed e stories) têm de servir o OBJETIVO e a OFERTA da semana, sem exceção.
 Cada campo tem de ser útil para a criativa executar sem perguntar nada: "comoFazer" com passos práticos (planos, duração, texto no ecrã, quem grava); "estrategia" explica porque vende; "legenda" pronta a publicar na voz da marca com pedido de venda; "inspiracao" descreve a referência visual (não inventes URLs).
 
 Responde só com JSON:
-{"cartoes":[{"data":"AAAA-MM-DD","tipo":"Feed"|"Storie","formato":"Reel"|"Carrossel"|"Estático"|null,"titulo":"Segunda: Feed","intencao":"","estrategia":"","tema":"","comoFazer":"","inspiracao":"","legenda":"","stories":[{"intencao":"","estrategia":"","tema":"","texto":"","comoFazer":"","media":"video"|"foto"}]}],"notaParaTania":"uma frase com o risco ou decisão que ela tem de validar"}
+{"cartoes":[{"data":"AAAA-MM-DD","tipo":"Feed"|"Storie","formato":"Reel"|"Carrossel"|"Estático"|null,"titulo":"Segunda: Feed","intencao":"","estrategia":"","tema":"","comoFazer":"","inspiracao":"","legenda":"","stories":[{"intencao":"","estrategia":"","tema":"","texto":"","comoFazer":"","inspiracao":"","media":"video"|"foto"}]}],"notaParaTania":"uma frase com o risco ou decisão que ela tem de validar"}
 Nos cartões Storie, os campos de feed ficam vazios e tudo vai em "stories".`;
 }
 function renderOficina(main){
@@ -764,12 +833,13 @@ function renderOficina(main){
       <label class="f">Tipo<select id="of-tipo" data-of="tipo"><option${o.tipo==="Feed"?" selected":""}>Feed</option><option${o.tipo==="Storie"?" selected":""}>Storie</option></select></label>
       ${o.tipo === "Feed" ? `<label class="f">Formato<select id="of-formato" data-of="formato">${FORMATOS.map(f => `<option${o.formato===f?" selected":""}>${f}</option>`).join("")}</select></label>` : ""}</div>` : ""}
     ${sel.map(w => `<details class="sec"><summary style="cursor:pointer;font-weight:700">O que já está definido para ${esc(nomeSemana(w))} · ${esc(w.titulo)}</summary><p class="readv small">${esc(blocoSemana(w))}</p></details>`).join("")}
+    <label class="f">Inspiração (links e notas, um por linha)<textarea id="of-insp" data-of="insp" style="min-height:80px" placeholder="https://pinterest.com/pin/… → story de quarta, composição com o embrulho\nhttps://instagram.com/p/… → reel de segunda, ritmo dos cortes">${esc(o.insp)}</textarea></label>
     <label class="f">O que queres que eu faça<textarea id="of-brief" data-of="brief" style="min-height:130px" placeholder="Ex.: temos vídeos da Sílvia a abrir caixas e fotos dos conjuntos no jardim. Quero spoiler na segunda e revelação na quarta às 10h.">${esc(o.brief)}</textarea></label>
     <div class="row"><button class="btn primary" data-act="gerar" ${o.busy || !sample || !sel.length ? "disabled" : ""}>${o.busy ? esc(o.prog || "A pensar…") : o.modo === "semana" && sel.length > 1 ? `Gerar ${sel.length} semanas` : "Gerar"}</button>${o.busy ? `<button class="btn" data-act="parar">Parar</button>` : ""}${!sample ? `<span class="small muted">Só funciona dentro do claude.ai.</span>` : ""}</div>
     ${o.err ? `<p class="small" style="color:var(--bad)">${esc(o.err)}</p>` : ""}</div>
-  ${o.out.length ? `<div class="card"><div class="spread"><h2>Proposta</h2><div class="row"><button class="btn primary" data-act="enviarTodos">Enviar tudo para o quadro (Ideia)</button><button class="btn" data-act="guardarRasc">Guardar tudo</button><button class="btn ghost danger" data-act="descartar">Eliminar tudo</button></div></div>
+  ${o.out.length ? `<div class="card"><div class="spread"><h2>Proposta</h2><div class="row"><button class="btn primary" data-act="enviarTodos">Enviar tudo para o quadro (Ideia)</button>${o.modo === "semana" ? (o.confSub ? `<span class="row small">Apaga os cartões em Ideia destas semanas e põe estes no lugar? <button class="btn danger sm" data-act="substituir">Sim, substituir</button><button class="btn sm" data-act="noSub">Não</button></span>` : `<button class="btn" data-act="askSub">Substituir a semana no quadro</button>`) : ""}<button class="btn" data-act="guardarRasc">Guardar tudo</button><button class="btn ghost danger" data-act="descartar">Eliminar tudo</button></div></div>
     ${o.out.map((g,gi) => `<h3 class="serif" style="font-size:24px">${esc(g.titulo)}</h3>${g.nota ? `<p class="chip warn" style="white-space:normal">${esc(g.nota)}</p>` : ""}${g.cartoes.map((c,i) => previewCartao(c,gi,i)).join("")}`).join("")}</div>` : ""}
-  ${S.rascunhos.length ? `<div class="card"><h3>Rascunhos guardados</h3>${[...S.rascunhos].sort((a,b) => (b.em||"").localeCompare(a.em||"")).map(r => `<div class="spread" style="border-top:1px solid var(--line);padding-top:8px"><span>${esc(fmtQuando(r.em))} · ${esc((r.out||[]).map(g => g.titulo).join(", "))}</span><span class="row"><button class="btn sm" data-act="abrirRasc" data-id="${esc(r.id)}">Abrir</button><button class="btn ghost sm danger" data-act="apagarRasc" data-id="${esc(r.id)}">Apagar</button></span></div>`).join("")}</div>` : ""}`;
+  ${S.rascunhos.filter(r => r.id.startsWith("r-")).length ? `<div class="card"><h3>Rascunhos guardados</h3>${[...S.rascunhos].filter(r => r.id.startsWith("r-")).sort((a,b) => (b.em||"").localeCompare(a.em||"")).map(r => `<div class="spread" style="border-top:1px solid var(--line);padding-top:8px"><span>${esc(fmtQuando(r.em))} · ${esc((r.out||[]).map(g => g.titulo).join(", "))}</span><span class="row"><button class="btn sm" data-act="abrirRasc" data-id="${esc(r.id)}">Abrir</button><button class="btn ghost sm danger" data-act="apagarRasc" data-id="${esc(r.id)}">Apagar</button></span></div>`).join("")}</div>` : ""}`;
 }
 function previewCartao(c,gi,i){
   const f = (l,v,cls) => v ? `<div style="display:grid;gap:2px"><span class="lbl">${l}</span><p class="readv ${cls||""}" style="${cls?"font-size:17px":""}">${esc(v)}</p></div>` : "";
@@ -777,7 +847,7 @@ function previewCartao(c,gi,i){
   return `<div class="sec"><div class="spread"><div><span class="small muted">${esc(c.data ? fmtDia(c.data) : "")}</span><h3>${esc(c.titulo || c.tipo)}${c.formato ? " · " + esc(c.formato) : ""}</h3></div>
       <div class="row"><button class="btn primary sm" data-act="enviarUm" data-g="${gi}" data-i="${i}">Enviar para o quadro</button><button class="btn sm" data-act="guardarRasc">Guardar</button><button class="btn ghost sm danger" data-act="eliminarUm" data-g="${gi}" data-i="${i}">Eliminar</button></div></div>
     ${f("Intenção",c.intencao)}${f("Estratégia",c.estrategia)}${f("Tema",c.tema)}${f("Como fazer",c.comoFazer)}${f("Inspiração",c.inspiracao)}${f("Legenda",c.legenda,"hand")}
-    ${(c.stories||[]).map((s,j) => `<div class="sec story"><h4>Storie ${j+1} · ${s.media==="foto"?"foto":"vídeo"}</h4>${f("Intenção",s.intencao)}${f("Estratégia",s.estrategia)}${f("Tema",s.tema)}${f("Texto",s.texto,"hand")}${f("Como fazer",s.comoFazer)}</div>`).join("")}
+    ${(c.stories||[]).map((s,j) => `<div class="sec story"><h4>Storie ${j+1} · ${s.media==="foto"?"foto":"vídeo"}</h4>${f("Intenção",s.intencao)}${f("Estratégia",s.estrategia)}${f("Tema",s.tema)}${f("Texto",s.texto,"hand")}${f("Como fazer",s.comoFazer)}${f("Inspiração",s.inspiracao)}</div>`).join("")}
     ${(c._pedidos||[]).length ? `<div class="coms">${c._pedidos.map(t => `<div class="com"><span class="who">Tu <span class="role dona">pedido de retificação</span></span><p class="readv">${esc(t)}</p></div>`).join("")}</div>` : ""}
     <div class="sec priv" style="gap:8px"><label class="f">Comentário para retificar este conteúdo<textarea id="ret-${k}" data-ret="${k}" style="min-height:60px" placeholder="Ex.: a legenda está demasiado poética, quero o preço na 2.ª linha; o storie 2 tem de ser sondagem, não link.">${esc((UI.of.retTxt||{})[k]||"")}</textarea></label>
       <div class="row"><button class="btn sm" data-act="retificar" data-g="${gi}" data-i="${i}" ${busy || UI.of.busy || !sample ? "disabled" : ""}>${busy ? "A retificar… (até 1 minuto)" : "Retificar"}</button></div></div>
@@ -790,7 +860,7 @@ async function retificar(gi, i){
   o.ret = k; renderMain();
   const limpo = { ...c }; delete limpo._pedidos;
   try {
-    const res = await sample.json(`És a estrategista de conteúdos sénior da Tânia Silveira para a marca Traços D'Amor. Escreve em português de Portugal.\n\nMARCA\n${MARCA}\n\n${w ? blocoSemana(w) : ""}\n\nCARTÃO ATUAL (JSON):\n${JSON.stringify(limpo)}\n\n${(c._pedidos||[]).length ? "PEDIDOS ANTERIORES DA TÂNIA (continuam válidos):\n" + c._pedidos.map(t => "- " + t).join("\n") + "\n\n" : ""}NOVO PEDIDO DA TÂNIA:\n${pedido}\n\nRetifica o cartão exatamente como ela pede. Mantém o que ela não mandou mudar. Mantém a mesma data e o mesmo tipo, salvo se ela pedir outra coisa. Nunca inventes preços, tecidos ou tamanhos: usa [parênteses retos].\nResponde só com o cartão em JSON, com as mesmas chaves: {"data","tipo","formato","titulo","intencao","estrategia","tema","comoFazer","inspiracao","legenda","stories":[{"intencao","estrategia","tema","texto","comoFazer","media"}]}`, { modelTier:"complex", cache:false });
+    const res = await sample.json(`És a estrategista de conteúdos sénior da Tânia Silveira para a marca Traços D'Amor. Escreve em português de Portugal.\n\nMARCA\n${MARCA}\n\n${w ? blocoSemana(w) : ""}\n\nCARTÃO ATUAL (JSON):\n${JSON.stringify(limpo)}\n\n${(c._pedidos||[]).length ? "PEDIDOS ANTERIORES DA TÂNIA (continuam válidos):\n" + c._pedidos.map(t => "- " + t).join("\n") + "\n\n" : ""}NOVO PEDIDO DA TÂNIA:\n${pedido}\n\nRetifica o cartão exatamente como ela pede. Mantém o que ela não mandou mudar. Mantém a mesma data e o mesmo tipo, salvo se ela pedir outra coisa. Nunca inventes preços, tecidos ou tamanhos: usa [parênteses retos].\nResponde só com o cartão em JSON, com as mesmas chaves: {"data","tipo","formato","titulo","intencao","estrategia","tema","comoFazer","inspiracao","legenda","stories":[{"intencao","estrategia","tema","texto","comoFazer","inspiracao","media"}]}`, { modelTier:"complex", cache:false });
     if (!res || typeof res !== "object" || Array.isArray(res)) throw { code:"invalid_json" };
     g.cartoes[i] = { ...res, _pedidos:[...(c._pedidos||[]), pedido] };
     o.retTxt[k] = ""; toast("Retificado.");
@@ -815,7 +885,7 @@ async function enviarParaQuadro(c){
   const data = c.data || UI.of.data || todayIso; const id = `${CLIENTE}-${data}-${uidShort()}`; const w = semanaDe(data); const tipo = c.tipo === "Storie" ? "Storie" : "Feed";
   return write(`cartoes/${id}`, { cliente:CLIENTE, data, semana: w ? w.id : null, tipo, formato: tipo === "Feed" ? (FORMATOS.includes(c.formato) ? c.formato : "Reel") : null,
     titulo:c.titulo||"", intencao:c.intencao||"", estrategia:c.estrategia||"", tema:c.tema||"", comoFazer:c.comoFazer||"", inspiracao:c.inspiracao||"", legenda:c.legenda||"",
-    stories:(c.stories||[]).map(s => ({ intencao:s.intencao||"", estrategia:s.estrategia||"", tema:s.tema||"", texto:s.texto||"", comoFazer:s.comoFazer||"", media:s.media==="foto"?"foto":"video", linkCriativo:"", linkDrive:"" })),
+    stories:(c.stories||[]).map(s => ({ intencao:s.intencao||"", estrategia:s.estrategia||"", tema:s.tema||"", texto:s.texto||"", comoFazer:s.comoFazer||"", inspiracao:s.inspiracao||"", media:s.media==="foto"?"foto":"video", linkCriativo:"", linkDrive:"" })),
     linkCriativo:"", capaCriativo:"", linkDrive:"", capaDrive:"", etapa:"ideia", historico:[{ etapa:"ideia", por:S.me.id, em:new Date().toISOString() }], criadoEm:new Date().toISOString() });
 }
 
@@ -829,6 +899,20 @@ document.addEventListener("click", async e => {
   const a = el.dataset.act; const card = () => S.cartoes.find(x => x.id === UI.cardId);
   switch (a) {
     case "ajuda": UI.ajuda = !UI.ajuda; try { localStorage.setItem("td-ajuda-vista", "1"); } catch(x){} renderChrome(); renderMain(); break;
+    case "sugEstado": { const g = S.sugestoes.find(x => x.id === el.dataset.doc); if (!g) break; const itens = (g.itens||[]).map((x,i) => i === Number(el.dataset.i) ? { ...x, estado:el.dataset.v } : x);
+      if (await write(`${PRIV}/sugestoes/${g.id}`, { itens }, true)) { g.itens = itens; renderMain(); } break; }
+    case "notif": UI.notif = !UI.notif; renderChrome(); renderMain(); break;
+    case "lerTodas": marcarLidas(notificacoes().map(n => n.key)).then(renderMain); break;
+    case "abrirNotif": { await marcarLidas([el.dataset.key]); if (el.dataset.card) openCard(el.dataset.card); renderMain(); break; }
+    case "menc": { const id = el.dataset.id; UI.menc = UI.menc.includes(id) ? UI.menc.filter(x => x !== id) : [...UI.menc, id]; el.setAttribute("aria-pressed", UI.menc.includes(id)); break; }
+    case "darOkCom": { const c = S.comentarios.find(x => x.id === el.dataset.id); if (!c) break; const oks = [...new Set([...(c.oks||[]), S.me.id])];
+      if (await write(`comentarios/${c.id}`, { oks }, true)) { c.oks = oks; marcarLidas([c.id]); renderModalLive(); toast("OK enviado."); } break; }
+    case "askSub": UI.of.confSub = true; renderMain(); break;
+    case "noSub": UI.of.confSub = false; renderMain(); break;
+    case "substituir": { const ids = new Set(UI.of.out.map(g => g.semana)); const ws = S.semanas.filter(w => ids.has(w.id));
+      let apagados = 0; for (const w of ws) for (const c of S.cartoes.filter(c => c.data >= w.inicio && c.data <= w.fim && c.etapa === "ideia")) { try { await db.doc(`cartoes/${c.id}`).delete(); apagados++; } catch(x){} }
+      let n = 0; for (const g of UI.of.out) for (const c of g.cartoes) if (await enviarParaQuadro(c)) n++;
+      UI.of.out = []; UI.of.confSub = false; toast(`${apagados} cartões substituídos por ${n} novos.`); renderMain(); break; }
     case "fecharFundo": if (e.target === el) closeCard(); break;
     case "fechar": closeCard(); break;
     case "paraTi": { const pt = paraTi().sort((x,y) => x.data.localeCompare(y.data)); if (pt.length) openCard(pt[0].id); break; }
@@ -851,7 +935,7 @@ document.addEventListener("click", async e => {
     case "pedirCancelar": UI.pedir = false; renderModalLive(); break;
     case "pedirEnviar": { const c = card(); const t = $("#pedirTxt")?.value.trim(); if (!t) { toast("Escreve o que tem de mudar."); break; }
       await addComentario({ cartao:c.id, texto:"Alterações: " + t }); UI.pedir = false; await mover(c, "criativo", { alteracoes:true }); break; }
-    case "comentar": { const t = $("#novoCom")?.value.trim(); if (!t) break; if (await addComentario({ cartao:UI.cardId, texto:t })) $("#novoCom").value = ""; break; }
+    case "comentar": { const t = $("#novoCom")?.value.trim(); if (!t) break; if (await addComentario({ cartao:UI.cardId, texto:t, mencoes:[...UI.menc], oks:[] })) { $("#novoCom").value = ""; UI.menc = []; document.querySelectorAll("[data-act=menc]").forEach(b => b.setAttribute("aria-pressed","false")); } break; }
     case "addStory": { const c = card(); const body = lerForm(c); body.stories = [...body.stories, { media:"video" }]; if (await write(`cartoes/${c.id}`, body, true)) { localMerge(c.id, body); renderModal(); } break; }
     case "rmStory": { const c = card(); const body = lerForm(c); body.stories.splice(Number(el.dataset.i),1); if (await write(`cartoes/${c.id}`, body, true)) { localMerge(c.id, body); renderModal(); } break; }
     case "askDel": $("#delZone").innerHTML = `<span class="row small">Apagar mesmo? <button type="button" class="btn danger" data-act="del">Sim</button><button type="button" class="btn" data-act="noDel">Não</button></span>`; break;
@@ -901,6 +985,7 @@ document.addEventListener("change", async e => {
   const t = e.target;
   if (t.matches("[data-act=semSel]")) { UI.semana = t.value; renderMain(); }
   else if (t.matches("[data-act=semAbrir]")) { UI.semAberta = t.value; UI.editSem = null; t.blur(); renderMain(); }
+  else if (t.matches("[data-act=sugSel]")) { UI.sugId = t.value; t.blur(); renderMain(); }
   else if (t.matches("[data-act=relSel]")) { UI.relId = t.value; t.blur(); renderMain(); }
   else if (t.matches("[data-act=moverSel]")) { const c = S.cartoes.find(x => x.id === UI.cardId); if (c && t.value !== c.etapa) await mover(c, t.value); }
   else if (t.matches("[data-of]")) { UI.of[t.dataset.of] = t.value; if (t.tagName === "SELECT") { t.blur(); renderMain(); } }

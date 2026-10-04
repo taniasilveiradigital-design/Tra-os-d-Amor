@@ -1,6 +1,6 @@
 # Relatório semanal Traços D'Amor (rotina de segunda-feira)
 
-Guião que a rotina automática segue todas as segundas às 05:00 (Lisboa).
+Guião que a rotina automática segue todas as segundas às 08:00 (Lisboa).
 Só é ativada depois de o Instagram estar ligado através do conector Metricool.
 
 App: https://claude.ai/artifact/D3MiggwcKrr8yggsoKk3vz
@@ -34,3 +34,15 @@ Todos os dias (rotina diária, depois de o Metricool estar ligado):
 3. Escrever `privado/tracosdamor/resultados/<id>` com `{feed:{alcance, visualizacoes, gostos, comentarios, partilhas, guardados, cliques, respostas}, stories:[{...}], linkPost, atualizadoEm}`. O que não existir fica `null`.
 4. Stories: avaliar no próprio dia ou no dia seguinte, antes de desaparecerem.
 5. Feed: reavaliar 48 horas depois de publicar. Os números ainda crescem.
+
+## Relatório (visível à cliente e à equipa)
+Campos extra: `conclusoes` (o que os dados dizem, 3 a 5 frases) e `melhorias` [{acao, porque, como, autor:"claude"}].
+O relatório mostra números, conclusões e melhorias. Nada da estratégia interna.
+
+## Sugestões da semana (só a Tânia vê)
+Escrever `privado/tracosdamor/sugestoes/tracosdamor-<inicio>` com:
+{inicio, geradoEm, titulo, resumo, itens:[{area: instagram|comunicacao|email|vendas|atracao, titulo, porque, como, prioridade: alta|media|baixa, estado:"aplicar"}]}
+Entre 8 e 12 sugestões concretas, aplicáveis nessa semana, baseadas nos dados e no que foi publicado.
+
+## Dados (só a Tânia vê)
+Tudo ao pormenor: `privado/tracosdamor/metricas/<semana>` e `privado/tracosdamor/resultados/<cartão>`.
