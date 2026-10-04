@@ -194,7 +194,11 @@ table.mini{width:100%;border-collapse:collapse;font-size:14px} table.mini td,tab
 .card.leitura{border-left:5px solid var(--mk-fb)}
 .chart.wide{grid-column:1/-1} .chart polyline.ln{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round} .chart polyline.ig{stroke:var(--mk-ig)} .chart polyline.fb{stroke:var(--mk-fb)}
 .chart circle.pt{stroke:var(--surface);stroke-width:2} .chart circle.ig{fill:var(--mk-ig)} .chart circle.fb{fill:var(--mk-fb)} .chart g.hit:hover circle.pt{r:6}
-.relbar{border-top:4px solid var(--td-terra)} #relForm .inp[type=number]{text-align:right}
+.relbar{border-top:4px solid var(--td-terra)}
+.exemplo.sim{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;position:sticky;top:44px;z-index:5}
+.funil{display:grid;gap:10px;align-content:start} .funil h4{display:flex;align-items:center;gap:4px}
+.fstep{display:grid;gap:3px} .fstep .tr,.meta .tr{height:12px;background:var(--sunk);border-radius:6px;overflow:hidden;display:block} .fstep .tr span,.meta .tr span{display:block;height:100%;border-radius:6px}
+.meta{display:grid;gap:3px;min-width:120px} table.cmp tr.top td{background:var(--terra-soft)} .sug .resultado{background:var(--ok-bg, var(--sunk));border-radius:6px;padding:4px 8px} #relForm .inp[type=number]{text-align:right}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--muted)} .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .dl{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap} .dl.up{color:var(--ok)} .dl.down{color:var(--bad)} .dl.eq{color:var(--muted)}
 table.cmp th.grp{text-align:center;border-bottom:3px solid var(--line)} table.cmp th.grp.ig{border-bottom-color:var(--mk-ig)} table.cmp th.grp.fb{border-bottom-color:var(--mk-fb)}
@@ -343,6 +347,7 @@ function visivel(c){ return papel() !== "cliente" || IDX[c.etapa] >= IDX.cliente
 function localMerge(id, body){ const i = S.cartoes.findIndex(x => x.id === id); if (i >= 0) S.cartoes[i] = { ...S.cartoes[i], ...body }; }
 async function write(path, data, merge){
   if (!db) { toast("Sem ligação à base de dados."); return false; }
+  if (UI.sim && path.startsWith(PRIV)) { toast("Estás na simulação: nada é gravado. Sai da simulação para mexer nos dados reais."); return false; }
   try { const r = db.doc(path); if (merge) await r.update(data); else await r.set(data); return true; }
   catch(e){ toast(e && e.code === "invalid_argument" ? "Não tens permissão para isto." : "Não gravou. Tenta outra vez."); return false; }
 }
@@ -444,7 +449,8 @@ function renderMain(){
   if (!S.loaded.cartoes) { main.innerHTML = `<div class="empty"><p>A carregar…</p></div>`; return; }
   const priv = { estrategia:renderEstrategia, dados:renderDados, oficina:renderOficina };
   if (priv[UI.tab] && !isDona()) UI.tab = "quadro";
-  ({quadro:renderQuadro, calendario:renderCal, semanas:renderSemanas, relatorios:renderRelatorios, ...priv}[UI.tab] || renderQuadro)(main);
+  const fn = {quadro:renderQuadro, calendario:renderCal, semanas:renderSemanas, relatorios:renderRelatorios, ...priv}[UI.tab] || renderQuadro;
+  if (UI.tab === "dados" || UI.tab === "estrategia") comSimulacao(() => fn(main)); else fn(main);
   if (UI.ajuda) main.insertAdjacentHTML("afterbegin", ajudaHtml());
   if (UI.notif) main.insertAdjacentHTML("afterbegin", notifHtml());
 }
@@ -717,7 +723,10 @@ function renderEstrategia(main){
     return;
   }
   main.innerHTML = `<div class="priv-banner">🔒 <b>Área privada.</b> A equipa e a cliente não veem este separador.</div>
+  ${simBanner()}${UI.sim ? "" : `<div class="row" style="justify-content:flex-end">${simBotao()}</div>`}
+  ${estadoEstrategiaHtml()}
   ${sugestoesHtml()}
+  ${metasHtml(semanasOrd().map(w => ({ id:w.id, inicio:w.inicio, ...(S.metricas.find(m => m.id === w.id) || {}) })), "Metas semanais vs realidade")}
   <div class="spread"><h2>Estratégia de conteúdos</h2><button class="btn" data-act="editEst">Editar</button></div>
   ${c.objetivo ? `<div class="rep-hero" style="padding:18px 20px 36px"><span class="lbl" style="color:var(--cover-ink)">Objetivo</span><p style="font-size:20px">${esc(c.objetivo)}</p></div>` : ""}
   <div class="grid2">${c.diagnostico ? `<div class="card"><h3>Diagnóstico</h3><p class="readv">${esc(c.diagnostico)}</p></div>` : ""}
@@ -746,9 +755,136 @@ function sugestoesHtml(){
         <div class="spread"><b>${esc(x.titulo)}</b><span class="prio ${esc(x.prioridade||"media")}">${{alta:"Prioridade alta",media:"Prioridade média",baixa:"Prioridade baixa"}[x.prioridade||"media"]}</span></div>
         ${x.porque ? `<span class="small"><span class="lbl">Porquê</span> ${esc(x.porque)}</span>` : ""}
         ${x.como ? `<span class="small readv"><span class="lbl">Como</span> ${linkify(x.como)}</span>` : ""}
+        ${x.resultado ? `<span class="small resultado"><span class="lbl">Resultado</span> ${esc(x.resultado)}</span>` : ""}
         <div class="seg" role="group" aria-label="Estado">${ESTADOS_SUG.map(([ek,el]) => `<button data-act="sugEstado" data-doc="${esc(g.id)}" data-i="${x.i}" data-v="${ek}" aria-pressed="${(x.estado||"aplicar")===ek}">${el}</button>`).join("")}</div>
       </div>`).join("")}</div>`; }).join("")}</div></div>`;
 }
+
+/* ---------- dados ao pormenor: funil, taxas, metas, dias ---------- */
+const pct = (a, b) => (a == null || !b) ? null : Math.round(Number(a)/Number(b)*1000)/10;
+const fmtPct = v => v == null ? "—" : `${String(v).replace(".", ",")}%`;
+function funilHtml(cur){
+  const passos = [["alcance","Alcance"],["visitasPerfil","Visitas ao perfil"],["cliquesLink","Cliques no link"],["mensagens","Mensagens / DMs"]];
+  const col = (rk, rl, rc) => { const m = redeSem(cur, rk); if (!passos.some(([k]) => m[k] != null)) return "";
+    const max = Math.max(1, Number(m.alcance)||0);
+    return `<div class="funil"><h4><i class="dot" style="background:var(--mk-${rc})"></i>${rl}</h4>${passos.map(([k,l],i) => { const v = m[k], prev = i ? m[passos[i-1][0]] : null;
+      return `<div class="fstep"><div class="spread"><span>${l}</span><b>${fmtN(v)}</b></div><span class="tr"><span style="width:${Math.max(1.5,(Number(v)||0)/max*100)}%;background:var(--mk-${rc})"></span></span>${i ? `<span class="small muted">${fmtPct(pct(v, prev))} do passo anterior</span>` : ""}</div>`; }).join("")}</div>`; };
+  const corpo = REDES.map(([rk,rl,rc]) => col(rk,rl,rc)).join("");
+  if (!corpo) return "";
+  const msgs = somaRedes(cur, "mensagens"), vendas = cur.vendasOnline;
+  return `<div class="card"><h3>Funil da semana: onde se perde a venda</h3><div class="grid2">${corpo}</div>
+    ${vendas != null ? `<p class="small"><b>Vendas online: ${fmtN(vendas)}</b>${msgs ? ` · ${fmtPct(pct(vendas, msgs))} das mensagens viraram venda` : ""}${cur.receita != null ? ` · receita ${fmtN(cur.receita)} €` : ""}</p>` : ""}</div>`;
+}
+function taxasHtml(rows){
+  const tem = rows.filter(r => REDES.some(([rk]) => redeSem(r, rk).alcance != null));
+  if (!tem.length) return "";
+  const tx = [["Interação","interacoes","alcance"],["Cliques / alcance","cliquesLink","alcance"],["Mensagens / cliques","mensagens","cliquesLink"]];
+  return `<div class="card"><h3>Taxas por semana</h3><p class="small muted">Taxas tiram o efeito do tamanho de cada rede: dizem se o conteúdo convence, não só se chega.</p>
+    <div class="tbl"><table class="cmp"><thead><tr><th></th>${tx.map(([l]) => `<th colspan="2" class="grp sep">${l}</th>`).join("")}</tr><tr><th>Semana</th>${tx.map(() => `<th class="n sep">IG</th><th class="n">FB</th>`).join("")}</tr></thead>
+    <tbody>${tem.map(r => `<tr><td>${esc(fmtCurto(r.inicio))}</td>${tx.map(([,a,b]) => REDES.map(([rk],j) => `<td class="n${j?"":" sep"}">${fmtPct(pct(redeSem(r,rk)[a], redeSem(r,rk)[b]))}</td>`).join("")).join("")}</tr>`).join("")}</tbody></table></div></div>`;
+}
+const METAS_DEF = [["alcance","Alcance", r => somaRedes(r,"alcance")],["cliquesLink","Cliques no link", r => somaRedes(r,"cliquesLink")],["dms","Mensagens / DMs", r => somaRedes(r,"mensagens")],["vendasOnline","Vendas online", r => r.vendasOnline]];
+function metasHtml(rows, titulo){
+  const metas = S.priv?.metas || {}, defs = METAS_DEF.filter(([k]) => metas[k] != null);
+  const ws = rows.filter(r => S.metricas.some(m => m.id === r.id));
+  if (!defs.length || !ws.length) return "";
+  return `<div class="card"><h3>${titulo || "Metas vs realidade"}</h3><div class="tbl"><table><thead><tr><th>Semana</th>${defs.map(([k,l]) => `<th>${l} <span class="small muted">meta ${fmtN(metas[k])}</span></th>`).join("")}</tr></thead>
+    <tbody>${ws.map(r => `<tr><td style="white-space:nowrap">${esc(fmtCurto(r.inicio))}</td>${defs.map(([k,,f]) => { const v = f(r), p = v == null ? 0 : Math.min(100, v/metas[k]*100), ok = v != null && v >= metas[k];
+      return `<td><div class="meta"><span class="tr"><span style="width:${p}%;background:${ok ? "var(--ok)" : "var(--td-terra)"}"></span></span><span class="small">${ok ? "✓" : "✕"} <b>${fmtN(v)}</b></span></div></td>`; }).join("")}</tr>`).join("")}</tbody></table></div></div>`;
+}
+function diasHtml(lr){
+  if (!lr.length) return "";
+  const media = (rk, d, k) => { const a = lr.filter(x => x.rede === rk && dow(x.c.data) === d); return a.length ? Math.round(a.reduce((s,x) => s + (Number(x.m[k])||0), 0)/a.length*10)/10 : null; };
+  const W = 520, H = 190, pl = 6, pb = 24, pt = 18, bw = (W-pl*2)/7;
+  const graf = (k, titulo) => { const vals = DIAS_L.flatMap((_,d) => REDES.map(([rk]) => media(rk,d,k))); const max = Math.max(1, ...vals.filter(v => v != null));
+    const bars = DIAS_L.map((dl,d) => REDES.map(([rk,rl,rc],j) => { const v = media(rk,d,k); if (v == null) return ""; const w = bw*.36, x = pl + d*bw + bw*.12 + j*(w+2), h = Math.max(2, v/max*(H-pb-pt)), y = H-pb-h;
+      return `<g class="hit"><rect class="${rc}" x="${x}" y="${y}" width="${w}" height="${h}" rx="3"/><text class="val" x="${x+w/2}" y="${y-4}" text-anchor="middle" style="font-size:10px">${fmtN(v)}</text><title>${rl} · ${dl}: ${fmtN(v)} em média</title></g>`; }).join("") + `<text x="${pl + d*bw + bw/2}" y="${H-6}" text-anchor="middle">${dl.slice(0,3)}</text>`).join("");
+    return `<div class="chart big"><div class="spread"><h3>${titulo}</h3>${legendaRedes}</div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${titulo} por dia da semana"><line x1="${pl}" x2="${W-pl}" y1="${H-pb}" y2="${H-pb}"/>${bars}</svg></div>`; };
+  return `<h2>Por dia da semana</h2><div class="charts big">${graf("cliques","Cliques médios por publicação")}${graf("alcance","Alcance médio por publicação")}</div>`;
+}
+function estadoEstrategiaHtml(){
+  const ws = semanasOrd().map(w => ({ id:w.id, inicio:w.inicio, ...(S.metricas.find(m => m.id === w.id) || {}) })).filter(r => S.metricas.some(m => m.id === r.id));
+  const metas = S.priv?.metas || {}, defs = METAS_DEF.filter(([k]) => metas[k] != null);
+  const total = ws.length * defs.length, cumpridas = ws.reduce((s,r) => s + defs.filter(([k,,f]) => f(r) != null && f(r) >= metas[k]).length, 0);
+  const its = S.sugestoes.flatMap(g => g.itens || []), apl = its.filter(x => x.estado === "aplicada").length, curso = its.filter(x => x.estado === "curso").length;
+  const cl = ws.map(r => somaRedes(r, "cliquesLink")), vend = ws.reduce((s,r) => s + (Number(r.vendasOnline)||0), 0);
+  if (!ws.length && !its.length) return "";
+  return `<div class="kpis">
+    ${total ? `<div class="kpi"><span class="lbl">Metas cumpridas</span><span class="v">${cumpridas}/${total}</span><span class="d">${fmtPct(pct(cumpridas,total))} nas ${ws.length} semanas com dados</span></div>` : ""}
+    ${its.length ? `<div class="kpi"><span class="lbl">Sugestões aplicadas</span><span class="v">${apl}/${its.length}</span><span class="d">${curso} em curso</span></div>` : ""}
+    ${cl.length > 1 ? `<div class="kpi"><span class="lbl">Cliques no link</span><span class="v">${fmtN(cl[cl.length-1])}</span><span class="d">${delta(cl[cl.length-1], cl[0])} desde a 1.ª semana</span></div>` : ""}
+    ${ws.length ? `<div class="kpi"><span class="lbl">Vendas online</span><span class="v">${fmtN(vend)}</span><span class="d">no total das semanas${metas.vendasOnline != null ? ` · meta ${fmtN(metas.vendasOnline*ws.length)}` : ""}</span></div>` : ""}</div>`;
+}
+
+/* ---------- simulação (só no ecrã, nunca grava) ---------- */
+function rng(seed){ let h = 2166136261; for (const ch of seed) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return () => { h += 0x6D2B79F5; let t = h; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let SIM_CACHE = null;
+function buildSim(){
+  if (SIM_CACHE) return SIM_CACHE;
+  const ws = semanasOrd(), R = rng("tracos"), between = (a,b) => Math.round(a + R()*(b-a)), vendas = [1,2,2,4];
+  let segIg = 3050, segFb = 1020;
+  const metricas = ws.map((w,i) => { const g = 1 + .18*i, nIg = between(18,26) + 8*i, nFb = between(2,4) + i; segIg += nIg; segFb += nFb;
+    const aIg = Math.round(3600*g + between(-200,200)), aFb = Math.round(700 + 60*i + between(-40,40)), v = vendas[i % 4];
+    return { id:w.id, inicio:w.inicio, fim:w.fim, fonte:"simulação",
+      instagram:{ seguidores:segIg, novosSeguidores:nIg, alcance:aIg, visualizacoes:Math.round(aIg*2.6), interacoes:Math.round(aIg*(.05 + .004*i)), visitasPerfil:Math.round(aIg*.05), cliquesLink:30 + 12*i + between(0,5), mensagens:6 + 3*i + between(0,2) },
+      facebook:{ seguidores:segFb, novosSeguidores:nFb, alcance:aFb, visualizacoes:Math.round(aFb*1.8), interacoes:Math.round(aFb*.03), visitasPerfil:Math.round(aFb*.02), cliquesLink:5 + i + between(0,2), mensagens:i > 1 ? 2 : 1 },
+      vendasOnline:v, receita:v*between(85,110) }; });
+  const resultados = [];
+  for (const c of S.cartoes.filter(c => ws.some(w => c.data >= w.inicio && c.data <= w.fim))) {
+    const Rc = rng(c.id), b = (a,z) => Math.round(a + Rc()*(z-a)), venda = s => /preç|€|link|comenta/i.test(`${s?.texto||""} ${s?.tema||""} ${s?.comoFazer||""}`);
+    const post = (fmt) => { const base = fmt === "Reel" ? b(900,2400) : fmt === "Carrossel" ? b(450,900) : b(300,600);
+      return { alcance:base, visualizacoes:Math.round(base*(fmt === "Reel" ? 2.2 : 1.3)), gostos:Math.round(base*.04), comentarios:b(1,9), partilhas:b(0,8), guardados:fmt === "Carrossel" ? b(12,40) : b(2,15), cliques:b(3,14), respostas:b(0,4) }; };
+    const fb = (m, f) => Object.fromEntries(Object.entries(m).map(([k,v]) => [k, Math.round(v*f*(k === "cliques" || k === "respostas" ? .6 : 1))]));
+    const story = s => { const vend = venda(s), a = b(200,420); return { alcance:a, visualizacoes:Math.round(a*1.1), gostos:b(0,6), comentarios:0, partilhas:b(0,3), guardados:0, cliques:vend ? b(7,15) : b(0,4), respostas:b(0, vend ? 5 : 2) }; };
+    const r = { id:c.id, stories:(c.stories||[]).map(story) };
+    r.storiesFb = r.stories.map(m => fb(m, .18));
+    if (c.tipo === "Feed") { r.feed = post(c.formato); r.feedFb = fb(r.feed, .22); r.linkPost = "https://instagram.com/p/simulacao"; }
+    resultados.push(r);
+  }
+  const em = d => `${d}T21:00:00.000Z`;
+  const t = (m, rk, k) => m?.[rk]?.[k] || 0, f1 = v => String(Math.round(v*10)/10).replace(".", ",");
+  const [m1, , m3, m4] = metricas, cl1 = t(m1,"instagram","cliquesLink") + t(m1,"facebook","cliquesLink"), al1 = t(m1,"instagram","alcance") + t(m1,"facebook","alcance");
+  const msg3 = t(m3,"instagram","mensagens") + t(m3,"facebook","mensagens"), msg4 = t(m4,"instagram","mensagens") + t(m4,"facebook","mensagens"), cl3 = t(m3,"instagram","cliquesLink") + t(m3,"facebook","cliquesLink"), cl4 = t(m4,"instagram","cliquesLink") + t(m4,"facebook","cliquesLink");
+  const perguntas = m4 ? [
+    { id:"s1", em:em(ws[1].inicio), pergunta:"O Facebook está a trazer cliques?", resposta:`Pouco. Na semana 1, o Facebook deu ${t(m1,"facebook","cliquesLink")} dos ${cl1} cliques no link (${Math.round(t(m1,"facebook","cliquesLink")/cl1*100)}%) com ${Math.round(t(m1,"facebook","alcance")/al1*100)}% do alcance. Por cada 100 pessoas que veem, clicam ${f1(t(m1,"facebook","cliquesLink")/t(m1,"facebook","alcance")*100)} no Facebook e ${f1(t(m1,"instagram","cliquesLink")/t(m1,"instagram","alcance")*100)} no Instagram. Não justifica conteúdo próprio diário; justifica 1 publicação por semana feita para lá: conjunto, preço e link na própria publicação.` },
+    { id:"s2", em:em(ws[2].inicio), pergunta:"Que formato devo repetir na semana da camisa e calça?", resposta:"Stories com preço e link: são os que têm mais cliques por publicação (vê a tabela 'Cada publicação'). Reels trazem o maior alcance mas poucos cliques cada. Repete: reel de entrada à segunda com preço no 1.º segundo, stories de preço todos os dias, carrossel de detalhe à quarta." },
+    { id:"s3", em:em(ws[3].fim), pergunta:"Porque é que as vendas subiram na semana 4?", resposta:`Três razões nos números: mensagens subiram de ${msg3} para ${msg4}, cliques no link de ${cl3} para ${cl4} e a oferta do look completo tinha preço fechado. Das ${msg4} mensagens, ${m4.vendasOnline} viraram venda (${Math.round(m4.vendasOnline/msg4*100)}%). O que falta saber: quantas vendas vieram de clientes antigas. Isso está na loja, não no Meta.` } ] : [];
+  const it = (area, titulo, prioridade, estado, porque, como, resultado) => ({ area, titulo, prioridade, estado, porque, como, resultado });
+  const sugestoes = [
+    { id:"sim-w4", inicio:ws[3]?.inicio || "2026-10-26", titulo:"Fechar o mês com o look completo", resumo:"Última semana: tudo para o look completo com preço fechado. As mensagens são o canal de venda: responder a todas no mesmo dia.", itens:[
+      it("vendas","Preço fechado do look completo em todos os stories","alta","aplicar","Na semana 3 os stories com preço tiveram 4x mais cliques.","Story fixo diário: foto do look + preço total + preço em separado + link."),
+      it("instagram","Reel de transição do pijama ao look","alta","curso","Reels de transformação são os que mais alcance trazem fora dos seguidores.","15 s, preço no 1.º segundo, música calma, link na legenda e nos stories."),
+      it("email","Email às clientes antigas: o look completo","media","aplicar","Quem já comprou converte 3 a 5x mais do que quem chega do Instagram.","Assunto: 'O look que fica para as fotos de Natal'. Uma foto, preço, link direto."),
+      it("comunicacao","Responder a todas as mensagens em menos de 2 horas","alta","curso","1 em cada 4 mensagens virou venda; as respondidas no dia seguinte não converteram.","A Sílvia ativa notificações das mensagens e usa resposta rápida com foto, tamanhos e link."),
+      it("atracao","Parceria com 1 mãe criadora local","baixa","aplicar","Alcance novo com confiança de quem recomenda.","Oferecer o look em troca de 1 reel + 3 stories com link.") ] },
+    { id:"sim-w3", inicio:ws[2]?.inicio || "2026-10-19", titulo:"Camisa e calça: mostrar no corpo", resumo:"Peça mostrada em movimento vende mais do que flat-lay.", itens:[
+      it("instagram","Carrossel '3 formas de usar a camisa'","alta","aplicada","Carrosséis são os mais guardados (média 28).","3 looks, 1 por slide, preço no último slide.","32 guardados, 9 cliques. Melhor carrossel do mês."),
+      it("vendas","Link direto para o produto, não para a homepage","alta","aplicada","Quem clica e não vê o produto sai.","Link de cada story aponta para a página da peça.","Cliques que chegaram ao produto: +40% (dados da loja a confirmar)."),
+      it("comunicacao","Legendas com pedido de compra claro","media","aplicada","Legendas poéticas sem pedido tiveram 0 comentários com palavra-chave.","Fechar sempre com 'Comenta CAMISA e envio-te o link'.","11 comentários com palavra-chave."),
+      it("email","Primeira newsletter do outono","media","descartada","Base de emails pequena (estimada).","Ficou para novembro, quando houver base maior.") ] },
+    { id:"sim-w2", inicio:ws[1]?.inicio || "2026-10-12", titulo:"Casaco Trilha: provar que aguenta", resumo:"O casaco vende-se pela prova: poças, relva, recreio.", itens:[
+      it("instagram","Reel 'o casaco posto à prova'","alta","aplicada","Prova real convence mais do que descrição técnica.","Criança a saltar em poças, close no tecido, preço no fim.","2.180 de alcance, 11 cliques. Preço ficou no fim: mover para o início."),
+      it("vendas","Caixa de perguntas sobre o casaco","media","aplicada","Dúvidas de tamanho travam a compra.","Story de sábado com caixa; resposta no domingo com link.","14 perguntas, 3 mensagens, 1 venda."),
+      it("atracao","Publicar no Facebook 1 publicação feita para lá","media","aplicada","No Facebook os stories não são vistos.","Foto do casaco + preço + link na própria publicação.","Facebook: 9 cliques numa só publicação (máximo do mês)."),
+      it("comunicacao","Tom: menos poesia, mais peça","baixa","curso","As frases bonitas sem peça não geram cliques.","Uma frase de sensação + a peça + o preço.") ] },
+    { id:"sim-w1", inicio:ws[0]?.inicio || "2026-10-05", titulo:"Combos: preço à vista", resumo:"Semana de despedida do verão: o preço é o argumento.", itens:[
+      it("vendas","Preço riscado em todos os stories dos conjuntos","alta","aplicada","Sem preço não há clique.","129,90€ → 90€ em letra grande, nome do conjunto, tamanhos e link.","14 cliques no melhor story, recorde até aí."),
+      it("instagram","Sondagem entre dois conjuntos","alta","aplicada","Sondagem é a forma mais fácil de abrir conversa.","Dois conjuntos lado a lado; a quem vota, enviar foto e link por mensagem.","41 votos, 4 conversas, 1 venda."),
+      it("comunicacao","Apagar o story 'Já foste ao nosso site hoje?'","media","aplicada","1 clique em 280 visualizações.","Substituir por story com produto e preço.","Feito."),
+      it("email","Recolher emails no site","baixa","aplicar","Sem base de emails não há email marketing.","Pop-up no site: 'Recebe primeiro as novidades'.") ] } ];
+  const priv = { ...(S.priv || {}), metas: { alcance:4000, cliquesLink:45, dms:10, vendasOnline:2, ...(S.priv?.metas || {}) } };
+  SIM_CACHE = { metricas, resultados, perguntas, sugestoes, priv };
+  return SIM_CACHE;
+}
+const SIM_KEYS = ["metricas","resultados","perguntas","sugestoes","priv"];
+function comSimulacao(fn){
+  if (!UI.sim) return fn();
+  const real = Object.fromEntries(SIM_KEYS.map(k => [k, S[k]])), sim = buildSim();
+  Object.assign(S, sim);
+  try { return fn(); } finally { Object.assign(S, real); }
+}
+const simBotao = () => `<button class="btn ${UI.sim ? "primary" : ""}" data-act="sim">${UI.sim ? "Sair da simulação" : "Ver simulação"}</button>`;
+const simBanner = () => UI.sim ? `<div class="exemplo sim">SIMULAÇÃO: outubro completo com números inventados, para veres como fica. Nada aqui é gravado nem chega aos teus dados reais. ${simBotao()}</div>` : "";
 
 /* ---------- dados (privado) ---------- */
 const isoHoje = () => new Date().toISOString().slice(0,10);
@@ -781,6 +917,20 @@ function linhasResultados(){
     (r.storiesFb||[]).forEach((m,i) => { if (tem(m)) out.push({ c, tipo:`Storie ${i+1}`, rede:"facebook", m }); }); }
   return out;
 }
+function pubsHtml(lr, cur){
+  const sel = UI.dTodas ? lr : lr.filter(x => x.c.data >= cur.inicio && x.c.data <= cur.fim);
+  const grupos = new Map(); sel.forEach(x => { const k = x.c.id + "|" + x.tipo; if (!grupos.has(k)) grupos.set(k, { c:x.c, tipo:x.tipo }); grupos.get(k)[x.rede] = x.m; });
+  const linhas = [...grupos.values()].sort((a,b) => a.c.data.localeCompare(b.c.data) || a.tipo.localeCompare(b.tipo));
+  const ms = [["alcance","Alcance"],["gostos","Gostos"],["guardados","Guardados"],["cliques","Cliques"],["respostas","Respostas"]];
+  const melhor = linhas.reduce((m,l) => (Number(l.instagram?.cliques)||0) > (Number(m?.instagram?.cliques)||-1) ? l : m, null);
+  return `<div class="card"><div class="spread"><h3>Cada publicação · ${UI.dTodas ? "todas as semanas" : `${esc(fmtCurto(cur.inicio))} – ${esc(fmtCurto(cur.fim))}`}</h3>
+    <button class="btn sm" data-act="dTodas">${UI.dTodas ? "Só a semana escolhida" : `Ver todas as semanas (${new Set(lr.map(x => x.c.id + x.tipo)).size})`}</button></div>
+    ${linhas.length ? `<div class="tbl"><table class="cmp"><thead><tr><th></th><th></th><th></th>${ms.map(([,l]) => `<th colspan="2" class="grp sep">${l}</th>`).join("")}<th colspan="2" class="grp sep">Cliques / alcance</th></tr>
+      <tr><th>Dia</th><th>Peça</th><th>Conteúdo</th>${[...ms, 0].map(() => `<th class="n sep">IG</th><th class="n">FB</th>`).join("")}</tr></thead>
+    <tbody>${linhas.map(l => `<tr${l === melhor ? ' class="top"' : ""}><td style="white-space:nowrap">${esc(DIAS_L[dow(l.c.data)].slice(0,3))} ${esc(fmtCurto(l.c.data))}</td><td>${esc(l.tipo)}</td><td><button class="btn ghost" style="padding:0;font-weight:400;text-align:left" data-open="${esc(l.c.id)}">${esc(l.tipo.startsWith("Storie") ? (l.c.stories?.[Number(l.tipo.split(" ")[1])-1]?.tema || l.c.tema || tituloCartao(l.c)) : (l.c.tema || tituloCartao(l.c)))}</button></td>
+      ${ms.map(([k]) => `<td class="n sep">${fmtN(l.instagram?.[k])}</td><td class="n">${fmtN(l.facebook?.[k])}</td>`).join("")}<td class="n sep"><b>${fmtPct(pct(l.instagram?.cliques, l.instagram?.alcance))}</b></td><td class="n">${fmtPct(pct(l.facebook?.cliques, l.facebook?.alcance))}</td></tr>`).join("")}</tbody></table></div>
+    ${melhor ? `<p class="small">Destacada: a publicação com mais cliques no Instagram ${UI.dTodas ? "no total" : "desta semana"}.</p>` : ""}` : `<p class="muted">Sem resultados por publicação ${UI.dTodas ? "" : "nesta semana"}.</p>`}</div>`;
+}
 function renderDados(main){
   const ws = semanasOrd();
   const rows = ws.map(w => ({ id:w.id, inicio:w.inicio, fim:w.fim, ...(S.metricas.find(m => m.id === w.id) || {}) }));
@@ -799,7 +949,8 @@ function renderDados(main){
   const cols = rede === "negocio" ? METRICAS_NEG : METRICAS_REDE;
   const valDe = (r, k) => rede === "negocio" ? r[k] : redeSem(r, rede)[k];
   main.innerHTML = `<div class="priv-banner">🔒 <b>Área privada.</b> Os números são carregados por mim. A equipa e a cliente não veem este separador.</div>
-  <div class="spread"><h2>Dados: Instagram e Facebook</h2><div class="row">${ligado ? `<span class="chip ok">Metricool ligado</span>` : `<span class="chip warn">Metricool por ligar: números carregados à mão</span>`}</div></div>
+  ${simBanner()}
+  <div class="spread"><h2>Dados: Instagram e Facebook</h2><div class="row">${UI.sim ? "" : simBotao()}${ligado ? `<span class="chip ok">Metricool ligado</span>` : `<span class="chip warn">Metricool por ligar: números carregados à mão</span>`}</div></div>
   <div class="card"><div class="spread"><h3>Comparação da semana</h3>
     <select class="inp" style="width:auto" data-act="dSem" aria-label="Semana a comparar">${rows.map(r => `<option value="${esc(r.id)}"${r.id===UI.dSem?" selected":""}>${esc(nomeSemana(ws.find(w => w.id===r.id)))} · ${esc(fmtCurto(r.inicio))} – ${esc(fmtCurto(r.fim))}</option>`).join("")}</select></div>
     <p class="small muted">${ant ? `Contra a semana anterior (${esc(fmtCurto(ant.inicio))} – ${esc(fmtCurto(ant.fim))}).` : "Primeira semana: ainda não há semana anterior para comparar."}</p>
@@ -808,6 +959,9 @@ function renderDados(main){
     <tbody>${METRICAS_REDE.map(([k,l]) => cmpRow(k,l)).join("")}${METRICAS_NEG.map(([k,l]) => negRow(k,l)).join("")}</tbody></table></div>
     ${["alcance","cliquesLink","mensagens"].some(k => quota(k) != null) ? `<p class="small">Peso do Instagram no total: ${[["alcance","alcance"],["cliquesLink","cliques"],["mensagens","mensagens"]].filter(([k]) => quota(k) != null).map(([k,l]) => `<b>${quota(k)}%</b> do ${l}`).join(" · ")}. O resto vem do Facebook.</p>` : ""}</div>
   <div class="charts">${redesChart("Alcance", rows, "alcance")}${redesChart("Cliques no link", rows, "cliquesLink")}${redesChart("Mensagens / DMs de venda", rows, "mensagens")}${redesChart("Novos seguidores", rows, "novosSeguidores")}${barChart("Vendas online", rows, "vendasOnline")}</div>
+  ${funilHtml(cur)}
+  ${metasHtml(rows)}
+  ${taxasHtml(rows)}
   <div class="card"><div class="spread"><h3>Números por semana</h3>
     <div class="seg" role="group" aria-label="Rede">${[["instagram","Instagram"],["facebook","Facebook"],["negocio","Vendas"]].map(([k,l]) => `<button data-act="dRede" data-v="${k}" aria-pressed="${rede===k}">${l}</button>`).join("")}</div></div>
     <div class="tbl"><table><thead><tr><th>Semana</th>${cols.map(([,l]) => `<th class="n">${l}</th>`).join("")}<th></th></tr></thead>
@@ -819,13 +973,13 @@ function renderDados(main){
     <div class="tbl"><table class="cmp"><thead><tr><th></th><th colspan="4" class="grp ig sep">Instagram</th><th colspan="4" class="grp fb sep">Facebook</th></tr>
       <tr><th>Formato</th>${REDES.map(() => `<th class="n sep">Publicações</th><th class="n">Alcance</th><th class="n">Cliques</th><th class="n">Respostas</th>`).join("")}</tr></thead>
     <tbody>${Object.entries(grupos).map(([k,f]) => `<tr><td>${k}</td>${REDES.map(([rk]) => { const a = lr.filter(x => x.rede === rk && f(x)); return `<td class="n sep">${a.length}</td><td class="n">${fmtN(soma(a,"alcance"))}</td><td class="n">${fmtN(soma(a,"cliques"))}</td><td class="n">${fmtN(soma(a,"respostas"))}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div></div>
-  <div class="card"><h3>Cada publicação</h3>
-    ${lr.length ? `<div class="tbl"><table><thead><tr><th>Dia</th><th>Peça</th><th>Rede</th><th>Conteúdo</th>${METRICAS_POST.map(([,l]) => `<th class="n">${l}</th>`).join("")}</tr></thead><tbody>${lr.map(x => `<tr><td>${esc(fmtCurto(x.c.data))}</td><td>${esc(x.tipo)}</td><td><span class="legend"><span><i style="background:var(--mk-${x.rede==="facebook"?"fb":"ig"})"></i>${x.rede==="facebook"?"Facebook":"Instagram"}</span></span></td><td><button class="btn ghost" style="padding:0;font-weight:400;text-align:left" data-open="${esc(x.c.id)}">${esc(x.c.tema || x.c.stories?.[0]?.tema || tituloCartao(x.c))}</button></td>${METRICAS_POST.map(([k]) => `<td class="n">${fmtN(x.m[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : `<p class="muted">Ainda sem resultados por publicação.</p>`}</div>
+  ${diasHtml(lr)}
+  ${pubsHtml(lr, cur)}
   <div class="card"><div class="spread"><h3>Perguntas sobre os dados</h3><span class="small muted">Respondo com os números que estão aqui.</span></div>
     <div class="qa">${[...S.perguntas].sort((a,b) => (a.em||"").localeCompare(b.em||"")).map(q => `<p class="q">${esc(q.pergunta)}</p><p class="a">${esc(q.resposta)}</p>`).join("") || `<p class="muted small">Pergunta o que quiseres: "o Facebook está a trazer cliques?", "que formato devo repetir?"</p>`}
       ${UI.qaBusy ? `<p class="a muted">A pensar…</p>` : ""}</div>
     <label class="f">A tua pergunta<textarea id="qaTxt" data-qa="1" style="min-height:60px">${esc(UI.qaTxt)}</textarea></label>
-    <div class="row"><button class="btn primary" data-act="perguntar" ${UI.qaBusy || !sample ? "disabled" : ""}>Perguntar</button>${!sample ? `<span class="small muted">Só funciona dentro do claude.ai.</span>` : ""}</div></div>`;
+    <div class="row"><button class="btn primary" data-act="perguntar" ${UI.qaBusy || !sample || UI.sim ? "disabled" : ""}>Perguntar</button>${!sample ? `<span class="small muted">Só funciona dentro do claude.ai.</span>` : ""}</div></div>`;
 }
 function contextoDados(){
   const ws = semanasOrd().map(w => { const m = S.metricas.find(x => x.id === w.id);
@@ -1276,6 +1430,8 @@ document.addEventListener("click", async e => {
       tr.querySelectorAll("input[data-k]").forEach(i => { alvo[i.dataset.k] = i.value === "" ? null : Number(i.value); });
       if (await write(`${PRIV}/metricas/${el.dataset.id}`, body)) { UI.editDados = null; toast("Guardado."); renderMain(); } break; }
     case "perguntar": UI.qaTxt = $("#qaTxt")?.value || UI.qaTxt; perguntar(); break;
+    case "dTodas": UI.dTodas = !UI.dTodas; renderMain(); break;
+    case "sim": UI.sim = !UI.sim; SIM_CACHE = null; UI.editDados = null; UI.editEst = false; UI.dSem = null; renderMain(); window.scrollTo(0,0); break;
     case "relVista": UI.relVista = el.dataset.v; renderMain(); break;
     case "relEdit": UI.editRel = el.dataset.id; UI.relDraft = null; UI.relConf = null; renderMain(); window.scrollTo(0,0); break;
     case "relCancel": UI.editRel = null; UI.relDraft = null; renderMain(); break;
