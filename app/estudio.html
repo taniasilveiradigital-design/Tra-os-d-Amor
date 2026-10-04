@@ -907,6 +907,23 @@ Storie — Intenção: Manter a caixa presente no dia do spoiler. Estratégia: C
 function blocoSemana(w){
   return `SEMANA ${nomeSemana(w)} (${w.inicio} a ${w.fim}): ${w.titulo}\nObjetivo: ${w.objetivo||"-"}\nPalavra-chave: ${w.palavraChave||"-"}\nOferta: ${w.oferta||"-"}\nEstratégia do feed: ${w.estrategiaFeed||"-"}\nEstratégia dos stories: ${w.estrategiaStories||"-"}`;
 }
+/* memória: o que já foi criado, o que resultou e o que o último relatório disse, para não repetir e repetir o que vende */
+function memoriaOficina(w){
+  const curto = t => (t||"").replace(/\s+/g," ").slice(0,90);
+  const feitos = S.cartoes.filter(c => c.data && (c.data < w.inicio || c.data > w.fim)).sort((a,b) => b.data.localeCompare(a.data)).slice(0,60)
+    .map(c => `- ${c.data} ${c.tipo}${c.formato ? " " + c.formato : ""} [${c.etapa||"ideia"}]: ${curto(c.tema || c.titulo)}${(c.stories||[]).length ? " | stories: " + c.stories.map(x => curto(x.tema)).filter(Boolean).join(" / ") : ""}`);
+  const lr = linhasResultados().map(x => ({ ...x, sc:(Number(x.m.cliques)||0)*3 + (Number(x.m.respostas)||0)*3 + (Number(x.m.alcance)||0)/100 })).sort((a,b) => b.sc - a.sc);
+  const lin = x => `- ${x.c.data} ${x.tipo} (${x.rede === "facebook" ? "Facebook" : "Instagram"}): ${curto(x.c.tema || x.c.stories?.[0]?.tema)}: alcance ${x.m.alcance ?? "?"}, cliques ${x.m.cliques ?? "?"}, respostas ${x.m.respostas ?? "?"}`;
+  const rel = [...S.relatorios].filter(r => !r.exemplo).sort((a,b) => (b.inicio||"").localeCompare(a.inicio||""))[0];
+  return `MEMÓRIA (conteúdos já criados: não repetir temas nem ângulos; podes retomar o que resultou com um ângulo novo)
+${feitos.join("\n") || "(ainda nada)"}
+
+O QUE RESULTOU MELHOR
+${lr.slice(0,5).map(lin).join("\n") || "(ainda sem resultados)"}
+O QUE RESULTOU PIOR
+${lr.length > 5 ? lr.slice(-3).map(lin).join("\n") : "(ainda sem dados suficientes)"}
+${rel ? `\nÚLTIMO RELATÓRIO (${rel.inicio})\nConclusões: ${(rel.conclusoes||[]).join(" | ")}\nMelhorias: ${(rel.melhorias||[]).map(m => m.acao).join(" | ")}\nMostrar mais: ${(rel.mostrarMais||[]).join(" | ")}\nMostrar menos: ${(rel.mostrarMenos||[]).join(" | ")}` : ""}`;
+}
 function promptOficina(w){
   const o = UI.of; const c = S.priv || {};
   const alvo = o.modo === "semana"
@@ -923,6 +940,8 @@ Regras:
 ${(c.regras||[]).map(r => "- " + r).join("\n")}
 
 ${blocoSemana(w)}
+
+${memoriaOficina(w)}
 
 ${EXEMPLO}
 
