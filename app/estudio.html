@@ -116,6 +116,11 @@ textarea.cap{font-family:"Patrick Hand",Karla,cursive!important;font-size:17px!i
 .tile .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted)}
 .tile.s-ideia{border-left-color:var(--e-ideia-ink)} .tile.s-copy{border-left-color:var(--e-copy-ink)} .tile.s-criativo{border-left-color:var(--e-criativo-ink)} .tile.s-revisao{border-left-color:var(--e-revisao-ink)}
 .tile.s-cliente{border-left-color:var(--e-cliente-ink)} .tile.s-drive{border-left-color:var(--e-drive-ink)} .tile.s-aprovado{border-left-color:var(--e-aprovado-ink)} .tile.s-publicado{border-left-color:var(--e-publicado-ink)}
+.wkgrp{display:grid;gap:8px}
+.wkgrp-hd{font-size:12px;padding:6px 4px 0;border-top:1px solid rgba(0,0,0,.08);color:var(--ink)}
+.wkgrp:first-of-type .wkgrp-hd{border-top:0;padding-top:0}
+.wkgrp-hd b{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:17px;font-weight:500}
+.wkgrp-hd span{opacity:.75}
 .wklink{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;text-align:left;cursor:pointer;font-size:14px;width:100%}
 .addcard{background:transparent;border:0;text-align:left;padding:6px 4px;cursor:pointer;color:var(--muted);font-weight:700}
 .addcard:hover{color:var(--ink)}
@@ -464,8 +469,13 @@ function renderQuadro(main){
   const cols = p === "cliente" ? ETAPAS.filter(([k]) => IDX[k] >= IDX.cliente) : ETAPAS;
   main.innerHTML = `<div class="spread"><div class="row">${vistaSeg}${semanaPicker()}</div></div>
   <div class="board" style="grid-auto-columns:minmax(240px,1fr)">${cols.map(([k,l]) => { const its = cards.filter(c => c.etapa === k);
-    return `<section class="col ${k}" data-col="${k}" aria-label="${esc(l)}"><div class="colhd"><span>${esc(l)}</span><span class="n">${its.length}</span></div>${its.map(c => tile(c, p === "dona")).join("") || `<p class="small" style="opacity:.6;padding:4px">Vazio</p>`}</section>`; }).join("")}</div>
+    return `<section class="col ${k}" data-col="${k}" aria-label="${esc(l)}"><div class="colhd"><span>${esc(l)}</span><span class="n">${its.length}</span></div>${porSemana(its, p === "dona") || `<p class="small" style="opacity:.6;padding:4px">Vazio</p>`}</section>`; }).join("")}</div>
   ${p === "dona" ? `<p class="small muted">Arrasta os cartões entre colunas, ou abre um cartão e usa os botões.</p>` : ""}`;
+}
+function porSemana(its, drag){
+  const grupos = []; const idx = {};
+  for (const c of its) { const w = semanaDe(c.data); const k = w ? w.id : "sem"; if (!(k in idx)) { idx[k] = grupos.length; grupos.push({ w, cs:[] }); } grupos[idx[k]].cs.push(c); }
+  return grupos.map(g => `<div class="wkgrp"><div class="wkgrp-hd"><b>${g.w ? esc(nomeSemana(g.w)) : "Sem semana"}</b>${g.w ? ` <span>${esc(fmtCurto(g.w.inicio))} – ${esc(fmtCurto(g.w.fim))} · ${esc(g.w.titulo)}</span>` : ""}</div>${g.cs.map(c => tile(c, drag)).join("")}</div>`).join("");
 }
 function filtroSemana(list){ if (UI.semana === "todas") return list; const w = S.semanas.find(x => x.id === UI.semana); return w ? list.filter(c => c.data >= w.inicio && c.data <= w.fim) : list; }
 function semanaPicker(){ return `<select class="inp" style="width:auto" data-act="semSel" id="semSel" aria-label="Semana"><option value="todas">Todas as semanas</option>${semanasOrd().map(w => `<option value="${esc(w.id)}"${UI.semana===w.id?" selected":""}>${esc(nomeSemana(w))} · ${esc(fmtCurto(w.inicio))} – ${esc(fmtCurto(w.fim))}</option>`).join("")}</select>`; }
