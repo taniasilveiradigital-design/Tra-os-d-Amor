@@ -295,7 +295,8 @@ function delta(a, b){
 const METRICAS_POST = [["alcance","Alcance"],["visualizacoes","Visualizações"],["gostos","Gostos"],["comentarios","Comentários"],["partilhas","Partilhas"],["guardados","Guardados"],["cliques","Cliques no link"],["respostas","Respostas / DMs"]];
 const PAPEL_TXT = { dona:"Estratega", equipa:"Equipa criativa", cliente:"Cliente" };
 
-let db = null, userCap = null, sample = null;
+let db = null, userCap = null, sample = null, mcp = null;
+const APP_URL = "https://claude.ai/artifact/D3MiggwcKrr8yggsoKk3vz";
 const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
 const UI = { menc:[], notif:false, sugId:null, tab:"quadro", vista:"semanas", semana:"todas", semAberta:null, mes:"2026-10", cardId:null, pend:false, editSem:null, editEst:false, editDados:null, relId:null, editMelh:null, qaBusy:false, qaTxt:"",
   of:{ modo:"semana", semanas:[], data:"", tipo:"Feed", formato:"Reel", brief:"", busy:false, prog:"", out:[], err:"", ret:null, retTxt:{}, rascId:null, insp:"", confSub:false } };
@@ -375,6 +376,7 @@ function renderMainSafe(){ if (isEditing()) { UI.pend = true; } else renderMain(
     sub("sugestoes", db.collection(`${PRIV}/sugestoes`));
     if (S.me.id) sub("rascunhos", db.collection(`data/users/${S.me.id}`));
     sample = await window.claude?.use?.("sample") ?? null;
+    mcp = await window.claude?.use?.("mcp") ?? null;
   }
   if (S.me.id) db.doc(`data/users/${S.me.id}/estado`).onSnapshot(s => { S.estado = s.exists ? s.data() : { lidas:[] }; onData("estado"); }, () => {});
   if (S.me.id) {
@@ -564,7 +566,7 @@ function renderModal(){
     <div class="sec"><h3>Comentários</h3><div class="coms" id="mComs"></div>
       <label class="f">Escrever comentário<textarea id="novoCom" style="min-height:60px" placeholder="Escreve aqui…"></textarea></label>
       <div class="mchips"><span class="lbl">Identificar</span>${S.pessoas.filter(x => x.id !== S.me.id).map(x => `<button type="button" class="mchip" data-act="menc" data-id="${esc(x.id)}" aria-pressed="${UI.menc.includes(x.id)}">@${esc(nomeDe(x.id))}</button>`).join("") || `<span class="small muted">Ainda não há outras pessoas na app.</span>`}</div>
-      <div class="row"><button class="btn primary" data-act="comentar">Comentar</button></div></div>
+      <div class="row"><button class="btn primary" data-act="comentar">Comentar</button>${p === "dona" && mcp ? `<label class="small row" style="gap:6px"><input type="checkbox" id="porEmail" checked> Enviar email a quem identifiquei</label>` : ""}</div></div>
     <form id="cardForm" class="panel" style="gap:14px">
       ${eCopy ? `<div class="sec"><div class="fgrid">
         <label class="f">Dia<input type="date" name="data" value="${esc(c.data)}" id="fld-data"></label>
@@ -636,6 +638,30 @@ async function mover(c, to, extra){
   if (ok) { localMerge(c.id, body); renderMainSafe(); renderModalLive(); await addComentario({ cartao:c.id, texto:`Passou para ${ETQ[to]}.`, sistema:true }); toast(`Passou para ${ETQ[to]}.`); }
   return ok;
 }
+/* email pelo Gmail da Tânia às pessoas identificadas num comentário */
+async function emailDe(id){
+  const guardado = S.priv?.emails?.[id]; if (guardado) return guardado;
+  try { const ps = await userCap?.profiles([id]); return ps?.[id]?.email || null; } catch(e){ return null; }
+}
+async function enviarEmails(ids, texto, c){
+  if (!mcp) return;
+  const enviados = [], semEmail = [];
+  for (const id of ids) {
+    const to = await emailDe(id), nome = nomeDe(id);
+    if (!to) { semEmail.push(nome); continue; }
+    const onde = c ? `${tituloCartao(c)} (${fmtDia(c.data)})` : "a app";
+    try {
+      await mcp.callTool("Gmail", "send_message", { to:[to], subject:`Traços D'Amor · comentário em ${c ? tituloCartao(c) : "a app"}`,
+        body:`Olá ${nome},\n\nA Tânia deixou-te um comentário em ${onde}:\n\n"${texto}"\n\nAbre a app para responder ou dar OK:\n${APP_URL}\n\nTânia Silveira` });
+      enviados.push(nome);
+    } catch(e){
+      const m = { server_not_connected:"Liga o Gmail no claude.ai (Definições → Conectores) para enviar emails.", consent_denied:"Não deste permissão ao Gmail nesta página.", not_granted:"Não deste permissão ao Gmail nesta página." }[e?.code];
+      toast(m || `O email para ${nome} não saiu. O comentário ficou na app.`); return;
+    }
+  }
+  if (enviados.length) toast(`Email enviado a ${enviados.join(", ")}.`);
+  if (semEmail.length) setTimeout(() => toast(`Sem email de ${semEmail.join(", ")}: põe-no em Estratégia → Pessoas.`), enviados.length ? 2600 : 0);
+}
 async function addComentario(o){ return write(`comentarios/${CLIENTE}-${uidShort()}`, { cliente:CLIENTE, autor:S.me.id, em:new Date().toISOString(), sistema:false, cartao:null, semana:null, ...o }); }
 function lerForm(c){
   const f = $("#cardForm"); const fd = new FormData(f); const g = k => fd.has(k) ? fd.get(k) : undefined; const body = {};
@@ -695,8 +721,8 @@ function renderEstrategia(main){
   ${c.tom ? `<div class="card"><h3>Tom de voz</h3><p class="readv">${esc(c.tom)}</p></div>` : ""}
   <div class="card"><h3>Pastas da Drive</h3><div class="row">${PASTAS.map(([k,l]) => pub.pastas?.[k] ? `<a class="btn" href="${esc(pub.pastas[k])}" target="_blank" rel="noopener">${l}</a>` : `<span class="chip warn">${l}: por definir</span>`).join("")}</div></div>
   <div class="card"><h3>Pessoas com acesso</h3>
-    <p class="small muted">Quem abre a app aparece aqui. Dá o nome e o papel a cada pessoa. É esse nome que aparece nos comentários. Partilha a app como <b>Contributor</b>, não como Editor.</p>
-    ${pessoas.length ? `<div class="tbl"><table><thead><tr><th>Conta</th><th>Nome a mostrar</th><th>Papel</th><th></th></tr></thead><tbody>${pessoas.map(x => `<tr><td>${esc(S.names[x.id] || "Sem nome visível")}</td><td><input class="inp" style="max-width:200px" id="pn-${esc(x.id)}" value="${esc(x.nome)}" placeholder="Ex.: Sílvia"></td><td><select class="inp" style="width:auto" id="pp-${esc(x.id)}"><option value="cliente"${x.papel!=="equipa"?" selected":""}>Cliente</option><option value="equipa"${x.papel==="equipa"?" selected":""}>Equipa criativa</option></select></td><td><button class="btn sm" data-act="savePessoa" data-id="${esc(x.id)}">Guardar</button></td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">Ainda ninguém abriu a app além de ti. Partilha o link no menu Share.</p>`}</div>`;
+    <p class="small muted">Quem abre a app aparece aqui. Dá o nome e o papel a cada pessoa. É esse nome que aparece nos comentários. Partilha a app como <b>Contributor</b>, não como Editor. O email serve para lhes chegar um aviso quando as identificas num comentário: só tu o vês e sai do teu Gmail.</p>
+    ${pessoas.length ? `<div class="tbl"><table><thead><tr><th>Conta</th><th>Nome a mostrar</th><th>Papel</th><th>Email 🔒</th><th></th></tr></thead><tbody>${pessoas.map(x => `<tr><td>${esc(S.names[x.id] || "Sem nome visível")}</td><td><input class="inp" style="max-width:200px" id="pn-${esc(x.id)}" value="${esc(x.nome)}" placeholder="Ex.: Sílvia"></td><td><select class="inp" style="width:auto" id="pp-${esc(x.id)}"><option value="cliente"${x.papel!=="equipa"?" selected":""}>Cliente</option><option value="equipa"${x.papel==="equipa"?" selected":""}>Equipa criativa</option></select></td><td>${x.id === S.me.id ? "" : `<input class="inp" type="email" style="max-width:220px" id="pe-${esc(x.id)}" value="${esc(S.priv?.emails?.[x.id] || "")}" placeholder="email@exemplo.pt">`}</td><td><button class="btn sm" data-act="savePessoa" data-id="${esc(x.id)}">Guardar</button></td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">Ainda ninguém abriu a app além de ti. Partilha o link no menu Share.</p>`}</div>`;
 }
 
 const AREAS = [["instagram","Instagram"],["comunicacao","Comunicação"],["email","Email marketing"],["vendas","Vendas"],["atracao","Atração"]];
@@ -1076,7 +1102,7 @@ document.addEventListener("click", async e => {
     case "pedirCancelar": UI.pedir = false; renderModalLive(); break;
     case "pedirEnviar": { const c = card(); const t = $("#pedirTxt")?.value.trim(); if (!t) { toast("Escreve o que tem de mudar."); break; }
       await addComentario({ cartao:c.id, texto:"Alterações: " + t }); UI.pedir = false; await mover(c, "criativo", { alteracoes:true }); break; }
-    case "comentar": { const t = $("#novoCom")?.value.trim(); if (!t) break; if (await addComentario({ cartao:UI.cardId, texto:t, mencoes:[...UI.menc], oks:[] })) { $("#novoCom").value = ""; UI.menc = []; document.querySelectorAll("[data-act=menc]").forEach(b => b.setAttribute("aria-pressed","false")); } break; }
+    case "comentar": { const t = $("#novoCom")?.value.trim(); if (!t) break; const mencs = [...UI.menc], mail = !!$("#porEmail")?.checked; if (await addComentario({ cartao:UI.cardId, texto:t, mencoes:mencs, oks:[] })) { if (mail && mencs.length) enviarEmails(mencs, t, S.cartoes.find(x => x.id === UI.cardId)); $("#novoCom").value = ""; UI.menc = []; document.querySelectorAll("[data-act=menc]").forEach(b => b.setAttribute("aria-pressed","false")); } break; }
     case "addStory": { const c = card(); const body = lerForm(c); body.stories = [...body.stories, { media:"video" }]; if (await write(`cartoes/${c.id}`, body, true)) { localMerge(c.id, body); renderModal(); } break; }
     case "rmStory": { const c = card(); const body = lerForm(c); body.stories.splice(Number(el.dataset.i),1); if (await write(`cartoes/${c.id}`, body, true)) { localMerge(c.id, body); renderModal(); } break; }
     case "askDel": $("#delZone").innerHTML = `<span class="row small">Apagar mesmo? <button type="button" class="btn danger" data-act="del">Sim</button><button type="button" class="btn" data-act="noDel">Não</button></span>`; break;
@@ -1093,7 +1119,9 @@ document.addEventListener("click", async e => {
     case "comSemana": { const t = $("#semCom")?.value.trim(); if (!t) break; if (await addComentario({ semana:UI.semAberta, texto:t })) $("#semCom").value = ""; break; }
     case "editEst": UI.editEst = true; renderMain(); break;
     case "cancelEst": UI.editEst = false; renderMain(); break;
-    case "savePessoa": { const id = el.dataset.id; if (await write(`pessoas/${id}`, { nome: $(`#pn-${CSS.escape(id)}`).value.trim(), papel: $(`#pp-${CSS.escape(id)}`).value }, true)) toast("Guardado."); break; }
+    case "savePessoa": { const id = el.dataset.id; const em = $(`#pe-${CSS.escape(id)}`);
+      if (em && em.value.trim() !== (S.priv?.emails?.[id] || "")) await write(PRIV, { emails:{ ...(S.priv?.emails || {}), [id]: em.value.trim() } }, true);
+      if (await write(`pessoas/${id}`, { nome: $(`#pn-${CSS.escape(id)}`).value.trim(), papel: $(`#pp-${CSS.escape(id)}`).value }, true)) toast("Guardado."); break; }
     case "editDados": UI.editDados = el.dataset.id; renderMain(); break;
     case "cancelDados": UI.editDados = null; renderMain(); break;
     case "dRede": UI.dRede = el.dataset.v; UI.editDados = null; renderMain(); break;
