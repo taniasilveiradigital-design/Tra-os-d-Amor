@@ -247,6 +247,7 @@ let db = null, userCap = null, sample = null;
 const S = { cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
 const UI = { tab:"quadro", vista:"semanas", semana:"todas", semAberta:null, mes:"2026-10", cardId:null, pend:false, editSem:null, editEst:false, editDados:null, relId:null, editMelh:null, qaBusy:false, qaTxt:"",
   of:{ modo:"semana", semanas:[], data:"", tipo:"Feed", formato:"Reel", brief:"", busy:false, prog:"", out:[], err:"", ret:null, retTxt:{}, rascId:null } };
+try { if (!localStorage.getItem("td-ajuda-vista")) UI.ajuda = true; } catch(e){}
 try { const t = localStorage.getItem("td-tab3"); if (t) UI.tab = t; const v = localStorage.getItem("td-vista"); if (v) UI.vista = v; } catch(e){}
 
 /* ---------- helpers ---------- */
@@ -337,7 +338,7 @@ function renderChrome(){
   const c = S.cliente;
   if (c) { $("#clientName").textContent = c.nome || "Traços D'Amor"; $("#clientMeta").textContent = [c.instagram, c.site].filter(Boolean).join(" · "); }
   const p = papel(); const pt = paraTi();
-  $("#statusChips").innerHTML = `<span class="chip neutral">${esc(PAPEL_TXT[p])}</span>` +
+  $("#statusChips").innerHTML = `<button class="chip neutral" data-act="ajuda" aria-expanded="${!!UI.ajuda}">? Como funciona</button><span class="chip neutral">${esc(PAPEL_TXT[p])}</span>` +
     (pt.length ? `<button class="chip bad" data-act="paraTi">● ${pt.length} à tua espera</button>` : `<span class="chip ok">Nada à tua espera</span>`);
   const pub = [["quadro","Quadro"],["calendario","Calendário"],["semanas","Semanas"],["relatorios","Relatórios"]];
   const priv = p === "dona" ? [["estrategia","Estratégia 🔒"],["dados","Dados 🔒"],["oficina","Oficina 🔒"]] : [];
@@ -345,6 +346,13 @@ function renderChrome(){
   $("#tabs").innerHTML = pub.map(([k,l]) => `<button role="tab" data-tab="${k}" aria-selected="${UI.tab===k}">${l}</button>`).join("") +
     (priv.length ? `<span class="sep" aria-hidden="true"></span>` + priv.map(([k,l]) => `<button role="tab" data-tab="${k}" aria-selected="${UI.tab===k}" class="priv">${l}</button>`).join("") : "");
 }
+const AJUDA = {
+  dona: ["Planeias cada semana em Semanas (objetivo, oferta, estratégia do feed e dos stories). Só tu editas.", "Na Oficina 🔒 geras conteúdos para uma ou várias semanas, retificas com comentários e envias para o quadro (coluna Ideia).", "Revês cada cartão e envias para a criativa. Quando volta em Revisão estratégica, aprovas e segue para a cliente.", "Depois do OK da cliente, a criativa põe os ficheiros na Drive. Quando é publicado, eu avalio os números (aparece \"avaliação pendente\").", "Estratégia, Dados e Oficina só tu vês. Em Estratégia → Pessoas dás nome e papel a quem entra."],
+  equipa: ["No Quadro vês todos os cartões por semana. O chip \"à tua espera\" no topo leva-te ao que é teu.", "Abre o cartão: tens intenção, tema, como fazer, legenda e os stories. Faz no Canva ou CapCut e cola os links.", "Quando estiver pronto, carrega em \"Enviar para revisão estratégica\".", "Se vier com \"alterações pedidas\", o pedido está nos comentários do cartão.", "Depois do OK da cliente: exporta cada ficheiro, guarda-o na pasta indicada da Drive com o nome indicado e cola o link. Depois de publicar, marca como publicado."],
+  cliente: ["No topo, \"à tua espera\" mostra os conteúdos que precisam do teu OK.", "Abre o cartão, vê o texto e o criativo (botão Abrir nos links).", "Se estiver bem, carrega em \"Dar OK\". Se não, \"Pedir alterações\" e escreve o que queres mudar.", "Em Semanas vês o objetivo e a oferta de cada semana. Podes deixar comentários e links de inspiração.", "Em Relatórios vês como correu cada semana."]
+};
+function ajudaHtml(){ if (!UI.ajuda) return ""; const p = papel();
+  return `<div class="card" style="border-left:4px solid var(--terra)"><div class="spread"><h3>Como funciona · ${esc(PAPEL_TXT[p])}</h3><button class="btn sm" data-act="ajuda">Fechar</button></div><ol class="clean">${AJUDA[p].map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>`; }
 function renderMain(){
   const main = $("#main");
   if (S.nodb) { main.innerHTML = `<div class="empty"><h3>Abre esta página no claude.ai</h3><p>A aplicação precisa da base de dados, que só existe dentro do claude.ai.</p></div>`; return; }
@@ -352,6 +360,7 @@ function renderMain(){
   const priv = { estrategia:renderEstrategia, dados:renderDados, oficina:renderOficina };
   if (priv[UI.tab] && !isDona()) UI.tab = "quadro";
   ({quadro:renderQuadro, calendario:renderCal, semanas:renderSemanas, relatorios:renderRelatorios, ...priv}[UI.tab] || renderQuadro)(main);
+  if (UI.ajuda) main.insertAdjacentHTML("afterbegin", ajudaHtml());
 }
 
 /* ---------- cartões ---------- */
@@ -453,7 +462,7 @@ function linkField(name, label, val, pastaKey, fname, editable){
 function renderModal(){
   const c = S.cartoes.find(x => x.id === UI.cardId); if (!c) { closeCard(); return; }
   const p = papel(); const eCopy = p === "dona"; const eLinks = p !== "cliente"; const feed = c.tipo === "Feed";
-  const ta = (name, label, val, cls, h) => eCopy ? `<label class="f">${label}<textarea name="${name}" class="${cls||""}" id="fld-${name}" ${h?`style="min-height:${h}px"`:""}>${esc(val)}</textarea></label>`
+  const ta = (name, label, val, cls, h) => (p === "cliente" && /estrategia$/.test(name)) ? "" : eCopy ? `<label class="f">${label}<textarea name="${name}" class="${cls||""}" id="fld-${name}" ${h?`style="min-height:${h}px"`:""}>${esc(val)}</textarea></label>`
     : (val ? `<div style="display:grid;gap:2px"><span class="lbl">${label}</span><p class="readv${cls==="cap"?" hand":""}" style="${cls==="cap"?"font-size:17px":""}">${esc(val)}</p></div>` : "");
   const res = S.resultados.find(r => r.id === c.id) || {};
   const resFields = (pref, obj) => `<div class="fgrid">${METRICAS_POST.map(([k,l]) => `<label class="f">${l}<input type="number" min="0" name="${pref}${k}" value="${obj?.[k] ?? ""}" id="fld-${pref}${k}"></label>`).join("")}</div>`;
@@ -679,7 +688,7 @@ function renderRelatorios(main){
       ${(o.funcionou||[]).length ? `<span class="lbl" style="color:var(--ok)">Funcionou</span><ul class="clean">${o.funcionou.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
       ${(o.naoFuncionou||[]).length ? `<span class="lbl" style="color:var(--bad)">Não funcionou</span><ul class="clean">${o.naoFuncionou.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</div>`; };
   const melh = r.melhorias || [];
-  main.innerHTML = `<div class="spread"><span></span><select class="inp" style="width:auto" data-act="relSel" id="relSel" aria-label="Semana do relatório">${rs.map(x => `<option value="${esc(x.id)}"${x.id===r.id?" selected":""}>${esc(fmtCurto(x.inicio))} – ${esc(fmtCurto(x.fim))}</option>`).join("")}</select></div>
+  main.innerHTML = `<div class="row" style="justify-content:flex-end"><select class="inp" style="width:auto" data-act="relSel" id="relSel" aria-label="Semana do relatório">${rs.map(x => `<option value="${esc(x.id)}"${x.id===r.id?" selected":""}>${esc(fmtCurto(x.inicio))} – ${esc(fmtCurto(x.fim))}</option>`).join("")}</select></div>
   <div class="rep-hero"><span class="v">${esc(ver)} · ${esc(fmtLongo(r.inicio))} a ${esc(fmtLongo(r.fim))}</span><h2>${esc(r.titulo || "Relatório da semana")}</h2><p class="readv" style="max-width:70ch">${esc(r.resumo)}</p></div>
   ${(r.kpis||[]).length ? `<div class="kpis">${r.kpis.map(k => { const d = (k.valor != null && k.anterior != null) ? k.valor - k.anterior : null;
     return `<div class="kpi"><span class="lbl">${esc(k.nome)}</span><span class="v">${fmtN(k.valor)}</span><span class="d">${d == null ? "sem semana anterior" : (d>0?"▲ +":d<0?"▼ ":"= ") + fmtN(d) + " vs semana anterior"}</span>${k.meta != null ? (k.valor >= k.meta ? `<span class="chip ok">✓ meta ${fmtN(k.meta)}</span>` : `<span class="chip bad">✕ meta ${fmtN(k.meta)}</span>`) : ""}</div>`; }).join("")}</div>` : ""}
@@ -819,6 +828,7 @@ document.addEventListener("click", async e => {
   const el = e.target.closest("[data-act]"); if (!el) return;
   const a = el.dataset.act; const card = () => S.cartoes.find(x => x.id === UI.cardId);
   switch (a) {
+    case "ajuda": UI.ajuda = !UI.ajuda; try { localStorage.setItem("td-ajuda-vista", "1"); } catch(x){} renderChrome(); renderMain(); break;
     case "fecharFundo": if (e.target === el) closeCard(); break;
     case "fechar": closeCard(); break;
     case "paraTi": { const pt = paraTi().sort((x,y) => x.data.localeCompare(y.data)); if (pt.length) openCard(pt[0].id); break; }
@@ -850,7 +860,8 @@ document.addEventListener("click", async e => {
     case "editSem": UI.editSem = el.dataset.id; renderMain(); break;
     case "cancelSem": UI.editSem = null; renderMain(); break;
     case "novaSemana": { const last = semanasOrd().slice(-1)[0]; const ini = last ? addDays(last.fim,1) : mondayOf(todayIso); const id = `${CLIENTE}-${ini}`;
-      if (await write(`semanas/${id}`, { cliente:CLIENTE, inicio:ini, fim:addDays(ini,6), titulo:"Nova semana", objetivo:"", oferta:"", palavraChave:"", estrategiaStories:"", estrategiaFeed:"", notas:"" })) { UI.semAberta = id; UI.editSem = id; UI.tab = "semanas"; renderChrome(); renderMain(); } break; }
+      const nova = { cliente:CLIENTE, inicio:ini, fim:addDays(ini,6), titulo:"Nova semana", objetivo:"", oferta:"", palavraChave:"", estrategiaStories:"", estrategiaFeed:"", notas:"" };
+      if (await write(`semanas/${id}`, nova)) { if (!S.semanas.find(x => x.id === id)) S.semanas.push({ id, ...nova }); UI.semAberta = id; UI.editSem = id; UI.tab = "semanas"; renderChrome(); renderMain(); } break; }
     case "addInsp": { const u = $("#inspUrl")?.value.trim(); if (!/^https?:\/\//.test(u||"")) { toast("Cola um link que comece por https://"); break; }
       if (await write(`inspiracoes/${CLIENTE}-${uidShort()}`, { cliente:CLIENTE, semana:UI.semAberta, url:u, nota:$("#inspNota").value.trim(), autor:S.me.id, em:new Date().toISOString() })) { $("#inspUrl").value = ""; $("#inspNota").value = ""; } break; }
     case "rmInsp": { try { await db.doc(`inspiracoes/${el.dataset.id}`).delete(); } catch(x){ toast("Não apagou."); } break; }
