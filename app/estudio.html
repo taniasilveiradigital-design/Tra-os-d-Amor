@@ -138,7 +138,8 @@ textarea.cap{font-family:"Patrick Hand",Karla,cursive!important;font-size:17px!i
 .sec.story{border-left:4px solid var(--e-criativo-ink)}
 .sec.priv{border:1px dashed var(--terra)}
 .checks{display:grid;gap:4px;font-size:14px}
-.checks div{display:flex;gap:8px;align-items:baseline}
+.checks div,.checks .chk{display:flex;gap:8px;align-items:baseline}
+.checks .chk{background:none;border:0;padding:3px 0;font:inherit;color:inherit;text-align:left;cursor:pointer;border-radius:6px} .checks .chk:hover{background:var(--sunk)}
 .checks .y{color:var(--ok);font-weight:700} .checks .x{color:var(--muted)}
 .linkrow{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end}
 .hint{font-size:12px;color:var(--muted)}
@@ -453,7 +454,7 @@ function checklist(c){
     items.push([c.formato === "Reel" ? "Link Canva Reels" : "Link Canva", !!c.linkCriativo], [c.formato === "Reel" ? "Link final Reels (Drive)" : "Link final (Drive)", !!c.linkDrive], ["Legenda", !!c.legenda]);
   }
   (c.stories||[]).forEach((s,i) => { const n = c.stories.length > 1 ? ` ${i+1}` : ""; items.push([`Copy para Storie${n}`, !!(s.texto || s.tema)], [`Link Canva storie${n}`, !!s.linkCriativo], [`Link Storie Final (Drive)${n}`, !!s.linkDrive]); });
-  return items;
+  return items.map(([n,ok]) => [n, typeof c.checks?.[n] === "boolean" ? c.checks[n] : ok]);
 }
 const faltaDrive = c => checklist(c).filter(([n,ok]) => /Drive/.test(n) && !ok).map(x => x[0]);
 const faltaCriativo = c => checklist(c).filter(([n,ok]) => /Canva/.test(n) && !ok).map(x => x[0]);
@@ -543,14 +544,14 @@ const pastaUrl = k => S.cliente?.pastas?.[k] || "";
 const nomeFicheiro = (c, suf) => `TDA_${c.data}_${suf}`;
 function linkField(name, label, val, pastaKey, fname, editable){
   const url = pastaKey ? pastaUrl(pastaKey) : ""; const pn = (PASTAS.find(p => p[0]===pastaKey)||[])[1];
-  return `<div style="display:grid;gap:4px"><div class="linkrow"><label class="f">${label}<input name="${name}" value="${esc(val)}" placeholder="https://…" ${editable?"":"readonly"} id="fld-${name}"></label>${val ? `<a class="btn" href="${esc(val)}" target="_blank" rel="noopener">Abrir</a>` : `<span></span>`}</div>
+  return `<div style="display:grid;gap:4px"><div class="linkrow"><label class="f">${label}<input name="${name}" value="${esc(val)}" placeholder="https://…" ${editable?"":"disabled"} id="fld-${name}"></label>${val ? `<a class="btn" href="${esc(val)}" target="_blank" rel="noopener">Abrir</a>` : `<span></span>`}</div>
     ${pastaKey ? `<p class="hint">Pasta: ${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(pn)}</a>` : `${esc(pn)}`} · nome do ficheiro <code>${esc(fname)}</code></p>` : ""}</div>`;
 }
 const linkify = t => esc(t).replace(/(https?:\/\/[^\s<]+)/g, u => `<a href="${u}" target="_blank" rel="noopener">${u.length > 60 ? u.slice(0,57) + "…" : u}</a>`);
 const linksDe = t => (String(t||"").match(/https?:\/\/[^\s<]+/g) || []);
 function renderModal(){
   const c = S.cartoes.find(x => x.id === UI.cardId); if (!c) { closeCard(); return; }
-  const p = papel(); const eCopy = p === "dona"; const eLinks = p !== "cliente"; const feed = c.tipo === "Feed";
+  const p = papel(); const eCopy = p === "dona"; const eLinks = p === "equipa"; const eLeg = p === "dona" || p === "cliente"; const feed = c.tipo === "Feed";
   const ta = (name, label, val, cls, h) => (p === "cliente" && /estrategia$/.test(name)) ? "" : eCopy ? `<label class="f">${label}<textarea name="${name}" class="${cls||""}" id="fld-${name}" ${h?`style="min-height:${h}px"`:""}>${esc(val)}</textarea></label>`
     : (val ? `<div style="display:grid;gap:2px"><span class="lbl">${label}</span><p class="readv${cls==="cap"?" hand":""}" style="${cls==="cap"?"font-size:17px":""}">${/comoFazer$|inspiracao$/.test(name) ? linkify(val) : esc(val)}</p></div>` : "");
   const insp = (name, val) => eCopy
@@ -573,9 +574,9 @@ function renderModal(){
         <label class="f">Tipo<select name="tipo" id="fld-tipo"><option${feed?" selected":""}>Feed</option><option${!feed?" selected":""}>Storie</option></select></label>
         ${feed ? `<label class="f">Formato<select name="formato" id="fld-formato">${FORMATOS.map(f => `<option${f===c.formato?" selected":""}>${f}</option>`).join("")}</select></label>` : ""}
         <label class="f">Título<input name="titulo" value="${esc(c.titulo)}" placeholder="${esc(`${DIAS_L[dow(c.data)]}: ${c.tipo}`)}" id="fld-titulo"></label></div></div>` : ""}
-      <div class="sec"><h3>Checklist</h3><div class="checks">${checklist(c).map(([n,ok]) => `<div><span class="${ok?"y":"x"}">${ok?"☑":"☐"}</span><span>${esc(n)}</span></div>`).join("")}</div><p class="hint">Marca-se sozinha quando o campo é preenchido.</p></div>
+      <div class="sec"><h3>Checklist</h3><div class="checks">${checklist(c).map(([n,ok]) => `<button type="button" class="chk" data-act="check" data-n="${esc(n)}" aria-pressed="${ok}"><span class="${ok?"y":"x"}">${ok?"☑":"☐"}</span><span>${esc(n)}</span></button>`).join("")}</div><p class="hint">Marca-se sozinha quando o campo é preenchido. Todas podem marcar ou desmarcar.</p></div>
       ${feed ? `<div class="sec"><h3>${esc(c.formato || "Feed")}</h3>
-        ${ta("intencao","Intenção",c.intencao)}${ta("estrategia","Estratégia",c.estrategia)}${ta("tema","Tema",c.tema,"",44)}${ta("comoFazer","Como fazer",c.comoFazer)}${insp("inspiracao",c.inspiracao)}${ta("legenda","Legenda",c.legenda,"cap",120)}
+        ${ta("intencao","Intenção",c.intencao)}${ta("estrategia","Estratégia",c.estrategia)}${ta("tema","Tema",c.tema,"",44)}${ta("comoFazer","Como fazer",c.comoFazer)}${insp("inspiracao",c.inspiracao)}${eLeg ? `<label class="f">Legenda${p === "cliente" ? " (podes ajustar)" : ""}<textarea name="legenda" class="cap" id="fld-legenda" style="min-height:120px">${esc(c.legenda)}</textarea></label>` : ta("legenda","Legenda",c.legenda,"cap",120)}
         <h4 style="margin-top:6px">Criativo e ficheiros finais</h4>
         ${linkField("linkCriativo", c.formato==="Reel"?"Link Canva / CapCut do Reels":"Link Canva", c.linkCriativo, null, "", eLinks)}
         ${c.formato==="Reel" ? linkField("capaCriativo","Link Canva da capa",c.capaCriativo,null,"",eLinks) : ""}
@@ -587,7 +588,7 @@ function renderModal(){
         ${linkField(`s${i}_linkCriativo`,"Link Canva storie",s.linkCriativo,null,"",eLinks)}
         ${linkField(`s${i}_linkDrive`,"Link Storie Final (Drive)",s.linkDrive,s.media==="foto"?"storyFoto":"storyVideo",nomeFicheiro(c,`story${i+1}.${s.media==="foto"?"png":"mp4"}`),eLinks)}</div>`).join("")}
       ${eCopy ? `<button type="button" class="btn" data-act="addStory">+ Adicionar storie</button>` : ""}
-      ${eLinks ? `<div class="row"><button class="btn primary" type="submit">Guardar</button>${eCopy ? `<span style="flex:1"></span><span id="delZone"><button type="button" class="btn ghost danger" data-act="askDel">Apagar cartão</button></span>` : ""}</div>` : ""}
+      ${eCopy || eLinks || (eLeg && feed) ? `<div class="row"><button class="btn primary" type="submit">Guardar</button>${eCopy ? `<span style="flex:1"></span><span id="delZone"><button type="button" class="btn ghost danger" data-act="askDel">Apagar cartão</button></span>` : ""}</div>` : ""}
     </form>
     ${p === "dona" ? `<form id="resForm" class="sec priv"><div class="spread"><h3>Resultados 🔒</h3><span class="hint">Só tu vês.</span></div>
       <div class="redebox">${REDES.map(([rk,rl,rc]) => { const fb = rk === "facebook"; return `<div class="sec ${rc}"><h4>${rl}</h4>
@@ -1103,6 +1104,8 @@ document.addEventListener("click", async e => {
     case "pedirEnviar": { const c = card(); const t = $("#pedirTxt")?.value.trim(); if (!t) { toast("Escreve o que tem de mudar."); break; }
       await addComentario({ cartao:c.id, texto:"Alterações: " + t }); UI.pedir = false; await mover(c, "criativo", { alteracoes:true }); break; }
     case "comentar": { const t = $("#novoCom")?.value.trim(); if (!t) break; const mencs = [...UI.menc], mail = !!$("#porEmail")?.checked; if (await addComentario({ cartao:UI.cardId, texto:t, mencoes:mencs, oks:[] })) { if (mail && mencs.length) enviarEmails(mencs, t, S.cartoes.find(x => x.id === UI.cardId)); $("#novoCom").value = ""; UI.menc = []; document.querySelectorAll("[data-act=menc]").forEach(b => b.setAttribute("aria-pressed","false")); } break; }
+    case "check": { const c = S.cartoes.find(x => x.id === UI.cardId); if (!c) break; const n = el.dataset.n; const cur = (checklist(c).find(x => x[0] === n) || [])[1];
+      const checks = { ...(c.checks || {}), [n]: !cur }; if (await write(`cartoes/${c.id}`, { checks }, true)) { localMerge(c.id, { checks }); renderModal(); } break; }
     case "addStory": { const c = card(); const body = lerForm(c); body.stories = [...body.stories, { media:"video" }]; if (await write(`cartoes/${c.id}`, body, true)) { localMerge(c.id, body); renderModal(); } break; }
     case "rmStory": { const c = card(); const body = lerForm(c); body.stories.splice(Number(el.dataset.i),1); if (await write(`cartoes/${c.id}`, body, true)) { localMerge(c.id, body); renderModal(); } break; }
     case "askDel": $("#delZone").innerHTML = `<span class="row small">Apagar mesmo? <button type="button" class="btn danger" data-act="del">Sim</button><button type="button" class="btn" data-act="noDel">Não</button></span>`; break;
@@ -1168,7 +1171,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && UI.cardId)
 
 document.addEventListener("submit", async e => {
   e.preventDefault(); const f = e.target;
-  if (f.id === "cardForm") { const c = S.cartoes.find(x => x.id === UI.cardId); const body = lerForm(c); if (await write(`cartoes/${c.id}`, body, true)) { localMerge(c.id, body); toast("Guardado."); renderModal(); } return; }
+  if (f.id === "cardForm") { const c = S.cartoes.find(x => x.id === UI.cardId); const body = papel() === "cliente" ? { legenda: new FormData(f).get("legenda") ?? c.legenda, atualizadoEm:new Date().toISOString() } : lerForm(c); if (await write(`cartoes/${c.id}`, body, true)) { localMerge(c.id, body); toast("Guardado."); renderModal(); } return; }
   if (f.id === "resForm") {
     const c = S.cartoes.find(x => x.id === UI.cardId); const fd = new FormData(f); const num = k => { const v = fd.get(k); return v === "" || v == null ? null : Number(v); };
     const grupo = pref => Object.fromEntries(METRICAS_POST.map(([k]) => [k, num(`${pref}${k}`)]));
