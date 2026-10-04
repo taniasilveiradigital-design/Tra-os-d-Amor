@@ -13,7 +13,7 @@ Base de dados da app: coleções `clientes`, `semanas`, `cartoes`, `comentarios`
 3. Tirar do Metricool os números da conta @tracosdamor.pt para a semana: seguidores, novos seguidores, alcance, visualizações, interações, visitas ao perfil, cliques no link. E por publicação (posts, reels, carrosséis, stories): alcance, visualizações, gostos, comentários, partilhas, guardados, cliques no link, respostas.
 4. Escrever `privado/tracosdamor/metricas/<id>` com `fonte: "metricool"` e as duas redes em separado: `{inicio, fim, instagram:{seguidores, novosSeguidores, alcance, visualizacoes, interacoes, visitasPerfil, cliquesLink, mensagens}, facebook:{mesmas chaves}, vendasOnline, receita}`. Não apagar `mensagens`, `vendasOnline` e `receita` se foram preenchidos à mão. Documentos antigos com chaves soltas contam como Instagram.
 5. Associar cada publicação ao cartão do mesmo dia. Atualizar `metricas`, `linkPost` e `etapa: "publicado"`. O que foi publicado sem estar planeado fica registado nas notas do relatório.
-6. Escrever `relatorios/<id>`:
+6. Escrever o RASCUNHO em `privado/tracosdamor/relatorios/<id>` (nunca em `relatorios/`). Só a Tânia publica, com o botão "Validar e publicar" na app. Campos:
    - `veredito`: bom | atencao | critico (face às metas de cliques, DMs e vendas).
    - `titulo`: uma frase que diz o que aconteceu.
    - `resumo`: 3 a 5 linhas diretas.
@@ -47,3 +47,24 @@ Entre 8 e 12 sugestões concretas, aplicáveis nessa semana, baseadas nos dados 
 
 ## Dados (só a Tânia vê)
 Tudo ao pormenor: `privado/tracosdamor/metricas/<semana>` e `privado/tracosdamor/resultados/<cartão>`.
+
+## Regra de ouro: nada chega à cliente sem a Tânia validar
+
+- Todas as rotinas escrevem só em `privado/tracosdamor/relatorios/<id>`. A cliente e a equipa só leem `relatorios/`, e esse só recebe cópias quando a Tânia carrega em "Validar e publicar para a cliente".
+- A Tânia edita tudo (números, textos, gráficos de evolução, análise detalhada) antes e depois de publicar. Depois de publicar, as alterações só chegam à cliente com "Publicar as alterações".
+- Campos comuns a todos os tipos: `tipo` ("semanal" | "mensal" | "historico"), `inicio`, `fim`, os campos da versão da cliente (`titulo`, `resumo`, `veredito`, `kpis`, `porRede.leitura`, `evolucao.pontos`, `porFormato`, `conclusoes`, `melhorias`, `mostrarMais`, `mostrarMenos`, `acoes`) e `detalhe` (só para a Tânia: `notasDados`, `seccoes[{titulo,texto}]`, `top[]`, `piores[]`).
+- `evolucao.pontos`: [{rotulo, instagram:{alcance, cliquesLink, mensagens, seguidores}, facebook:{...}}]. Mensal: uma linha por semana. Histórico: uma linha por mês.
+- `kpis` com `instagram`/`facebook` = {valor, anterior}. "anterior" é a semana anterior (semanal), o mês anterior (mensal) ou o início da página (histórico).
+
+## Relatório mensal (último dia de cada mês)
+
+- Corre no dia 30 ou 31 (no último dia do mês; em fevereiro, dia 28 ou 29), ao fim do dia.
+- Id: `tracosdamor-AAAA-MM-mensal`.
+- Versão da cliente: análise geral do mês, Instagram vs Facebook, semana a semana.
+- `detalhe`: análise completa para a Tânia (funil, conversão, formatos, publicações que mais e menos resultaram, o que falta confirmar nos dados).
+
+## Relatório desde o início (uma vez)
+
+- Id: `tracosdamor-historico`.
+- Fonte: exportação do Meta Business Suite (Instagram e Facebook, desde o início da página) + vendas online da loja.
+- Evolução mês a mês; kpis comparam o último mês com o início.

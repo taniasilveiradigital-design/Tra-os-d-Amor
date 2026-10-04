@@ -192,6 +192,9 @@ td.n input{width:90px;text-align:right;background:var(--bg);border:1px solid var
 .share{display:flex;gap:2px;height:8px;border-radius:4px;overflow:hidden} .share span{display:block;height:100%}
 table.mini{width:100%;border-collapse:collapse;font-size:14px} table.mini td,table.mini th{padding:3px 0;border-bottom:1px solid var(--line)} table.mini .n{text-align:right;padding-left:10px}
 .card.leitura{border-left:5px solid var(--mk-fb)}
+.chart.wide{grid-column:1/-1} .chart polyline.ln{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round} .chart polyline.ig{stroke:var(--mk-ig)} .chart polyline.fb{stroke:var(--mk-fb)}
+.chart circle.pt{stroke:var(--surface);stroke-width:2} .chart circle.ig{fill:var(--mk-ig)} .chart circle.fb{fill:var(--mk-fb)} .chart g.hit:hover circle.pt{r:6}
+.relbar{border-top:4px solid var(--td-terra)} #relForm .inp[type=number]{text-align:right}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--muted)} .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .dl{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap} .dl.up{color:var(--ok)} .dl.down{color:var(--bad)} .dl.eq{color:var(--muted)}
 table.cmp th.grp{text-align:center;border-bottom:3px solid var(--line)} table.cmp th.grp.ig{border-bottom-color:var(--mk-ig)} table.cmp th.grp.fb{border-bottom-color:var(--mk-fb)}
@@ -298,7 +301,7 @@ const PAPEL_TXT = { dona:"Estratega", equipa:"Equipa criativa", cliente:"Cliente
 
 let db = null, userCap = null, sample = null, mcp = null;
 const APP_URL = "https://claude.ai/artifact/D3MiggwcKrr8yggsoKk3vz";
-const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
+const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], relPriv:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
 const UI = { menc:[], notif:false, sugId:null, tab:"quadro", vista:"semanas", semana:"todas", semAberta:null, mes:"2026-10", cardId:null, pend:false, editSem:null, editEst:false, editDados:null, relId:null, editMelh:null, qaBusy:false, qaTxt:"",
   of:{ modo:"semana", semanas:[], data:"", tipo:"Feed", formato:"Reel", brief:"", busy:false, prog:"", out:[], err:"", ret:null, retTxt:{}, rascId:null, insp:"", confSub:false } };
 try { if (!localStorage.getItem("td-ajuda-vista")) UI.ajuda = true; } catch(e){}
@@ -344,7 +347,7 @@ async function write(path, data, merge){
   catch(e){ toast(e && e.code === "invalid_argument" ? "Não tens permissão para isto." : "Não gravou. Tenta outra vez."); return false; }
 }
 function sub(name, q){ q.onSnapshot(snap => { S[name] = snap.docs.map(d => { const o = { id:d.id, ...d.data() }; if (name === "cartoes") o.etapa = normEtapa(o.etapa); return o; }); S.loaded[name] = true; onData(name); }, () => { S.loaded[name] = true; onData(name); }); }
-function isEditing(){ const a = document.activeElement; return UI.editSem || UI.editEst || UI.editDados || UI.editMelh || (a && $("#main").contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)); }
+function isEditing(){ const a = document.activeElement; return UI.editSem || UI.editEst || UI.editDados || UI.editRel || (a && $("#main").contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)); }
 function onData(name){
   if (["comentarios","pessoas","inspiracoes"].includes(name)) resolveNames();
   renderChrome();
@@ -375,6 +378,7 @@ function renderMainSafe(){ if (isEditing()) { UI.pend = true; } else renderMain(
     sub("resultados", db.collection(`${PRIV}/resultados`));
     sub("perguntas", db.collection(`${PRIV}/perguntas`));
     sub("sugestoes", db.collection(`${PRIV}/sugestoes`));
+    sub("relPriv", db.collection(`${PRIV}/relatorios`));
     if (S.me.id) sub("rascunhos", db.collection(`data/users/${S.me.id}`));
     sample = await window.claude?.use?.("sample") ?? null;
     mcp = await window.claude?.use?.("mcp") ?? null;
@@ -551,7 +555,7 @@ const linkify = t => esc(t).replace(/(https?:\/\/[^\s<]+)/g, u => `<a href="${u}
 const linksDe = t => (String(t||"").match(/https?:\/\/[^\s<]+/g) || []);
 function renderModal(){
   const c = S.cartoes.find(x => x.id === UI.cardId); if (!c) { closeCard(); return; }
-  const p = papel(); const eCopy = p === "dona"; const eLinks = p === "equipa"; const eLeg = p === "dona" || p === "cliente"; const feed = c.tipo === "Feed";
+  const p = papel(); const eCopy = p === "dona"; const eLinks = p === "equipa" || p === "dona"; const eLeg = p === "dona" || p === "cliente"; const feed = c.tipo === "Feed";
   const ta = (name, label, val, cls, h) => (p === "cliente" && /estrategia$/.test(name)) ? "" : eCopy ? `<label class="f">${label}<textarea name="${name}" class="${cls||""}" id="fld-${name}" ${h?`style="min-height:${h}px"`:""}>${esc(val)}</textarea></label>`
     : (val ? `<div style="display:grid;gap:2px"><span class="lbl">${label}</span><p class="readv${cls==="cap"?" hand":""}" style="${cls==="cap"?"font-size:17px":""}">${/comoFazer$|inspiracao$/.test(name) ? linkify(val) : esc(val)}</p></div>` : "");
   const insp = (name, val) => eCopy
@@ -842,22 +846,38 @@ async function perguntar(){
 
 /* ---------- relatórios ---------- */
 function lst(t, arr, ordered){ if (!arr || !arr.length) return ""; const tag = ordered ? "ol" : "ul"; return `<div class="card"><h3>${t}</h3><${tag} class="clean">${arr.map(x => `<li>${esc(x)}</li>`).join("")}</${tag}></div>`; }
-/* relatório: tudo Instagram vs Facebook. Relatórios antigos (valores soltos) contam como Instagram. */
+/* ---------- relatórios ----------
+   Rascunhos em privado/…/relatorios (só a Tânia). A cliente e a equipa só leem relatorios/, que só recebe o que a Tânia valida.
+   Tudo Instagram vs Facebook. Relatórios antigos (valores soltos) contam como Instagram. */
 const FORMATOS_REL = [["reels","Reels"],["stories","Stories"],["estaticos","Estáticos"]];
+const TIPOS_REL = {
+  semanal:   { nome:"Semanal",        ant:"Semana anterior", cur:"Esta semana", vs:"vs semana anterior", evo:"Dia a dia" },
+  mensal:    { nome:"Mensal",         ant:"Mês anterior",    cur:"Este mês",    vs:"vs mês anterior",    evo:"Semana a semana" },
+  historico: { nome:"Desde o início", ant:"Início",          cur:"Agora",       vs:"vs início da página", evo:"Mês a mês" } };
+const tipoRel = r => TIPOS_REL[r?.tipo] || TIPOS_REL.semanal;
+const EVO_M = [["alcance","Alcance"],["cliquesLink","Cliques no link"],["mensagens","Mensagens / DMs"],["seguidores","Seguidores"]];
+const CAMPOS_CLIENTE = ["tipo","inicio","fim","titulo","resumo","veredito","kpis","porRede","porFormato","evolucao","conclusoes","melhorias","mostrarMais","mostrarMenos","acoes","exemplo","geradoEm"];
+const mesAno = s => { const d = parse(s); return `${MESES[d.getMonth()]} ${d.getFullYear()}`; };
+const diaAno = s => { const d = parse(s); return `${d.getDate()} ${MESES[d.getMonth()].slice(0,3)} ${d.getFullYear()}`; };
+function rotuloRel(r){
+  if (r.tipo === "mensal") { const m = mesAno(r.inicio); return `Mensal · ${m[0].toUpperCase()}${m.slice(1)}`; }
+  if (r.tipo === "historico") return `Desde o início · ${diaAno(r.inicio)} a ${diaAno(r.fim)}`;
+  return `Semanal · ${fmtCurto(r.inicio)} – ${fmtCurto(r.fim)}`;
+}
 const redeNum = (o, rk) => o?.[rk] ? o[rk] : (rk === "instagram" && o && !o.facebook ? o : {});
 const temRedes = k => k && (k.instagram || k.facebook);
 const legendaRedes = `<div class="legend"><span><i style="background:var(--mk-ig)"></i>Instagram</span><span><i style="background:var(--mk-fb)"></i>Facebook</span></div>`;
-function kpiHtml(k){
+function kpiHtml(k, T){
   const meta = (v) => k.meta != null && v != null ? (v >= k.meta ? `<span class="chip ok">✓ meta ${fmtN(k.meta)}</span>` : `<span class="chip bad">✕ meta ${fmtN(k.meta)}</span>`) : "";
-  if (!temRedes(k)) return `<div class="kpi"><span class="lbl">${esc(k.nome)}</span><span class="v">${fmtN(k.valor)}</span><span class="d">${delta(k.valor, k.anterior)} vs semana anterior</span>${meta(k.valor)}</div>`;
+  if (!temRedes(k)) return `<div class="kpi"><span class="lbl">${esc(k.nome)}</span><span class="v">${fmtN(k.valor)}</span><span class="d">${delta(k.valor, k.anterior)} ${T.vs}</span>${meta(k.valor)}</div>`;
   const ig = Number(k.instagram?.valor)||0, fb = Number(k.facebook?.valor)||0, t = ig + fb, pc = t ? Math.round(ig/t*100) : null;
   return `<div class="kpi rede"><span class="lbl">${esc(k.nome)}</span><span class="v">${fmtN(t)}</span>
     ${REDES.map(([rk,rl,rc]) => `<div class="kr"><i style="background:var(--mk-${rc})"></i><span>${rl}</span><b>${fmtN(k[rk]?.valor)}</b>${delta(k[rk]?.valor, k[rk]?.anterior)}</div>`).join("")}
     ${pc != null ? `<div class="share" title="Instagram ${pc}% · Facebook ${100-pc}%"><span style="width:${pc}%;background:var(--mk-ig)"></span><span style="width:${100-pc}%;background:var(--mk-fb)"></span></div><span class="d">${pc}% Instagram · ${100-pc}% Facebook</span>` : ""}${meta(t)}</div>`;
 }
-/* barras agrupadas: semana anterior vs esta semana, Instagram ao lado do Facebook */
-function kpiChart(k){
-  const grupos = [["Semana anterior","anterior"],["Esta semana","valor"]];
+/* barras agrupadas: antes vs agora, Instagram ao lado do Facebook */
+function kpiChart(k, T){
+  const grupos = [[T.ant,"anterior"],[T.cur,"valor"]];
   const vals = grupos.flatMap(([,g]) => REDES.map(([rk]) => k[rk]?.[g])).filter(v => v != null).map(Number);
   if (!vals.length) return "";
   const W = 340, H = 210, pb = 26, pt = 22, max = Math.max(1, ...vals), gw = W/2, bw = 54;
@@ -866,8 +886,24 @@ function kpiChart(k){
       return `<g class="hit"><rect class="${rc}${g==="anterior"?" ant":""}" x="${x}" y="${y}" width="${bw}" height="${h}" rx="4"/><text class="val" x="${x+bw/2}" y="${y-6}" text-anchor="middle">${fmtN(v)}</text><title>${rl} · ${gl}: ${fmtN(v)}</title></g>`; }).join("")
     + `<text x="${gi*gw + gw/2}" y="${H-7}" text-anchor="middle">${gl}</text>`).join("");
   return `<div class="chart big"><div class="spread"><h3>${esc(k.nome)}</h3>${legendaRedes}</div>
-    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(k.nome)}: Instagram e Facebook, semana anterior e esta semana"><line x1="0" x2="${W}" y1="${H-pb}" y2="${H-pb}"/>${bars}</svg>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(k.nome)}: Instagram e Facebook, ${T.ant} e ${T.cur}"><line x1="0" x2="${W}" y1="${H-pb}" y2="${H-pb}"/>${bars}</svg>
     <p class="small">${REDES.map(([rk,rl]) => `${rl} ${delta(k[rk]?.valor, k[rk]?.anterior)}`).join(" · ")}</p></div>`;
+}
+/* evolução no tempo: uma linha por rede */
+function evoChart(title, pontos, key){
+  const v = (p, rk) => { const x = p?.[rk]?.[key]; return x == null || x === "" ? null : Number(x); };
+  const all = pontos.flatMap(p => REDES.map(([rk]) => v(p,rk))).filter(x => x != null);
+  if (!all.length) return "";
+  const W = 520, H = 230, pl = 30, pr = 60, pt = 20, pb = 28, max = Math.max(1, ...all), n = pontos.length;
+  const X = i => pl + (n === 1 ? (W-pl-pr)/2 : i*(W-pl-pr)/(n-1)), Y = val => H-pb - val/max*(H-pb-pt);
+  const passo = Math.ceil(n/8);
+  const eixo = pontos.map((p,i) => (i % passo === 0 || i === n-1) ? `<text x="${X(i)}" y="${H-8}" text-anchor="middle">${esc(p.rotulo)}</text>` : "").join("");
+  const series = REDES.map(([rk,rl,rc]) => { const pts = pontos.map((p,i) => [i, v(p,rk)]).filter(([,y]) => y != null); if (!pts.length) return "";
+    const last = pts[pts.length-1];
+    return `<polyline class="ln ${rc}" points="${pts.map(([i,y]) => `${X(i)},${Y(y)}`).join(" ")}"/>`
+      + pts.map(([i,y]) => `<g class="hit"><circle class="pt ${rc}" cx="${X(i)}" cy="${Y(y)}" r="4"/><circle cx="${X(i)}" cy="${Y(y)}" r="11" fill="transparent"/><title>${rl} · ${esc(pontos[i].rotulo)}: ${fmtN(y)}</title></g>`).join("")
+      + `<text class="val" x="${X(last[0])+8}" y="${Y(last[1])+4}">${fmtN(last[1])}</text>`; }).join("");
+  return `<div class="chart big"><div class="spread"><h3>${title}</h3>${legendaRedes}</div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}: evolução no Instagram e no Facebook"><line x1="${pl}" x2="${W-pr}" y1="${H-pb}" y2="${H-pb}"/>${series}${eixo}</svg></div>`;
 }
 /* por formato: cada formato com a barra do Instagram e a do Facebook */
 function formatoChart(title, pf, key){
@@ -884,13 +920,20 @@ function kpisDoRelatorio(r){
   return Object.keys(nomes).filter(m => pr.instagram?.[m] != null || pr.facebook?.[m] != null).map(m => ({ nome:nomes[m], instagram:{ valor:pr.instagram?.[m], anterior:pr.anterior?.instagram?.[m] }, facebook:{ valor:pr.facebook?.[m], anterior:pr.anterior?.facebook?.[m] } }))
     .concat(ks.filter(k => /venda|receita/i.test(k.nome)));
 }
-function renderRelatorios(main){
-  const rs = [...S.relatorios].sort((a,b) => (b.inicio||"").localeCompare(a.inicio||""));
-  if (!rs.length) { main.innerHTML = `<div class="rep-hero"><span class="v">Relatório semanal</span><h2>O primeiro relatório chega na segunda-feira</h2><p>Instagram e Facebook lado a lado: o que funcionou em stories, reels e estáticos, os números da semana e as melhorias para a semana seguinte.</p></div>`; return; }
-  const r = rs.find(x => x.id === UI.relId) || rs[0]; const dona = isDona();
-  const ver = { bom:"Semana a correr bem", atencao:"Atenção", critico:"Semana crítica" }[r.veredito] || "Análise";
-  const pf = r.porFormato || {};
-  const ks = kpisDoRelatorio(r), ksRede = ks.filter(temRedes);
+/* lista que a Tânia vê: rascunhos privados + o que já está publicado */
+function listaRel(){
+  if (!isDona()) return [...S.relatorios].map(r => ({ ...r, _estado:"publicado" })).sort((a,b) => (b.fim||"").localeCompare(a.fim||"") || (a.tipo||"").localeCompare(b.tipo||""));
+  const out = S.relPriv.map(r => { const pub = S.relatorios.find(p => p.id === r.id);
+    const estado = pub ? ((r.atualizadoEm || "") > (r.publicadoEm || "") ? "alterado" : "publicado") : "rascunho";
+    return { ...r, _priv:true, _estado:estado }; });
+  S.relatorios.filter(p => !S.relPriv.some(r => r.id === p.id)).forEach(p => out.push({ ...p, _priv:false, _estado:"publicado" }));
+  return out.sort((a,b) => (b.fim||"").localeCompare(a.fim||"") || (a.tipo||"").localeCompare(b.tipo||""));
+}
+const ESTADO_REL = { rascunho:["warn","Rascunho · por validar"], publicado:["ok","Validado · a cliente vê"], alterado:["bad","Alterado depois de publicar · a cliente vê a versão anterior"] };
+function relClienteHtml(r){
+  const T = tipoRel(r), pf = r.porFormato || {}, ks = kpisDoRelatorio(r), ksRede = ks.filter(temRedes);
+  const ver = { bom:"A correr bem", atencao:"Atenção", critico:"Crítico" }[r.veredito] || "Análise";
+  const pontos = r.evolucao?.pontos || [];
   const fmtCard = (k, t) => { const o = pf[k]; if (!o) return ""; const n = o.numeros || {};
     const linhas = [["publicacoes","Publicações"],["alcanceMedio","Alcance médio"],["cliques","Cliques"],["respostas","Respostas"]].filter(([m]) => REDES.some(([rk]) => redeNum(n, rk)[m] != null));
     return `<div class="fmtcard ${k}"><h3>${t}</h3>
@@ -898,25 +941,123 @@ function renderRelatorios(main){
       ${(o.funcionou||[]).length ? `<span class="lbl" style="color:var(--ok)">Funcionou</span><ul class="clean">${o.funcionou.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
       ${(o.naoFuncionou||[]).length ? `<span class="lbl" style="color:var(--bad)">Não funcionou</span><ul class="clean">${o.naoFuncionou.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</div>`; };
   const melh = r.melhorias || [];
-  main.innerHTML = `<div class="row" style="justify-content:flex-end"><select class="inp" style="width:auto" data-act="relSel" id="relSel" aria-label="Semana do relatório">${rs.map(x => `<option value="${esc(x.id)}"${x.id===r.id?" selected":""}>${esc(fmtCurto(x.inicio))} – ${esc(fmtCurto(x.fim))}</option>`).join("")}</select></div>
-  ${r.exemplo ? `<div class="exemplo">EXEMPLO com dados fictícios. Serve para veres o formato do relatório de cada segunda-feira às 8h.</div>` : ""}
-  <div class="rep-hero"><span class="v">${esc(ver)} · ${esc(fmtLongo(r.inicio))} a ${esc(fmtLongo(r.fim))}</span><h2>${esc(r.titulo || "Relatório da semana")}</h2><p class="readv" style="max-width:70ch">${esc(r.resumo)}</p></div>
-  ${ks.length ? `<div class="kpis">${ks.map(kpiHtml).join("")}</div>` : ""}
+  const periodo = r.tipo === "semanal" ? `${fmtLongo(r.inicio)} a ${fmtLongo(r.fim)}` : r.tipo === "mensal" ? mesAno(r.inicio) : `${diaAno(r.inicio)} a ${diaAno(r.fim)}`;
+  return `${r.exemplo ? `<div class="exemplo">SIMULAÇÃO com dados fictícios. Serve para veres como fica o relatório ${T.nome.toLowerCase()}.</div>` : ""}
+  <div class="rep-hero"><span class="v">${esc(T.nome)} · ${esc(ver)} · ${esc(periodo)}</span><h2>${esc(r.titulo || "Relatório")}</h2><p class="readv" style="max-width:70ch">${esc(r.resumo)}</p></div>
+  ${ks.length ? `<div class="kpis">${ks.map(k => kpiHtml(k, T)).join("")}</div>` : ""}
+  ${pontos.length > 1 ? `<div class="spread"><h2>${T.evo}</h2>${legendaRedes}</div><div class="charts big">${EVO_M.map(([k,l]) => evoChart(l, pontos, k)).join("")}</div>` : ""}
   ${ksRede.length ? `<div class="spread"><h2>Instagram vs Facebook</h2>${legendaRedes}</div>
     ${r.porRede?.leitura ? `<div class="card leitura"><p class="readv">${esc(r.porRede.leitura)}</p></div>` : ""}
-    <div class="charts big">${ksRede.map(kpiChart).join("")}</div>` : ""}
+    <div class="charts big">${ksRede.map(k => kpiChart(k, T)).join("")}</div>` : ""}
   ${["alcanceMedio","cliques","respostas"].some(m => FORMATOS_REL.some(([fk]) => REDES.some(([rk]) => redeNum(pf[fk]?.numeros, rk)[m] != null))) ? `<h2>Por formato</h2>
     <div class="charts big">${formatoChart("Alcance médio por publicação", pf, "alcanceMedio")}${formatoChart("Cliques no link", pf, "cliques")}${formatoChart("Respostas e DMs", pf, "respostas")}</div>` : ""}
   <div class="grid2">${fmtCard("stories","Stories")}${fmtCard("reels","Reels")}${fmtCard("estaticos","Estáticos e carrosséis")}</div>
   ${(r.conclusoes||[]).length ? `<div class="card"><h3>O que os dados nos dizem</h3><ol class="clean">${r.conclusoes.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>` : ""}
-  <div class="card"><div class="spread"><h3>Melhorias para a próxima semana</h3>${dona && UI.editMelh !== r.id ? `<button class="btn sm" data-act="editMelh" data-id="${esc(r.id)}">Editar melhorias</button>` : ""}</div>
-    ${UI.editMelh === r.id ? `<div id="melhEdit" class="panel" style="gap:10px">${melh.map((m,i) => `<div class="sec" data-mi="${i}"><div class="fgrid"><label class="f">Melhoria<input data-mk="acao" value="${esc(m.acao)}" id="m-a-${i}"></label><label class="f">Autor<select data-mk="autor" id="m-u-${i}"><option value="claude"${m.autor!=="tania"?" selected":""}>Claude</option><option value="tania"${m.autor==="tania"?" selected":""}>Tânia</option></select></label></div><label class="f">Porquê<textarea data-mk="porque" id="m-p-${i}" style="min-height:50px">${esc(m.porque)}</textarea></label><label class="f">Como<textarea data-mk="como" id="m-c-${i}" style="min-height:50px">${esc(m.como)}</textarea></label><div class="row"><button class="btn ghost sm danger" data-act="rmMelh" data-i="${i}">Remover</button></div></div>`).join("")}
-      <div class="row"><button class="btn" data-act="addMelh">+ Acrescentar melhoria</button><button class="btn primary" data-act="saveMelh" data-id="${esc(r.id)}">Guardar</button><button class="btn" data-act="cancelMelh">Cancelar</button></div></div>`
-    : (melh.length ? melh.map(m => `<div class="melhoria ${m.autor==="tania"?"tania":""}"><span class="lbl">${m.autor==="tania"?"Tânia":"Claude"}</span><b>${esc(m.acao)}</b>${m.porque ? `<span class="small"><span class="lbl">Porquê</span> ${esc(m.porque)}</span>` : ""}${m.como ? `<span class="small"><span class="lbl">Como</span> ${esc(m.como)}</span>` : ""}</div>`).join("") : `<p class="muted">Sem melhorias registadas.</p>`)}</div>
+  <div class="card"><h3>Melhorias</h3>${melh.length ? melh.map(m => `<div class="melhoria ${m.autor==="tania"?"tania":""}"><span class="lbl">${m.autor==="tania"?"Tânia":"Claude"}</span><b>${esc(m.acao)}</b>${m.porque ? `<span class="small"><span class="lbl">Porquê</span> ${esc(m.porque)}</span>` : ""}${m.como ? `<span class="small"><span class="lbl">Como</span> ${esc(m.como)}</span>` : ""}</div>`).join("") : `<p class="muted">Sem melhorias registadas.</p>`}</div>
   <div class="grid2">${lst("Mostrar mais", r.mostrarMais)}${lst("Mostrar menos ou deixar de mostrar", r.mostrarMenos)}</div>
-  ${lst("Ações para esta semana", r.acoes, true)}`;
+  ${lst("Ações", r.acoes, true)}`;
 }
-function lerMelhorias(){ return [...document.querySelectorAll("#melhEdit [data-mi]")].map(el => { const o = {}; el.querySelectorAll("[data-mk]").forEach(i => o[i.dataset.mk] = i.value); return o; }); }
+function relDetalheHtml(r){
+  const T = tipoRel(r), d = r.detalhe || {}, ks = kpisDoRelatorio(r), pontos = r.evolucao?.pontos || [];
+  const pubTbl = (t, arr) => (arr||[]).length ? `<div class="card"><h3>${t}</h3><div class="tbl"><table><thead><tr><th>Dia</th><th>Rede</th><th>Peça</th><th>Conteúdo</th><th class="n">Alcance</th><th class="n">Cliques</th><th class="n">Respostas</th><th class="n">Guardados</th></tr></thead><tbody>${arr.map(x => `<tr><td>${esc(fmtCurto(x.data))}</td><td><span class="legend"><span><i style="background:var(--mk-${x.rede==="facebook"?"fb":"ig"})"></i>${x.rede==="facebook"?"Facebook":"Instagram"}</span></span></td><td>${esc(x.peca)}</td><td>${esc(x.tema)}</td><td class="n">${fmtN(x.alcance)}</td><td class="n">${fmtN(x.cliques)}</td><td class="n">${fmtN(x.respostas)}</td><td class="n">${fmtN(x.guardados)}</td></tr>`).join("")}</tbody></table></div></div>` : "";
+  return `<div class="priv-banner">🔒 <b>Análise detalhada.</b> Só tu vês. A cliente recebe a versão geral, e só depois de validares.</div>
+  ${r.exemplo ? `<div class="exemplo">SIMULAÇÃO com dados fictícios.</div>` : ""}
+  ${d.notasDados ? `<div class="card leitura"><h3>Dados a confirmar antes de validar</h3><p class="readv">${esc(d.notasDados)}</p></div>` : ""}
+  ${ks.length ? `<div class="card"><h3>Todos os números</h3><div class="tbl"><table class="cmp"><thead><tr><th></th><th colspan="3" class="grp ig sep">Instagram</th><th colspan="3" class="grp fb sep">Facebook</th><th colspan="2" class="grp sep">Total</th></tr>
+    <tr><th>Métrica</th>${REDES.map(() => `<th class="n sep">${T.cur}</th><th class="n">${T.ant}</th><th class="n">Δ</th>`).join("")}<th class="n sep">${T.cur}</th><th class="n">Δ</th></tr></thead>
+    <tbody>${ks.map(k => { const red = temRedes(k), t = red ? (Number(k.instagram?.valor)||0) + (Number(k.facebook?.valor)||0) : k.valor, tA = red ? (k.instagram?.anterior == null && k.facebook?.anterior == null ? null : (Number(k.instagram?.anterior)||0) + (Number(k.facebook?.anterior)||0)) : k.anterior;
+      return `<tr><td>${esc(k.nome)}${k.meta != null ? ` <span class="small muted">meta ${fmtN(k.meta)}</span>` : ""}</td>${REDES.map(([rk]) => red ? `<td class="n sep">${fmtN(k[rk]?.valor)}</td><td class="n">${fmtN(k[rk]?.anterior)}</td><td class="n">${delta(k[rk]?.valor, k[rk]?.anterior)}</td>` : `<td class="n sep"></td><td></td><td></td>`).join("")}<td class="n sep"><b>${fmtN(t)}</b></td><td class="n">${delta(t, tA)}</td></tr>`; }).join("")}</tbody></table></div></div>` : ""}
+  ${pontos.length ? `<div class="card"><h3>${T.evo}: números</h3><div class="tbl"><table class="cmp"><thead><tr><th></th>${EVO_M.map(([,l]) => `<th colspan="2" class="grp sep">${l}</th>`).join("")}</tr><tr><th>Período</th>${EVO_M.map(() => `<th class="n sep">IG</th><th class="n">FB</th>`).join("")}</tr></thead>
+    <tbody>${pontos.map(p => `<tr><td>${esc(p.rotulo)}</td>${EVO_M.map(([k]) => `<td class="n sep">${fmtN(p.instagram?.[k])}</td><td class="n">${fmtN(p.facebook?.[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div>` : ""}
+  ${(d.seccoes||[]).map(s => `<div class="card"><h3>${esc(s.titulo)}</h3><p class="readv">${esc(s.texto)}</p></div>`).join("")}
+  ${pubTbl("Publicações que mais resultaram", d.top)}${pubTbl("Publicações que menos resultaram", d.piores)}
+  ${!(d.seccoes||[]).length && !d.notasDados ? `<p class="muted">Ainda sem análise detalhada. Carrega em Editar para escreveres a tua.</p>` : ""}`;
+}
+/* ---- edição: tudo editável ---- */
+const linhas = a => (a||[]).join("\n");
+function relEditHtml(r){
+  const pf = r.porFormato || {}, d = r.detalhe || {}, pontos = r.evolucao?.pontos || [], ks = kpisDoRelatorio(r);
+  const num = (attr, v) => `<input type="number" ${attr} value="${v ?? ""}" class="inp" style="width:84px">`;
+  return `<form id="relForm" class="panel" style="gap:14px">
+  <div class="card"><h3>Geral</h3><div class="fgrid">
+    <label class="f">Título<input name="titulo" value="${esc(r.titulo)}" id="re-titulo"></label>
+    <label class="f">Estado da semana / mês<select name="veredito" id="re-ver">${[["bom","A correr bem"],["atencao","Atenção"],["critico","Crítico"]].map(([k,l]) => `<option value="${k}"${r.veredito===k?" selected":""}>${l}</option>`).join("")}</select></label></div>
+    <label class="f">Resumo<textarea name="resumo" id="re-resumo" style="min-height:80px">${esc(r.resumo)}</textarea></label></div>
+  <div class="card"><div class="spread"><h3>Números (confirma cada um)</h3><button type="button" class="btn sm" data-act="relAdd" data-what="kpi">+ Linha</button></div>
+    <p class="hint">Linhas com Instagram ou Facebook preenchidos comparam as duas redes. Vendas e receita vão em Total.</p>
+    <div class="tbl"><table class="cmp"><thead><tr><th>Métrica</th><th class="n">Meta</th><th colspan="2" class="grp ig sep">Instagram</th><th colspan="2" class="grp fb sep">Facebook</th><th colspan="2" class="grp sep">Total</th><th></th></tr>
+      <tr><th></th><th></th><th class="n sep">Agora</th><th class="n">Antes</th><th class="n sep">Agora</th><th class="n">Antes</th><th class="n sep">Agora</th><th class="n">Antes</th><th></th></tr></thead>
+    <tbody>${ks.map((k,i) => `<tr data-kpi="${i}"><td><input data-f="nome" value="${esc(k.nome)}" class="inp" style="min-width:150px"></td><td>${num('data-f="meta"', k.meta)}</td>
+      <td class="sep">${num('data-f="ig.valor"', k.instagram?.valor)}</td><td>${num('data-f="ig.anterior"', k.instagram?.anterior)}</td>
+      <td class="sep">${num('data-f="fb.valor"', k.facebook?.valor)}</td><td>${num('data-f="fb.anterior"', k.facebook?.anterior)}</td>
+      <td class="sep">${num('data-f="t.valor"', temRedes(k) ? null : k.valor)}</td><td>${num('data-f="t.anterior"', temRedes(k) ? null : k.anterior)}</td>
+      <td><button type="button" class="btn ghost sm danger" data-act="relRm" data-what="kpi" data-i="${i}" aria-label="Remover linha">✕</button></td></tr>`).join("")}</tbody></table></div></div>
+  <div class="card"><h3>Instagram vs Facebook: leitura</h3><label class="f">O que a comparação diz<textarea name="leitura" id="re-leitura" style="min-height:70px">${esc(r.porRede?.leitura)}</textarea></label></div>
+  <div class="card"><div class="spread"><h3>Evolução (${esc(tipoRel(r).evo.toLowerCase())})</h3><button type="button" class="btn sm" data-act="relAdd" data-what="evo">+ Período</button></div>
+    ${pontos.length ? `<div class="tbl"><table class="cmp"><thead><tr><th>Período</th>${EVO_M.map(([,l]) => `<th colspan="2" class="grp sep">${l}</th>`).join("")}<th></th></tr><tr><th></th>${EVO_M.map(() => `<th class="n sep">IG</th><th class="n">FB</th>`).join("")}<th></th></tr></thead>
+    <tbody>${pontos.map((p,i) => `<tr data-evo="${i}"><td><input data-f="rotulo" value="${esc(p.rotulo)}" class="inp" style="width:90px"></td>${EVO_M.map(([k]) => `<td class="sep">${num(`data-f="ig.${k}"`, p.instagram?.[k])}</td><td>${num(`data-f="fb.${k}"`, p.facebook?.[k])}</td>`).join("")}<td><button type="button" class="btn ghost sm danger" data-act="relRm" data-what="evo" data-i="${i}" aria-label="Remover período">✕</button></td></tr>`).join("")}</tbody></table></div>` : `<p class="small muted">Sem evolução. Acrescenta períodos se quiseres o gráfico.</p>`}</div>
+  <div class="card"><h3>Por formato</h3><div class="grid2">${FORMATOS_REL.map(([fk,fl]) => { const o = pf[fk] || {}, n = o.numeros || {};
+    return `<div class="sec" data-fmt="${fk}"><h4>${fl}</h4>
+      <div class="tbl"><table class="mini"><thead><tr><th></th><th class="n">Instagram</th><th class="n">Facebook</th></tr></thead><tbody>${[["publicacoes","Publicações"],["alcanceMedio","Alcance médio"],["cliques","Cliques"],["respostas","Respostas"]].map(([m,l]) => `<tr><td>${l}</td>${REDES.map(([rk]) => `<td class="n">${num(`data-f="${rk}.${m}"`, redeNum(n, rk)[m])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+      <label class="f">Funcionou (uma por linha)<textarea data-f="funcionou" style="min-height:60px">${esc(linhas(o.funcionou))}</textarea></label>
+      <label class="f">Não funcionou (uma por linha)<textarea data-f="naoFuncionou" style="min-height:60px">${esc(linhas(o.naoFuncionou))}</textarea></label></div>`; }).join("")}</div></div>
+  <div class="card"><h3>Conclusões e listas</h3>
+    <label class="f">O que os dados nos dizem (uma por linha)<textarea name="conclusoes" id="re-concl" style="min-height:90px">${esc(linhas(r.conclusoes))}</textarea></label>
+    <div class="grid2"><label class="f">Mostrar mais (uma por linha)<textarea name="mostrarMais" id="re-mais" style="min-height:60px">${esc(linhas(r.mostrarMais))}</textarea></label>
+    <label class="f">Mostrar menos (uma por linha)<textarea name="mostrarMenos" id="re-menos" style="min-height:60px">${esc(linhas(r.mostrarMenos))}</textarea></label></div>
+    <label class="f">Ações (uma por linha)<textarea name="acoes" id="re-acoes" style="min-height:60px">${esc(linhas(r.acoes))}</textarea></label></div>
+  <div class="card"><div class="spread"><h3>Melhorias</h3><button type="button" class="btn sm" data-act="relAdd" data-what="melh">+ Melhoria</button></div>
+    ${(r.melhorias||[]).map((m,i) => `<div class="sec" data-mi="${i}"><div class="fgrid"><label class="f">Melhoria<input data-mk="acao" value="${esc(m.acao)}"></label><label class="f">Autor<select data-mk="autor"><option value="claude"${m.autor!=="tania"?" selected":""}>Claude</option><option value="tania"${m.autor==="tania"?" selected":""}>Tânia</option></select></label></div><label class="f">Porquê<textarea data-mk="porque" style="min-height:44px">${esc(m.porque)}</textarea></label><label class="f">Como<textarea data-mk="como" style="min-height:44px">${esc(m.como)}</textarea></label><div class="row"><button type="button" class="btn ghost sm danger" data-act="relRm" data-what="melh" data-i="${i}">Remover</button></div></div>`).join("")}</div>
+  <div class="card priv"><div class="spread"><h3>Análise detalhada 🔒 (só tu)</h3><button type="button" class="btn sm" data-act="relAdd" data-what="sec">+ Secção</button></div>
+    <label class="f">Dados a confirmar antes de validar<textarea name="notasDados" id="re-notas" style="min-height:60px">${esc(d.notasDados)}</textarea></label>
+    ${(d.seccoes||[]).map((s,i) => `<div class="sec" data-sec="${i}"><label class="f">Título<input data-f="titulo" value="${esc(s.titulo)}"></label><label class="f">Texto<textarea data-f="texto" style="min-height:90px">${esc(s.texto)}</textarea></label><div class="row"><button type="button" class="btn ghost sm danger" data-act="relRm" data-what="sec" data-i="${i}">Remover secção</button></div></div>`).join("")}</div>
+  <div class="row" style="position:sticky;bottom:0;background:var(--bg);padding:10px 0"><button class="btn primary" type="submit">Guardar rascunho</button><button type="button" class="btn" data-act="relCancel">Cancelar</button><span class="small muted">Guardar não publica. A cliente só vê depois de carregares em Validar e publicar.</span></div>
+  </form>`;
+}
+function lerRelForm(base){
+  const f = $("#relForm"); if (!f) return base;
+  const nv = el => el.value === "" ? null : Number(el.value), ls = t => (t || "").split("\n").map(x => x.trim()).filter(Boolean);
+  const r = JSON.parse(JSON.stringify(base));
+  r.titulo = f.querySelector("[name=titulo]").value; r.veredito = f.querySelector("[name=veredito]").value; r.resumo = f.querySelector("[name=resumo]").value;
+  r.kpis = [...f.querySelectorAll("[data-kpi]")].map(tr => { const g = k => nv(tr.querySelector(`[data-f="${k}"]`));
+    const k = { nome: tr.querySelector('[data-f="nome"]').value.trim(), meta: g("meta") };
+    if ([g("ig.valor"), g("ig.anterior"), g("fb.valor"), g("fb.anterior")].some(v => v != null)) { k.instagram = { valor:g("ig.valor"), anterior:g("ig.anterior") }; k.facebook = { valor:g("fb.valor"), anterior:g("fb.anterior") }; }
+    else { k.valor = g("t.valor"); k.anterior = g("t.anterior"); }
+    if (k.meta == null) delete k.meta; return k; });
+  r.porRede = { ...(r.porRede || {}), leitura: f.querySelector("[name=leitura]").value };
+  const pontos = [...f.querySelectorAll("[data-evo]")].map(tr => { const p = { rotulo: tr.querySelector('[data-f="rotulo"]').value, instagram:{}, facebook:{} };
+    EVO_M.forEach(([k]) => { p.instagram[k] = nv(tr.querySelector(`[data-f="ig.${k}"]`)); p.facebook[k] = nv(tr.querySelector(`[data-f="fb.${k}"]`)); }); return p; });
+  r.evolucao = { ...(r.evolucao || {}), pontos };
+  r.porFormato = r.porFormato || {};
+  f.querySelectorAll("[data-fmt]").forEach(box => { const fk = box.dataset.fmt, o = { ...(r.porFormato[fk] || {}) }, n = {};
+    REDES.forEach(([rk]) => { n[rk] = {}; ["publicacoes","alcanceMedio","cliques","respostas"].forEach(m => { n[rk][m] = nv(box.querySelector(`[data-f="${rk}.${m}"]`)); }); });
+    o.numeros = n; o.funcionou = ls(box.querySelector('[data-f="funcionou"]').value); o.naoFuncionou = ls(box.querySelector('[data-f="naoFuncionou"]').value); r.porFormato[fk] = o; });
+  r.conclusoes = ls(f.querySelector("[name=conclusoes]").value); r.mostrarMais = ls(f.querySelector("[name=mostrarMais]").value); r.mostrarMenos = ls(f.querySelector("[name=mostrarMenos]").value); r.acoes = ls(f.querySelector("[name=acoes]").value);
+  r.melhorias = [...f.querySelectorAll("[data-mi]")].map(el => { const o = {}; el.querySelectorAll("[data-mk]").forEach(i => o[i.dataset.mk] = i.value); return o; });
+  r.detalhe = { ...(r.detalhe || {}), notasDados: f.querySelector("[name=notasDados]").value,
+    seccoes: [...f.querySelectorAll("[data-sec]")].map(el => ({ titulo: el.querySelector('[data-f="titulo"]').value, texto: el.querySelector('[data-f="texto"]').value })) };
+  return r;
+}
+const limpaRel = r => { const o = { ...r }; ["id","_priv","_estado"].forEach(k => delete o[k]); return o; };
+function renderRelatorios(main){
+  const rs = listaRel(), dona = isDona();
+  if (!rs.length) { main.innerHTML = `<div class="rep-hero"><span class="v">Relatórios</span><h2>Ainda não há relatórios publicados</h2><p>Semanal às segundas, mensal no último dia de cada mês e o relatório desde o início da página. Instagram e Facebook lado a lado.</p></div>`; return; }
+  const r = rs.find(x => x.id === UI.relId) || rs[0];
+  if (dona && UI.editRel === r.id) { const base = UI.relDraft?.id === r.id ? UI.relDraft : r;
+    main.innerHTML = `<div class="spread"><h2>A editar: ${esc(rotuloRel(r))}</h2><span class="chip ${ESTADO_REL[r._estado][0]}">${ESTADO_REL[r._estado][1]}</span></div>${relEditHtml(base)}`; return; }
+  const vista = dona ? (UI.relVista || "cliente") : "cliente";
+  const porValidar = dona ? rs.filter(x => x._estado !== "publicado").length : 0;
+  main.innerHTML = `<div class="spread"><div class="row">${dona && porValidar ? `<span class="chip warn">${porValidar} por validar</span>` : ""}</div>
+    <select class="inp" style="width:auto" data-act="relSel" id="relSel" aria-label="Relatório">${rs.map(x => `<option value="${esc(x.id)}"${x.id===r.id?" selected":""}>${dona && x._estado !== "publicado" ? "● " : ""}${esc(rotuloRel(x))}${x.exemplo ? " (simulação)" : ""}</option>`).join("")}</select></div>
+  ${dona ? `<div class="card relbar"><div class="spread"><span class="chip ${ESTADO_REL[r._estado][0]}">${ESTADO_REL[r._estado][1]}</span>
+      <div class="seg" role="group" aria-label="Versão"><button data-act="relVista" data-v="cliente" aria-pressed="${vista==="cliente"}">Versão da cliente</button><button data-act="relVista" data-v="detalhe" aria-pressed="${vista==="detalhe"}">Análise detalhada 🔒</button></div></div>
+    <div class="row" id="relAcoes"><button class="btn" data-act="relEdit" data-id="${esc(r.id)}">Editar</button>
+      ${UI.relConf === r.id ? `<span class="row small">Confirmaste os números? A cliente passa a ver esta versão. <button class="btn primary" data-act="relPub" data-id="${esc(r.id)}">Sim, publicar</button><button class="btn" data-act="relConfNo">Ainda não</button></span>`
+        : r._estado === "rascunho" ? `<button class="btn primary" data-act="relConf" data-id="${esc(r.id)}">Validar e publicar para a cliente</button>`
+        : r._estado === "alterado" ? `<button class="btn primary" data-act="relConf" data-id="${esc(r.id)}">Publicar as alterações</button><button class="btn ghost danger" data-act="relRetirar" data-id="${esc(r.id)}">Retirar da cliente</button>`
+        : `<button class="btn ghost danger" data-act="relRetirar" data-id="${esc(r.id)}">Retirar da cliente</button>`}</div></div>` : ""}
+  ${vista === "detalhe" ? relDetalheHtml(r) : relClienteHtml(r)}`;
+}
 
 /* ---------- oficina (privado) ---------- */
 const MARCA = `Traços D'Amor: moda infantil portuguesa premium, design autoral, tagline "we are dreamers". Fundadora e cliente: Sílvia Ferreira (@ferreira silvia). Criativa: Ângela. Público: mães conscientes que querem algo que distinga os filhos; compram por significado, não por preço.
@@ -1135,12 +1276,25 @@ document.addEventListener("click", async e => {
       tr.querySelectorAll("input[data-k]").forEach(i => { alvo[i.dataset.k] = i.value === "" ? null : Number(i.value); });
       if (await write(`${PRIV}/metricas/${el.dataset.id}`, body)) { UI.editDados = null; toast("Guardado."); renderMain(); } break; }
     case "perguntar": UI.qaTxt = $("#qaTxt")?.value || UI.qaTxt; perguntar(); break;
-    case "editMelh": UI.editMelh = el.dataset.id; renderMain(); break;
-    case "cancelMelh": UI.editMelh = null; renderMain(); break;
-    case "addMelh": case "rmMelh": { const i = S.relatorios.findIndex(x => x.id === UI.editMelh); const cur = lerMelhorias();
-      if (a === "addMelh") cur.push({ acao:"", porque:"", como:"", autor:"tania" }); else cur.splice(Number(el.dataset.i),1);
-      S.relatorios[i] = { ...S.relatorios[i], melhorias:cur }; renderMain(); break; }
-    case "saveMelh": { const cur = lerMelhorias().filter(m => m.acao.trim()); if (await write(`relatorios/${el.dataset.id}`, { melhorias:cur }, true)) { UI.editMelh = null; toast("Melhorias guardadas."); renderMain(); } break; }
+    case "relVista": UI.relVista = el.dataset.v; renderMain(); break;
+    case "relEdit": UI.editRel = el.dataset.id; UI.relDraft = null; UI.relConf = null; renderMain(); window.scrollTo(0,0); break;
+    case "relCancel": UI.editRel = null; UI.relDraft = null; renderMain(); break;
+    case "relAdd": case "relRm": { const base = UI.relDraft?.id === UI.editRel ? UI.relDraft : listaRel().find(x => x.id === UI.editRel); if (!base) break;
+      const d = lerRelForm(base), w = el.dataset.what, i = Number(el.dataset.i);
+      if (w === "kpi") a === "relAdd" ? d.kpis.push({ nome:"", instagram:{}, facebook:{} }) : d.kpis.splice(i,1);
+      if (w === "evo") a === "relAdd" ? d.evolucao.pontos.push({ rotulo:"", instagram:{}, facebook:{} }) : d.evolucao.pontos.splice(i,1);
+      if (w === "melh") a === "relAdd" ? d.melhorias.push({ acao:"", porque:"", como:"", autor:"tania" }) : d.melhorias.splice(i,1);
+      if (w === "sec") a === "relAdd" ? d.detalhe.seccoes.push({ titulo:"", texto:"" }) : d.detalhe.seccoes.splice(i,1);
+      UI.relDraft = d; renderMain(); break; }
+    case "relConf": UI.relConf = el.dataset.id; renderMain(); break;
+    case "relConfNo": UI.relConf = null; renderMain(); break;
+    case "relPub": { const r = listaRel().find(x => x.id === el.dataset.id); if (!r) break; const agora = new Date().toISOString();
+      const pub = { cliente:CLIENTE, publicadoEm:agora }; CAMPOS_CLIENTE.forEach(k => { if (r[k] !== undefined) pub[k] = r[k]; });
+      const priv = { ...limpaRel(r), cliente:CLIENTE, publicadoEm:agora, validadoEm:agora, atualizadoEm: r.atualizadoEm || agora };
+      if (await write(`relatorios/${r.id}`, pub) && await write(`${PRIV}/relatorios/${r.id}`, priv)) { UI.relConf = null; toast("Validado. A cliente já vê este relatório."); } break; }
+    case "relRetirar": { const r = listaRel().find(x => x.id === el.dataset.id); if (!r) break;
+      if (!r._priv && !(await write(`${PRIV}/relatorios/${r.id}`, { ...limpaRel(r), cliente:CLIENTE, publicadoEm:null }))) break;
+      try { await db.doc(`relatorios/${r.id}`).delete(); if (r._priv) await write(`${PRIV}/relatorios/${r.id}`, { publicadoEm:null }, true); toast("Retirado. A cliente deixou de ver este relatório."); } catch(x){ toast("Não consegui retirar. Tenta outra vez."); } break; }
     case "ofModo": UI.of.modo = el.dataset.v; if (UI.of.modo === "dia") UI.of.semanas = UI.of.semanas.slice(0,1); renderMain(); break;
     case "ofSem": { const id = el.dataset.id; const s = UI.of.semanas;
       if (UI.of.modo === "dia") UI.of.semanas = [id]; else UI.of.semanas = s.includes(id) ? s.filter(x => x !== id) : [...s, id]; renderMain(); break; }
@@ -1172,6 +1326,10 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && UI.cardId)
 document.addEventListener("submit", async e => {
   e.preventDefault(); const f = e.target;
   if (f.id === "cardForm") { const c = S.cartoes.find(x => x.id === UI.cardId); const body = papel() === "cliente" ? { legenda: new FormData(f).get("legenda") ?? c.legenda, atualizadoEm:new Date().toISOString() } : lerForm(c); if (await write(`cartoes/${c.id}`, body, true)) { localMerge(c.id, body); toast("Guardado."); renderModal(); } return; }
+  if (f.id === "relForm") { const r = listaRel().find(x => x.id === UI.editRel); if (!r) return; const base = UI.relDraft?.id === r.id ? UI.relDraft : r;
+    const body = { ...limpaRel(lerRelForm(base)), cliente:CLIENTE, atualizadoEm:new Date().toISOString() };
+    if (await write(`${PRIV}/relatorios/${r.id}`, body)) { UI.editRel = null; UI.relDraft = null; toast(r._estado === "rascunho" ? "Rascunho guardado. Ainda não está publicado." : "Guardado. Carrega em Publicar as alterações para a cliente ver."); renderMain(); }
+    return; }
   if (f.id === "resForm") {
     const c = S.cartoes.find(x => x.id === UI.cardId); const fd = new FormData(f); const num = k => { const v = fd.get(k); return v === "" || v == null ? null : Number(v); };
     const grupo = pref => Object.fromEntries(METRICAS_POST.map(([k]) => [k, num(`${pref}${k}`)]));
