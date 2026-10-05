@@ -202,7 +202,7 @@ table.mini{width:100%;border-collapse:collapse;font-size:14px} table.mini td,tab
 .aval{border-top:5px solid var(--td-castanho);gap:14px}
 .nota{display:flex;align-items:center;gap:8px;min-width:150px} .nota .tr{flex:1;height:10px;background:var(--sunk);border-radius:5px;overflow:hidden;display:block} .nota .tr span{display:block;height:100%;background:var(--td-terra);border-radius:5px}
 .seg.lentes{flex-wrap:wrap} .lente{display:grid;gap:10px;background:var(--sunk);border-radius:12px;padding:14px}
-.aval-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.aval-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px} .aval-grid.dois{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))} .aval-col li .chip{padding:0 6px;font-size:11px} .pcol.curto h4{color:var(--td-terra)} .pcol.longo h4{color:var(--mk-fb)}
 .aval-col{background:var(--surface);border-radius:10px;padding:12px;display:grid;gap:6px;align-content:start;border-top:4px solid var(--line)}
 .aval-col.mal{border-top-color:var(--bad)} .aval-col.bem{border-top-color:var(--ok)} .aval-col.ja{border-top-color:var(--td-terra)} .aval-col.longo{border-top-color:var(--td-azul)}
 ul.fala li{font-family:"Patrick Hand",cursive;font-size:17px;line-height:1.35}
@@ -829,97 +829,79 @@ function estadoEstrategiaHtml(){
     ${ws.length ? `<div class="kpi"><span class="lbl">Vendas online</span><span class="v">${fmtN(vend)}</span><span class="d">no total das semanas${metas.vendasOnline != null ? ` · meta ${fmtN(metas.vendasOnline*ws.length)}` : ""}</span></div>` : ""}</div>`;
 }
 
-/* ---------- avaliação de fio a pavio (4 lentes) ---------- */
-const LENTES = [["estratega","Estratega"],["vendedor","Vendedor"],["marketing","Marketing"],["cliente","Mãe que não comprou"]];
-const QUANDO = [["hoje","Hoje"],["semana","Esta semana"],["mes","Este mês"],["3meses","Em 3 meses"],["6meses","Em 6 meses"]];
+/* ---------- avaliação de fio a pavio ----------
+   Uma análise só: olhada como estratega, vendedor, marketing e como a mãe que viu e não comprou,
+   mas escrita como um todo: o que correu bem, o que correu mal, e o que fazer a curto, médio e longo prazo. */
+const PRAZOS = [["curto","Curto prazo","esta semana e a próxima"],["medio","Médio prazo","1 a 3 meses"],["longo","Longo prazo","3 a 12 meses"]];
 function avaliacaoSim(metricas){
   const soma = (rk, k) => metricas.reduce((s,m) => s + (Number(m[rk]?.[k])||0), 0), f1 = v => String(Math.round(v*10)/10).replace(".", ",");
   const aI = soma("instagram","alcance"), aF = soma("facebook","alcance"), cI = soma("instagram","cliquesLink"), cF = soma("facebook","cliquesLink");
-  const vI = soma("instagram","visitasPerfil"), vF = soma("facebook","visitasPerfil"), mI = soma("instagram","mensagens"), mF = soma("facebook","mensagens");
+  const vis = soma("instagram","visitasPerfil") + soma("facebook","visitasPerfil"), msg = soma("instagram","mensagens") + soma("facebook","mensagens");
   const vend = metricas.reduce((s,m) => s + (Number(m.vendasOnline)||0), 0), rec = metricas.reduce((s,m) => s + (Number(m.receita)||0), 0);
-  const alc = aI + aF, vis = vI + vF, cl = cI + cF, msg = mI + mF, pFb = Math.round(aF/alc*100), cFbP = Math.round(cF/cl*100);
-  const fmt = n => fmtN(n);
+  const alc = aI + aF, cl = cI + cF, fmt = n => fmtN(n);
   return { id:"sim-aval", em:"2026-11-01", titulo:"Outubro de fio a pavio", nota:5.5,
-    veredito:`Outubro pôs a marca a vender: ${vend} vendas online e ${fmt(rec)} € de receita, quando antes não havia nenhuma. Mas está a vender por esforço, não por sistema. De ${fmt(alc)} pessoas alcançadas, só ${vend} compraram: 1 compra por cada ${fmt(Math.round(alc/Math.max(1,vend)))} pessoas. O conteúdo chega às pessoas; o que falha é o caminho entre "gostei" e "comprei".`,
-    lentes:{
-      estratega:{ nota:6, pergunta:"A estratégia está certa?",
-        mal:[`Outubro foi planeado por produto (combos, casaco, camisa e calça, look), mas sem uma meta de vendas por semana desde o início. As primeiras semanas falharam metas que ninguém estava a perseguir.`,
-          `O Facebook foi tratado como cópia do Instagram: ${pFb}% do alcance e só ${cFbP}% dos cliques. Gasta-se esforço numa rede que não está a vender.`,
-          "Toda a venda depende do algoritmo do Instagram. Não há base de emails nem forma de voltar a falar com quem já comprou.",
-          "Os reels trazem alcance, mas no dia do reel o story não continua a venda. Quem chega pelo reel encontra stories de ambiente.",
-          "Não há plano para clientes antigas. As crianças crescem: quem comprou em março precisa de outro tamanho em outubro."],
-        bem:["Uma peça por semana deu foco e repetição: as pessoas viram o casaco 7 dias seguidos.","Preço à vista desde a semana 1: é a decisão que mais fez subir os cliques.",`Crescimento contínuo: cliques no link subiram todas as semanas.`],
-        ja:["Uma meta de vendas por semana, escrita na Semana, e cada conteúdo com uma função: atrair, convencer ou vender.","No dia do reel, o story seguinte é sempre o de venda da mesma peça, com preço e link.","Facebook: 1 publicação por semana feita para lá (conjunto, preço, link na publicação). O resto só no Instagram."],
-        longo:["Calendário por coleções com pré-lançamento de 2 semanas: lista de espera, primeiras a saber, primeiras a comprar.","Base de emails: 500 contactos em 3 meses (pop-up no site, sorteio, lista de espera).","Programa de recompra por idade: aviso a cada 6 meses com o tamanho seguinte.","Calendário de datas que vendem roupa de criança: Natal, batizados, aniversários, regresso às aulas."] },
-      vendedor:{ nota:5, pergunta:"Estamos a pedir a venda?",
-        mal:[`As mensagens são o melhor canal de venda (${f1(vend/msg*100)}% viram compra), mas não há guião de resposta nem acompanhamento: quem não compra na hora fica esquecido.`,
-          "O pedido de compra aparece às vezes. Muitas legendas acabam numa frase bonita, sem dizer o que fazer a seguir.",
-          "Não há urgência verdadeira: não se diz que tamanhos restam nem até quando dura o preço.",
-          "Trocas, portes e prazo de entrega não aparecem em lado nenhum. Para uma mãe que compra online pela primeira vez, isto pesa mais do que o preço.",
-          "O story de preço real tinha o preço com pouco contraste, sem nome do conjunto, sem tamanhos e sem link."],
-        bem:["A sondagem entre dois conjuntos abriu conversas sem parecer venda.",'A frase "Custou menos, não se nota" é um bom argumento: mantém o valor da marca e explica o preço.',"Preço riscado (129,90 € → 90 €) dá razão para comprar agora."],
-        ja:['Guião de resposta às mensagens: foto da peça, tamanhos disponíveis, preço, link direto e uma pergunta de fecho ("Qual é o tamanho dela?").',"Acompanhamento 24 horas depois a quem perguntou e não comprou.",'Em todos os stories de venda: "Trocas grátis · portes X € · entrega em X dias" (confirmar condições com a Sílvia).',"Stock real por tamanho nos stories, só quando for verdade."],
-        longo:["Etiquetar produtos no Instagram (Instagram Shopping): comprar sem sair da app.","Guia de tamanhos por idade, com medidas reais, em destaque no perfil e no site.","Embrulho de oferta como argumento para avós e madrinhas.","Vendas por encomenda para datas (batizados, Natal) com prazo fechado."] },
-      marketing:{ nota:6, pergunta:"A comunicação está a trabalhar para a venda?",
-        mal:[`O alcance cresce, mas só ${f1(vis/alc*100)}% de quem vê vai ao perfil. Os reels não mostram a peça e o preço nos primeiros 3 segundos.`,
-          "A marca fala bonito, mas nem sempre diz o que é, quanto custa e para quem é. A poesia fica; falta a peça.",
-          "Não há prova social: nenhuma mãe real, nenhuma opinião, nenhuma criança da idade de quem vê.",
-          'Há stories sem produto (ex.: "Já foste ao nosso site hoje?") e flat-lays sem preço. Ocupam espaço sem vender.',
-          "Não há anúncios: o crescimento depende só do orgânico, que é lento para uma conta pequena."],
-        bem:["A identidade visual é forte e reconhecível: terracota, sálvia, crianças reais.","Os carrosséis de detalhe são os mais guardados: as mães guardam para decidir depois.","Os reels de movimento chegam a muita gente fora dos seguidores."],
-        ja:["Gancho de 3 segundos em todos os reels: a peça, a criança a mexer-se e o preço no ecrã.","Fórmula de legenda: uma frase de sensação, a peça, o preço e o pedido.","Um molde de story de preço que se leia bem, feito pela Ângela e usado sempre igual.","Prova social semanal: uma foto de cliente (com autorização) e a frase dela."],
-        longo:["Anúncios: 5 a 10 € por dia no reel com mais cliques da semana, e remarketing a quem viu metade do vídeo.","Parcerias com 3 mães criadoras de conteúdo locais (3 a 15 mil seguidores).","Pinterest para pesquisas como \"roupa para batizado\" e \"look de Natal criança\", que vendem durante meses.","Sílvia a dar a cara uma vez por semana: quem faz e porquê."] },
-      cliente:{ nota:4, pergunta:"Porque é que eu, mãe, vi e não comprei?",
-        mal:['"Vi o reel do casaco e gostei. O preço só aparecia no fim, e eu já tinha passado à frente."',
-          '"Não percebi que tamanhos havia. A minha filha tem 4 anos: serve? Fica grande? Tive vergonha de perguntar."',
-          '"Cliquei no link e fui parar à página inicial. Tive de procurar a peça e desisti." (hipótese a confirmar: não consegui abrir o site daqui)',
-          '"Não sei se posso trocar se não servir, nem quanto custa enviar. Na dúvida, não compro."',
-          '"Nunca vi outra mãe com a roupa. É uma marca a sério? Vale o preço?"',
-          '"Mandei mensagem à noite e só me responderam no dia seguinte. Já tinha comprado noutro lado."'],
-        bem:['"A roupa é bonita e diferente. Não é o que se vê em todas as lojas."','"Gostei de ver as crianças a brincar. Pareceu-me roupa para usar, não só para a fotografia."','"O preço riscado chamou-me a atenção."'],
-        ja:['"Diz-me o preço e os tamanhos logo, no primeiro segundo."','"Leva-me direto à peça quando eu clico."','"Diz-me que posso trocar e quanto pago de portes."','"Responde-me depressa: estou a decidir agora, com a criança ao colo."'],
-        longo:['"Mostra-me mães como eu a usar, e o que acharam."','"Conta-me quem faz a roupa e porquê. Quero sentir que compro a uma pessoa."','"Avisa-me quando houver o tamanho seguinte: ela cresce depressa."'] } },
+    veredito:`Outubro pôs a marca a vender: ${vend} vendas online e ${fmt(rec)} € de receita, quando antes não havia nenhuma. Mas vende por esforço, não por sistema: 1 compra por cada ${fmt(Math.round(alc/Math.max(1,vend)))} pessoas alcançadas. O conteúdo chega; o que falha é o caminho entre "gostei" e "comprei".`,
+    bem:[
+      { area:"Estratégia", texto:"Uma peça por semana deu foco: quem segue viu o casaco 7 dias seguidos, com começo, meio e fecho." },
+      { area:"Vendas", texto:`Preço à vista desde a semana 1: os cliques no link subiram todas as semanas (${fmt(metricas[0]?.instagram?.cliquesLink + metricas[0]?.facebook?.cliquesLink)} → ${fmt(metricas[metricas.length-1]?.instagram?.cliquesLink + metricas[metricas.length-1]?.facebook?.cliquesLink)}).` },
+      { area:"Vendas", texto:`As mensagens são o melhor canal: ${f1(vend/Math.max(1,msg)*100)}% das conversas viraram compra.` },
+      { area:"Conteúdo", texto:"Sondagens entre dois conjuntos abrem conversa sem parecer venda." },
+      { area:"Marca", texto:"Identidade forte e reconhecível; a roupa parece para usar, não só para a fotografia." },
+      { area:"Conteúdo", texto:"Carrosséis de detalhe são os mais guardados: as mães guardam para decidir depois." } ],
+    mal:[
+      { area:"Conteúdo", texto:`Só ${f1(vis/alc*100)}% de quem vê vai ao perfil. Os reels não mostram peça e preço nos primeiros 3 segundos: quem passa à frente nunca sabe o que é nem quanto custa.` },
+      { area:"Vendas", texto:"Quem vê não sabe que tamanhos há nem se serve à criança dela, e não pergunta." },
+      { area:"Vendas", texto:"Trocas, portes e prazo de entrega não aparecem em lado nenhum. Na dúvida, não se compra." },
+      { area:"Vendas", texto:"Mensagens respondidas tarde e sem acompanhamento: quem não compra na hora fica esquecido." },
+      { area:"Vendas", texto:"O pedido de compra aparece só às vezes; muitas legendas acabam numa frase bonita sem dizer o que fazer." },
+      { area:"Site", texto:"O link leva à página inicial e não à peça (hipótese a confirmar): quem clica tem de procurar e desiste." },
+      { area:"Marketing", texto:"Não há prova social: nenhuma mãe real a usar nem a dizer o que achou." },
+      { area:"Estratégia", texto:`O Facebook é uma cópia do Instagram: ${Math.round(aF/alc*100)}% do alcance e só ${Math.round(cF/cl*100)}% dos cliques.` },
+      { area:"Estratégia", texto:"Toda a venda depende do algoritmo: não há base de emails nem forma de voltar a quem já comprou." },
+      { area:"Estratégia", texto:"Não havia meta de vendas por semana desde o início: as primeiras metas falharam porque ninguém as perseguia." } ],
+    curto:[
+      { acao:"Gancho de 3 segundos em todos os reels: a peça, a criança a mexer-se e o preço no ecrã.", dono:"Ângela", impacto:"alto" },
+      { acao:"Story de preço sempre igual: nome do conjunto, preço legível, tamanhos e link.", dono:"Ângela", impacto:"alto" },
+      { acao:"Trocas, portes e prazo em todos os stories de venda (confirmar condições com a Sílvia).", dono:"Tânia", impacto:"alto" },
+      { acao:'Guião de resposta às mensagens em menos de 2 horas: foto, tamanhos, preço, link e "Qual é o tamanho dela?". Acompanhamento 24 horas depois.', dono:"Sílvia", impacto:"alto" },
+      { acao:"Links diretos para cada peça nos stories e na bio.", dono:"Sílvia", impacto:"alto" },
+      { acao:"Meta de vendas escrita em cada Semana e revista à segunda.", dono:"Tânia", impacto:"médio" } ],
+    medio:[
+      { acao:"Prova social: pedir fotos a quem comprou e publicar uma por semana.", dono:"Sílvia", impacto:"alto" },
+      { acao:"Guia de tamanhos por idade, com medidas reais, em destaque no perfil e no site.", dono:"Sílvia", impacto:"alto" },
+      { acao:"Facebook: 1 publicação própria por semana com preço e link; deixar de copiar stories.", dono:"Tânia", impacto:"médio" },
+      { acao:"Anúncios com 5 a 10 € por dia no reel com mais cliques, e remarketing a quem viu metade do vídeo.", dono:"Tânia", impacto:"alto" },
+      { acao:"Base de emails: pop-up no site e lista de espera; objetivo 500 contactos.", dono:"Tânia", impacto:"alto" },
+      { acao:"Instagram Shopping com os produtos etiquetados.", dono:"Sílvia", impacto:"médio" } ],
+    longo:[
+      { acao:"Lançamentos por coleção com 2 semanas de pré-lançamento e lista de espera.", dono:"Tânia", impacto:"alto" },
+      { acao:"Recompra por idade: avisar quem já comprou quando houver o tamanho seguinte.", dono:"Sílvia", impacto:"alto" },
+      { acao:"Parcerias fixas com 3 mães criadoras de conteúdo locais.", dono:"Tânia", impacto:"médio" },
+      { acao:"Calendário anual de datas que vendem: Natal, batizados, aniversários, regresso às aulas.", dono:"Tânia", impacto:"alto" },
+      { acao:"A Sílvia a dar a cara uma vez por semana: quem faz e porquê.", dono:"Sílvia", impacto:"médio" } ],
     jornada:[
-      { passo:"Viu um conteúdo", n:alc, perda:"Não foi ao perfil", porque:"O reel não mostra a peça nem o preço nos primeiros 3 segundos.", solucao:"Gancho com peça e preço no 1.º segundo." },
-      { passo:"Visitou o perfil", n:vis, perda:"Não clicou no link", porque:"A bio e os destaques não dizem onde comprar nem a oferta da semana (a confirmar).", solucao:"Bio com a oferta da semana e o link direto, e destaque de tamanhos." },
-      { passo:"Clicou no link", n:cl, perda:"Não mandou mensagem nem comprou", porque:"O link leva à página inicial e não à peça (hipótese). Faltam trocas e portes à vista.", solucao:"Link direto para a peça, e trocas e portes em todo o lado." },
-      { passo:"Mandou mensagem", n:msg, perda:"Não fechou a compra", porque:"Resposta lenta e sem acompanhamento.", solucao:"Guião de resposta em menos de 2 horas, e acompanhamento 24 horas depois." },
-      { passo:"Comprou", n:vend, perda:"", porque:"", solucao:"Pedir foto e opinião, e avisar quando houver o tamanho seguinte." } ],
-    plano:[
-      { quando:"hoje", acao:"Rever os stories de venda já agendados: preço legível, nome do conjunto, tamanhos e link.", dono:"Ângela", impacto:"alto", esforco:"baixo" },
-      { quando:"hoje", acao:"Confirmar com a Sílvia as condições de trocas, portes e prazo de entrega para pôr nos stories.", dono:"Tânia", impacto:"alto", esforco:"baixo" },
-      { quando:"semana", acao:"Guião de resposta às mensagens e acompanhamento 24 horas depois.", dono:"Sílvia", impacto:"alto", esforco:"baixo" },
-      { quando:"semana", acao:"Links diretos para cada peça em todos os stories e na bio.", dono:"Sílvia", impacto:"alto", esforco:"baixo" },
-      { quando:"semana", acao:"Gancho de 3 segundos com peça e preço em todos os reels.", dono:"Ângela", impacto:"alto", esforco:"médio" },
-      { quando:"semana", acao:"Meta de vendas escrita em cada Semana da app.", dono:"Tânia", impacto:"médio", esforco:"baixo" },
-      { quando:"mes", acao:"Facebook: 1 publicação própria por semana; deixar de copiar stories.", dono:"Tânia", impacto:"médio", esforco:"baixo" },
-      { quando:"mes", acao:"Prova social: pedir fotos a quem comprou e publicar uma por semana.", dono:"Sílvia", impacto:"alto", esforco:"médio" },
-      { quando:"mes", acao:"Guia de tamanhos por idade em destaque no perfil e no site.", dono:"Sílvia", impacto:"alto", esforco:"médio" },
-      { quando:"3meses", acao:"Base de emails com 500 contactos e newsletter quinzenal.", dono:"Tânia", impacto:"alto", esforco:"médio" },
-      { quando:"3meses", acao:"Anúncios com 5 a 10 € por dia e remarketing.", dono:"Tânia", impacto:"alto", esforco:"médio" },
-      { quando:"3meses", acao:"Instagram Shopping com produtos etiquetados.", dono:"Sílvia", impacto:"médio", esforco:"médio" },
-      { quando:"6meses", acao:"Lançamentos por coleção com lista de espera e programa de recompra por idade.", dono:"Tânia", impacto:"alto", esforco:"alto" },
-      { quando:"6meses", acao:"Parcerias fixas com 3 mães criadoras de conteúdo.", dono:"Tânia", impacto:"médio", esforco:"médio" } ] };
+      { passo:"Viu um conteúdo", n:alc, perda:"Não foi ao perfil", porque:"Peça e preço não aparecem nos primeiros segundos.", solucao:"Gancho com peça e preço no 1.º segundo." },
+      { passo:"Visitou o perfil", n:vis, perda:"Não clicou no link", porque:"Não é claro onde comprar nem qual é a oferta (a confirmar).", solucao:"Bio com a oferta da semana e link direto; destaque de tamanhos." },
+      { passo:"Clicou no link", n:cl, perda:"Não mandou mensagem nem comprou", porque:"Link para a página inicial (hipótese); trocas e portes escondidos.", solucao:"Link direto; trocas e portes em todo o lado." },
+      { passo:"Mandou mensagem", n:msg, perda:"Não fechou a compra", porque:"Resposta lenta e sem acompanhamento.", solucao:"Guião em menos de 2 horas; acompanhamento 24 horas depois." },
+      { passo:"Comprou", n:vend, perda:"", porque:"", solucao:"Pedir foto e opinião; avisar do tamanho seguinte." } ] };
 }
 function avaliacaoHtml(){
   const av = [...(S.avaliacoes || [])].sort((a,b) => (b.em||"").localeCompare(a.em||""))[0];
   if (!av) return "";
-  const lk = UI.lente || "estratega", L = av.lentes?.[lk] || {}, cli = lk === "cliente";
   const nota = n => `<div class="nota"><span class="tr"><span style="width:${(Number(n)||0)*10}%"></span></span><b>${String(n).replace(".", ",")}/10</b></div>`;
-  const bloco = (t, arr, cls) => (arr||[]).length ? `<div class="aval-col ${cls}"><h4>${t}</h4><ul class="clean${cli ? " fala" : ""}">${arr.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
+  const lista = (t, arr, cls) => (arr||[]).length ? `<div class="aval-col ${cls}"><h3>${t}</h3><ul class="clean">${arr.map(x => `<li>${x.area ? `<span class="chip neutral">${esc(x.area)}</span> ` : ""}${esc(x.texto ?? x)}</li>`).join("")}</ul></div>` : "";
   const maxN = Math.max(1, ...(av.jornada||[]).map(j => Number(j.n)||0));
-  return `<div class="card aval"><div class="spread"><div><span class="lbl">Avaliação · ${esc(fmtLongo(av.em))}${UI.sim ? " · SIMULAÇÃO" : ""}</span><h2>${esc(av.titulo)}</h2></div>${av.nota != null ? nota(av.nota) : ""}</div>
+  return `<div class="card aval"><div class="spread"><div><span class="lbl">Avaliação de fio a pavio · ${esc(fmtLongo(av.em))}${UI.sim ? " · SIMULAÇÃO" : ""}</span><h2>${esc(av.titulo)}</h2></div>${av.nota != null ? nota(av.nota) : ""}</div>
     <p class="readv" style="font-size:16px">${esc(av.veredito)}</p>
-    <div class="seg lentes" role="group" aria-label="Ponto de vista">${LENTES.map(([k,l]) => `<button data-act="lente" data-v="${k}" aria-pressed="${lk===k}">${l}${av.lentes?.[k]?.nota != null ? ` · ${String(av.lentes[k].nota).replace(".", ",")}` : ""}</button>`).join("")}</div>
-    <div class="lente ${lk}"><div class="spread"><h3>${esc(L.pergunta || "")}</h3>${L.nota != null ? nota(L.nota) : ""}</div>
-      <div class="aval-grid">${bloco(cli ? "Porque não comprei" : "O que correu mal", L.mal, "mal")}${bloco(cli ? "O que gostei" : "O que correu bem", L.bem, "bem")}${bloco(cli ? "O que me fazia comprar já" : "Fazer já", L.ja, "ja")}${bloco(cli ? "O que me fazia voltar" : "A longo prazo", L.longo, "longo")}</div></div></div>
-  ${(av.jornada||[]).length ? `<div class="card"><h3>O caminho de quem não comprou</h3><p class="small muted">Do primeiro contacto até à compra: onde as pessoas desistem, porquê e o que fazer.</p>
+    <div class="aval-grid dois">${lista("O que correu bem", av.bem, "bem")}${lista("O que correu mal", av.mal, "mal")}</div>
+    <h3>O que fazer</h3>
+    <div class="plano">${PRAZOS.map(([k,l,sub]) => (av[k]||[]).length ? `<div class="pcol ${k}"><h4>${l} <span class="small muted">${sub}</span></h4>${av[k].map(p => `<div class="pit"><span>${esc(p.acao)}</span><div class="row small">${p.dono ? `<span class="chip neutral">${esc(p.dono)}</span>` : ""}${p.impacto ? `<span class="chip ${p.impacto==="alto"?"ok":"neutral"}">impacto ${esc(p.impacto)}</span>` : ""}</div></div>`).join("")}</div>` : "").join("")}</div></div>
+  ${(av.jornada||[]).length ? `<div class="card"><h3>Onde se perde a venda</h3><p class="small muted">Do primeiro contacto até à compra: onde as pessoas desistem, porquê e o que fazer.</p>
     <div class="jornada">${av.jornada.map((j,i) => { const prox = av.jornada[i+1];
       return `<div class="jpasso"><div class="spread"><b>${i+1}. ${esc(j.passo)}</b>${j.n != null ? `<span class="v">${fmtN(j.n)}</span>` : ""}</div>${j.n != null ? `<span class="tr"><span style="width:${Math.max(1.5,(Number(j.n)||0)/maxN*100)}%"></span></span>` : ""}
         ${prox ? `<span class="small">${j.n != null && prox.n != null ? `<span class="perde">${fmtN((Number(j.n)||0) - (Number(prox.n)||0))} desistiram</span> (${fmtPct(pct(prox.n, j.n))} passaram) · ` : `<span class="perde">Desiste aqui:</span> `}${esc(j.perda)}</span><span class="small"><span class="lbl">Porquê</span> ${esc(j.porque)}</span>` : ""}
-        <span class="small"><span class="lbl">Fazer</span> ${esc(j.solucao)}</span></div>`; }).join("")}</div></div>` : ""}
-  ${(av.plano||[]).length ? `<div class="card"><h3>Plano de ação</h3><div class="plano">${QUANDO.map(([qk,ql]) => { const its = av.plano.filter(p => p.quando === qk); if (!its.length) return "";
-      return `<div class="pcol"><h4>${ql}</h4>${its.map(p => `<div class="pit"><span>${esc(p.acao)}</span><div class="row small"><span class="chip neutral">${esc(p.dono)}</span><span class="chip ${p.impacto==="alto"?"ok":"neutral"}">impacto ${esc(p.impacto)}</span><span class="chip neutral">esforço ${esc(p.esforco)}</span></div></div>`).join("")}</div>`; }).join("")}</div></div>` : ""}`;
+        <span class="small"><span class="lbl">Fazer</span> ${esc(j.solucao)}</span></div>`; }).join("")}</div></div>` : ""}`;
 }
 
 /* ---------- simulação (só no ecrã, nunca grava) ---------- */
@@ -1536,7 +1518,6 @@ document.addEventListener("click", async e => {
       tr.querySelectorAll("input[data-k]").forEach(i => { alvo[i.dataset.k] = i.value === "" ? null : Number(i.value); });
       if (await write(`${PRIV}/metricas/${el.dataset.id}`, body)) { UI.editDados = null; toast("Guardado."); renderMain(); } break; }
     case "perguntar": UI.qaTxt = $("#qaTxt")?.value || UI.qaTxt; perguntar(); break;
-    case "lente": UI.lente = el.dataset.v; renderMain(); break;
     case "dTodas": UI.dTodas = !UI.dTodas; renderMain(); break;
     case "sim": UI.sim = !UI.sim; SIM_CACHE = null; UI.editDados = null; UI.editEst = false; UI.dSem = null; renderMain(); window.scrollTo(0,0); break;
     case "relVista": UI.relVista = el.dataset.v; renderMain(); break;
