@@ -1334,10 +1334,11 @@ O QUE RESULTOU PIOR
 ${lr.length > 5 ? lr.slice(-3).map(lin).join("\n") : "(ainda sem dados suficientes)"}
 ${rel ? `\nÚLTIMO RELATÓRIO (${rel.inicio})\nConclusões: ${(rel.conclusoes||[]).join(" | ")}\nMelhorias: ${(rel.melhorias||[]).map(m => m.acao).join(" | ")}\nMostrar mais: ${(rel.mostrarMais||[]).join(" | ")}\nMostrar menos: ${(rel.mostrarMenos||[]).join(" | ")}` : ""}`;
 }
-function promptOficina(w){
+function promptOficina(w, parte){
   const o = UI.of; const c = S.priv || {};
+  const regraDia = d => { const k = dow(d); return [0,2,4,6].includes(k) ? `${d} (${DIAS_L[k]}): Feed, escolhe o formato (Reel, Carrossel ou Estático) com intenção, com 1 storie` : `${d} (${DIAS_L[k]}): só Storie, com 2 stories`; };
   const alvo = o.modo === "semana"
-    ? `Gera a SEMANA COMPLETA de ${w.inicio} a ${w.fim}: 7 cartões, um por dia. Feed às segundas, quartas, sextas e domingos (com 1 storie cada); terças, quintas e sábados só Storie (com 2 stories cada). Escolhe o formato de cada feed (Reel, Carrossel ou Estático) com intenção.`
+    ? `Esta semana vai de ${w.inicio} a ${w.fim} e é gerada em partes. Gera AGORA APENAS ${parte.dias.length} cartões, um por dia, para estes dias:\n${parte.dias.map(regraDia).join("\n")}${parte.feitos.length ? `\nJá gerados nesta semana (não repetir temas nem ângulos; continua a história da semana):\n${parte.feitos.map(c => `- ${c.data} ${c.tipo}${c.formato ? " " + c.formato : ""}: ${c.tema || (c.stories||[]).map(x => x.tema).join(" / ")}`).join("\n")}` : ""}`
     : `Gera UM cartão para o dia ${o.data || w.inicio}, tipo ${o.tipo}${o.tipo === "Feed" ? `, formato ${o.formato}` : ""}. ${o.tipo === "Feed" ? "Inclui 1 storie." : "Inclui 2 stories."}`;
   return `És a estrategista de conteúdos sénior da Tânia Silveira (estrategista têxtil, direta, sem floreados) a trabalhar para a marca Traços D'Amor. Escreve em português de Portugal.
 
@@ -1373,12 +1374,12 @@ Nos cartões Storie, os campos de feed ficam vazios e tudo vai em "stories".`;
 }
 function renderOficina(main){
   const o = UI.of; const ws = semanasOrd();
-  if (!o.semanas.length && ws.length) o.semanas = [(semanaAtual() || ws[0]).id];
+  if (!o.semanas.length && ws.length) { o.semanas = [(semanaAtual() || ws[0]).id]; o.auto = true; }
   const sel = ws.filter(w => o.semanas.includes(w.id));
   main.innerHTML = `<div class="priv-banner">🔒 <b>Oficina privada.</b> Só tu vês este separador e os rascunhos. O que envias para o quadro passa a ser visível para a equipa.</div>
   <div class="card"><h2>Gerar conteúdo</h2>
     <div class="row"><div class="seg" role="group" aria-label="O quê">${[["semana","Semana completa"],["dia","Um dia"]].map(([k,l]) => `<button data-act="ofModo" data-v="${k}" aria-pressed="${o.modo===k}">${l}</button>`).join("")}</div></div>
-    <span class="lbl">${o.modo === "semana" ? "Semanas (podes escolher várias)" : "Semana"}</span>
+    <span class="lbl">${o.modo === "semana" ? "Semana a gerar (carrega noutra para trocar; depois podes juntar mais)" : "Semana"}</span>
     <div class="row">${ws.map(w => `<button class="chip ${o.semanas.includes(w.id) ? "ok" : "neutral"}" data-act="ofSem" data-id="${esc(w.id)}" aria-pressed="${o.semanas.includes(w.id)}">${o.semanas.includes(w.id) ? "✓ " : ""}${esc(cap1(MESES[parse(w.inicio).getMonth()]).slice(0,3))} · ${esc(nomeSemana(w))} · ${esc(w.titulo)}</button>`).join("")}</div>
     ${o.modo === "dia" ? `<div class="fgrid"><label class="f">Dia<input type="date" id="of-data" data-of="data" value="${esc(o.data || sel[0]?.inicio || "")}"></label>
       <label class="f">Tipo<select id="of-tipo" data-of="tipo"><option${o.tipo==="Feed"?" selected":""}>Feed</option><option${o.tipo==="Storie"?" selected":""}>Storie</option></select></label>
@@ -1423,12 +1424,19 @@ async function gerar(){
   if (!sample) return; const o = UI.of; const sel = semanasOrd().filter(w => o.semanas.includes(w.id)); if (!sel.length) return;
   const alvo = o.modo === "semana" ? sel : [sel[0]];
   o.busy = true; o.err = ""; o.out = []; o.rascId = null; o.retTxt = {}; genCtl = new AbortController();
-  for (let k = 0; k < alvo.length; k++) {
-    const w = alvo[k]; o.prog = alvo.length > 1 ? `A gerar ${k+1} de ${alvo.length}… (1 a 2 min cada)` : "A pensar… (1 a 2 minutos)"; renderMain();
-    try { const res = await sample.json(promptOficina(w), { signal: genCtl.signal, modelTier:"complex", cache:false });
-      if (!res || !Array.isArray(res.cartoes)) throw { code:"invalid_json" };
-      o.out.push({ semana:w.id, titulo:`${nomeSemana(w)} · ${w.titulo}`, nota:res.notaParaTania || "", cartoes:res.cartoes });
-    } catch(e){ o.err = e?.code === "cancelled" ? "" : e?.code === "not_granted" ? "Não deste permissão para usar o Claude nesta página." : e?.code === "rate_limited" ? "Muitos pedidos seguidos. Espera um minuto." : e?.code === "invalid_json" ? "A resposta veio num formato que não consegui ler. Carrega em Gerar outra vez." : "Não consegui gerar. Tenta outra vez."; break; }
+  const erroDe = e => e?.code === "not_granted" ? "Não deste permissão para usar o Claude nesta página." : e?.code === "rate_limited" ? "Muitos pedidos seguidos. Espera um minuto e carrega em Gerar." : e?.code === "invalid_json" ? "A resposta veio cortada. Carrega em Gerar outra vez." : e?.code === "prompt_too_large" ? "O pedido ficou grande demais. Encurta o texto em \"O que queres que eu faça\"." : `Não consegui gerar (${e?.code || "erro"}). Tenta outra vez.`;
+  semanas: for (let k = 0; k < alvo.length; k++) {
+    const w = alvo[k], g = { semana:w.id, titulo:`${nomeSemana(w)} · ${w.titulo}`, nota:"", cartoes:[] };
+    const dias = []; for (let d = parse(w.inicio); iso(d) <= w.fim; d.setDate(d.getDate()+1)) dias.push(iso(d));
+    const partes = o.modo === "semana" ? [dias.slice(0,3), dias.slice(3,5), dias.slice(5)].filter(p => p.length) : [null];
+    for (let j = 0; j < partes.length; j++) {
+      o.prog = `${alvo.length > 1 ? `Semana ${k+1} de ${alvo.length} · ` : ""}${partes.length > 1 ? `parte ${j+1} de ${partes.length}` : "a pensar"}… (até 1 minuto cada)`; renderMain();
+      try { const res = await sample.json(promptOficina(w, partes[j] ? { dias:partes[j], feitos:g.cartoes } : null), { signal: genCtl.signal, modelTier:"complex", cache:false });
+        if (!res || !Array.isArray(res.cartoes)) throw { code:"invalid_json" };
+        g.cartoes.push(...res.cartoes); if (res.notaParaTania) g.nota = [g.nota, res.notaParaTania].filter(Boolean).join(" ");
+      } catch(e){ if (g.cartoes.length) o.out.push(g); o.err = e?.code === "cancelled" ? "" : (g.cartoes.length ? `Gerei ${g.cartoes.length} dias desta semana; o resto falhou. ` : "") + erroDe(e); break semanas; }
+    }
+    o.out.push(g);
   }
   o.busy = false; o.prog = ""; renderMain();
 }
@@ -1541,7 +1549,7 @@ document.addEventListener("click", async e => {
       try { await db.doc(`relatorios/${r.id}`).delete(); if (r._priv) await write(`${PRIV}/relatorios/${r.id}`, { publicadoEm:null }, true); toast("Retirado. A cliente deixou de ver este relatório."); } catch(x){ toast("Não consegui retirar. Tenta outra vez."); } break; }
     case "ofModo": UI.of.modo = el.dataset.v; if (UI.of.modo === "dia") UI.of.semanas = UI.of.semanas.slice(0,1); renderMain(); break;
     case "ofSem": { const id = el.dataset.id; const s = UI.of.semanas;
-      if (UI.of.modo === "dia") UI.of.semanas = [id]; else UI.of.semanas = s.includes(id) ? s.filter(x => x !== id) : [...s, id]; renderMain(); break; }
+      if (UI.of.modo === "dia" || UI.of.auto) UI.of.semanas = [id]; else UI.of.semanas = s.includes(id) ? (s.length > 1 ? s.filter(x => x !== id) : s) : [...s, id]; UI.of.auto = false; renderMain(); break; }
     case "gerar": gerar(); break;
     case "parar": genCtl?.abort(); break;
     case "descartar": UI.of.out = []; UI.of.rascId = null; renderMain(); break;
