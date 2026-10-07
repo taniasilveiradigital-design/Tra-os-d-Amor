@@ -209,6 +209,7 @@ ul.fala li{font-family:"Patrick Hand",cursive;font-size:17px;line-height:1.35}
 .jornada{display:grid;gap:12px} .jpasso{display:grid;gap:4px} .jpasso .v{font-weight:700;font-variant-numeric:tabular-nums}
 .jpasso .tr{height:14px;background:var(--sunk);border-radius:7px;overflow:hidden;display:block} .jpasso .tr span{display:block;height:100%;background:var(--td-terra);border-radius:7px}
 .perde{color:var(--bad);font-weight:700}
+.hist{display:grid;gap:6px} .hitem{border:1px solid var(--line);border-radius:10px;background:var(--surface)} .hitem summary{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;padding:8px 10px;cursor:pointer} .hitem summary .hd{font-variant-numeric:tabular-nums;min-width:62px;font-weight:700} .hitem summary .chip{padding:0 6px;font-size:11px} .hbody{padding:0 12px 12px;display:grid;gap:6px} .hcorpo{white-space:pre-wrap;max-height:420px;overflow:auto;background:var(--sunk);border-radius:8px;padding:10px}
 .plano{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px} .pcol{display:grid;gap:8px;align-content:start} .pit{background:var(--sunk);border-radius:10px;padding:10px;display:grid;gap:6px} .sug .resultado{background:var(--ok-bg, var(--sunk));border-radius:6px;padding:4px 8px} #relForm .inp[type=number]{text-align:right}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--muted)} .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .dl{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap} .dl.up{color:var(--ok)} .dl.down{color:var(--bad)} .dl.eq{color:var(--muted)}
@@ -316,7 +317,7 @@ const PAPEL_TXT = { dona:"Estratega", equipa:"Equipa criativa", cliente:"Cliente
 
 let db = null, userCap = null, sample = null, mcp = null;
 const APP_URL = "https://claude.ai/artifact/D3MiggwcKrr8yggsoKk3vz";
-const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], relPriv:[], avaliacoes:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
+const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], relPriv:[], avaliacoes:[], historico:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
 const UI = { menc:[], notif:false, sugId:null, tab:"quadro", vista:"semanas", semana:"todas", semAberta:null, mes:"2026-10", cardId:null, pend:false, editSem:null, editEst:false, editDados:null, relId:null, editMelh:null, qaBusy:false, qaTxt:"",
   of:{ modo:"semana", semanas:[], data:"", tipo:"Feed", formato:"Reel", brief:"", busy:false, prog:"", out:[], err:"", ret:null, retTxt:{}, rascId:null, insp:"", confSub:false } };
 try { if (!localStorage.getItem("td-ajuda-vista")) UI.ajuda = true; } catch(e){}
@@ -396,6 +397,7 @@ function renderMainSafe(){ if (isEditing()) { UI.pend = true; } else renderMain(
     sub("sugestoes", db.collection(`${PRIV}/sugestoes`));
     sub("relPriv", db.collection(`${PRIV}/relatorios`));
     sub("avaliacoes", db.collection(`${PRIV}/avaliacoes`));
+    sub("historico", db.collection(`${PRIV}/historico`));
     if (S.me.id) sub("rascunhos", db.collection(`data/users/${S.me.id}`));
     sample = await window.claude?.use?.("sample") ?? null;
     mcp = await window.claude?.use?.("mcp") ?? null;
@@ -443,7 +445,7 @@ function renderChrome(){
   $("#statusChips").innerHTML = `<button class="chip ${nn ? "bad" : "neutral"}" data-act="notif" aria-expanded="${!!UI.notif}">🔔 ${nn}</button><button class="chip neutral" data-act="ajuda" aria-expanded="${!!UI.ajuda}">? Como funciona</button><span class="chip neutral">${esc(PAPEL_TXT[p])}</span>` +
     (pt.length ? `<button class="chip bad" data-act="paraTi">● ${pt.length} à tua espera</button>` : `<span class="chip ok">Nada à tua espera</span>`);
   const pub = [["quadro","Quadro"],["calendario","Calendário"],["semanas","Semanas"],["relatorios","Relatórios"]];
-  const priv = p === "dona" ? [["estrategia","Estratégia 🔒"],["dados","Dados 🔒"],["oficina","Oficina 🔒"]] : [];
+  const priv = p === "dona" ? [["estrategia","Estratégia 🔒"],["dados","Dados 🔒"],["historico","Histórico 🔒"],["oficina","Oficina 🔒"]] : [];
   if (![...pub,...priv].find(t => t[0] === UI.tab)) UI.tab = "quadro";
   $("#tabs").innerHTML = pub.map(([k,l]) => `<button role="tab" data-tab="${k}" aria-selected="${UI.tab===k}">${l}</button>`).join("") +
     (priv.length ? `<span class="sep" aria-hidden="true"></span>` + priv.map(([k,l]) => `<button role="tab" data-tab="${k}" aria-selected="${UI.tab===k}" class="priv">${l}</button>`).join("") : "");
@@ -459,7 +461,7 @@ function renderMain(){
   const main = $("#main");
   if (S.nodb) { main.innerHTML = `<div class="empty"><h3>Abre esta página no claude.ai</h3><p>A aplicação precisa da base de dados, que só existe dentro do claude.ai.</p></div>`; return; }
   if (!S.loaded.cartoes) { main.innerHTML = `<div class="empty"><p>A carregar…</p></div>`; return; }
-  const priv = { estrategia:renderEstrategia, dados:renderDados, oficina:renderOficina };
+  const priv = { estrategia:renderEstrategia, dados:renderDados, historico:renderHistorico, oficina:renderOficina };
   if (priv[UI.tab] && !isDona()) UI.tab = "quadro";
   const fn = {quadro:renderQuadro, calendario:renderCal, semanas:renderSemanas, relatorios:renderRelatorios, ...priv}[UI.tab] || renderQuadro;
   if (UI.tab === "dados" || UI.tab === "estrategia") comSimulacao(() => fn(main)); else fn(main);
@@ -886,8 +888,8 @@ function avaliacaoSim(metricas){
       { passo:"Mandou mensagem", n:msg, perda:"Não fechou a compra", porque:"Resposta lenta e sem acompanhamento.", solucao:"Guião em menos de 2 horas; acompanhamento 24 horas depois." },
       { passo:"Comprou", n:vend, perda:"", porque:"", solucao:"Pedir foto e opinião; avisar do tamanho seguinte." } ] };
 }
-function avaliacaoHtml(){
-  const av = [...(S.avaliacoes || [])].sort((a,b) => (b.em||"").localeCompare(a.em||""))[0];
+function avaliacaoHtml(dada){
+  const av = dada || [...(S.avaliacoes || [])].filter(a => a.ambito !== "historico").sort((a,b) => (b.em||"").localeCompare(a.em||""))[0];
   if (!av) return "";
   const nota = n => `<div class="nota"><span class="tr"><span style="width:${(Number(n)||0)*10}%"></span></span><b>${String(n).replace(".", ",")}/10</b></div>`;
   const lista = (t, arr, cls) => (arr||[]).length ? `<div class="aval-col ${cls}"><h3>${t}</h3><ul class="clean">${arr.map(x => `<li>${x.area ? `<span class="chip neutral">${esc(x.area)}</span> ` : ""}${esc(x.texto ?? x)}</li>`).join("")}</ul></div>` : "";
@@ -902,6 +904,57 @@ function avaliacaoHtml(){
       return `<div class="jpasso"><div class="spread"><b>${i+1}. ${esc(j.passo)}</b>${j.n != null ? `<span class="v">${fmtN(j.n)}</span>` : ""}</div>${j.n != null ? `<span class="tr"><span style="width:${Math.max(1.5,(Number(j.n)||0)/maxN*100)}%"></span></span>` : ""}
         ${prox ? `<span class="small">${j.n != null && prox.n != null ? `<span class="perde">${fmtN((Number(j.n)||0) - (Number(prox.n)||0))} desistiram</span> (${fmtPct(pct(prox.n, j.n))} passaram) · ` : `<span class="perde">Desiste aqui:</span> `}${esc(j.perda)}</span><span class="small"><span class="lbl">Porquê</span> ${esc(j.porque)}</span>` : ""}
         <span class="small"><span class="lbl">Fazer</span> ${esc(j.solucao)}</span></div>`; }).join("")}</div></div>` : ""}`;
+}
+
+/* ---------- histórico (privado): tudo o que foi criado, importado do Notion ---------- */
+const HIST_FMT = [["Reels","Reels"],["Storie","Stories"],["Carrossel","Carrosséis"],["","Sem formato"]];
+const temPreco = x => /\d+[,.]?\d*\s?€|€\s?\d/.test(`${x.titulo} ${x.corpo||""}`);
+const temLink = x => /link|site|cta|loja/i.test(x.corpo||"");
+const temDM = x => /mensagem|\bDM\b|separamos/i.test(x.corpo||"");
+const temTamanho = x => /tamanh/i.test(x.corpo||"");
+function histItens(){
+  return S.historico.flatMap(m => m.itens || []).filter(x => !/^SEMANA/i.test(x.titulo || "")).sort((a,b) => (a.data||"9").localeCompare(b.data||"9"));
+}
+function temaHist(x){
+  const c = x.corpo || "", m = c.match(/#+\s*Tema\s*\n+\s*\**([^\n*]+)/) || c.match(/#+\s*Texto\s*\n+([^\n]+)/);
+  if (m) return m[1].trim();
+  return c.replace(/\[[^\]]*\]\([^)]*\)|https?:\/\/\S+|- \[ \]|\*\*|#+|---|Copy para Desig?n?/g, " ").replace(/\s+/g, " ").trim().slice(0, 140);
+}
+function renderHistorico(main){
+  const all = histItens();
+  if (!all.length) { main.innerHTML = `<div class="priv-banner">🔒 Só tu vês este separador.</div><div class="empty"><h3>Ainda não há histórico</h3><p>Manda-me a exportação do Notion (Markdown e CSV, com subpáginas) e eu trago tudo para aqui.</p></div>`; return; }
+  const f = UI.hist || (UI.hist = { q:"", mes:"", fmt:"", so:"" });
+  const meses = [...new Set(all.map(x => (x.data||"").slice(0,7)).filter(Boolean))];
+  const pub = all.filter(x => x.fase === "Publicado");
+  const nome = m => { const [y,mm] = m.split("-"); return `${cap1(MESES[Number(mm)-1])} ${y}`; };
+  const linhaMes = m => { const a = all.filter(x => (x.data||"").startsWith(m) && ["Publicado","Aprovado","Copy"].includes(x.fase)), c = fn => a.filter(fn).length;
+    return `<tr><td>${esc(nome(m))}</td><td class="n">${a.length}</td>${HIST_FMT.slice(0,3).map(([k]) => `<td class="n">${a.filter(x => x.formato === k).length}</td>`).join("")}<td class="n">${c(temPreco)}</td><td class="n">${c(temTamanho)}</td><td class="n">${c(temLink)}</td><td class="n">${c(temDM)}</td></tr>`; };
+  const dist = (k, titulo) => { const cnt = {}; pub.forEach(x => { const v = x[k] || "Sem classificação"; cnt[v] = (cnt[v]||0) + 1; }); const tot = pub.length || 1;
+    return `<div class="chart"><h3>${titulo}</h3><div class="hbars">${Object.entries(cnt).sort((a,b) => b[1]-a[1]).map(([v,n]) => `<div class="hbar"><span class="small">${esc(v)}</span><span class="tr"><span style="width:${n/tot*100}%;background:var(--td-terra)"></span></span><span class="v">${n}</span></div>`).join("")}</div></div>`; };
+  const q = f.q.trim().toLowerCase();
+  const vis = all.filter(x => (!f.mes || (x.data||"").startsWith(f.mes)) && (!f.fmt || (x.formato||"") === f.fmt) && (!f.so || (f.so === "preco" ? temPreco(x) : f.so === "semPreco" ? !temPreco(x) : x.fase === f.so)) && (!q || `${x.titulo} ${x.corpo}`.toLowerCase().includes(q)));
+  const porMes = {}; vis.forEach(x => { const m = (x.data||"").slice(0,7) || "sem data"; (porMes[m] = porMes[m] || []).push(x); });
+  const av = [...(S.avaliacoes||[])].filter(a => a.ambito === "historico").sort((a,b) => (b.em||"").localeCompare(a.em||""))[0];
+  main.innerHTML = `<div class="priv-banner">🔒 <b>Histórico de conteúdos.</b> Tudo o que foi criado desde junho, importado do Notion. Só tu vês. Quando houver acesso ao Instagram, cada publicação aqui ganha os números.</div>
+  <div class="kpis">
+    <div class="kpi"><span class="lbl">Conteúdos criados</span><span class="v">${all.length}</span><span class="d">${esc(nome(meses[0]))} a ${esc(nome(meses[meses.length-1]))}</span></div>
+    <div class="kpi"><span class="lbl">Publicados</span><span class="v">${pub.length}</span><span class="d">${pub.filter(x => x.formato==="Reels").length} reels · ${pub.filter(x => x.formato==="Storie").length} stories · ${pub.filter(x => x.formato==="Carrossel").length} carrosséis</span></div>
+    <div class="kpi"><span class="lbl">Publicados com preço</span><span class="v">${pub.filter(temPreco).length}</span><span class="d">de ${pub.length}</span></div>
+    <div class="kpi"><span class="lbl">Com pedido de mensagem</span><span class="v">${pub.filter(temDM).length}</span><span class="d">de ${pub.length}</span></div></div>
+  ${av ? avaliacaoHtml(av) : ""}
+  <div class="card"><h3>Mês a mês</h3><p class="small muted">Conta os conteúdos publicados, aprovados ou com copy fechada. "Com preço", "tamanhos", "link" e "mensagem" contam os conteúdos onde isso aparece escrito no Notion.</p>
+    <div class="tbl"><table><thead><tr><th>Mês</th><th class="n">Conteúdos</th><th class="n">Reels</th><th class="n">Stories</th><th class="n">Carrosséis</th><th class="n">Com preço</th><th class="n">Tamanhos</th><th class="n">Link / site</th><th class="n">Mensagem</th></tr></thead><tbody>${meses.map(linhaMes).join("")}</tbody></table></div></div>
+  <div class="charts">${dist("funil","Funil (publicados)")}${dist("intencaoConteudo","Intenção do conteúdo")}${dist("acaoEsperada","Ação esperada")}</div>
+  <div class="card"><div class="spread"><h3>Todos os conteúdos</h3><span class="small muted">${vis.length} de ${all.length}</span></div>
+    <div class="fgrid"><label class="f">Procurar<input id="h-q" data-hist="q" value="${esc(f.q)}" placeholder="girafa, casaco, preço…"></label>
+      <label class="f">Mês<select data-hist="mes" id="h-mes"><option value="">Todos</option>${meses.map(m => `<option value="${m}"${f.mes===m?" selected":""}>${esc(nome(m))}</option>`).join("")}</select></label>
+      <label class="f">Formato<select data-hist="fmt" id="h-fmt"><option value="">Todos</option>${HIST_FMT.slice(0,3).map(([k,l]) => `<option value="${k}"${f.fmt===k?" selected":""}>${l}</option>`).join("")}</select></label>
+      <label class="f">Mostrar<select data-hist="so" id="h-so">${[["","Tudo"],["Publicado","Só publicados"],["preco","Com preço"],["semPreco","Sem preço"],["Ideia","Ideias"]].map(([k,l]) => `<option value="${k}"${f.so===k?" selected":""}>${l}</option>`).join("")}</select></label></div>
+    ${Object.entries(porMes).map(([m,its]) => `<h3 class="serif" style="font-size:22px;margin-top:8px">${m === "sem data" ? "Sem data" : esc(nome(m))} <span class="small muted">${its.length}</span></h3>
+      <div class="hist">${its.map(x => `<details class="hitem"><summary><span class="hd">${x.data ? esc(DIAS_L[dow(x.data)].slice(0,3) + " " + fmtCurto(x.data)) : "—"}</span><span class="chip neutral">${esc(x.formato || "—")}</span><span class="chip ${x.fase==="Publicado"?"ok":x.fase==="Ideia"?"neutral":"warn"}">${esc(x.fase || "—")}</span>${temPreco(x) ? `<span class="chip ok">€</span>` : ""}${temDM(x) ? `<span class="chip ok">DM</span>` : ""}<b>${esc(x.titulo)}</b><span class="small muted">${esc(temaHist(x))}</span></summary>
+        <div class="hbody">${[["Funil",x.funil],["Intenção",x.intencaoConteudo],["Ação esperada",x.acaoEsperada],["Plataforma",x.plataforma]].filter(([,v]) => v).map(([l,v]) => `<span class="small"><span class="lbl">${l}</span> ${esc(v)}</span>`).join(" · ")}
+          ${x.conteudoLink ? `<p class="small"><a href="${esc(x.conteudoLink)}" target="_blank" rel="noopener">Abrir conteúdo</a></p>` : ""}
+          <div class="readv small hcorpo">${linkify(x.corpo || "(sem texto no Notion)")}</div></div></details>`).join("")}</div>`).join("") || `<p class="muted">Nada com estes filtros.</p>`}</div>`;
 }
 
 /* ---------- simulação (só no ecrã, nunca grava) ---------- */
@@ -1325,8 +1378,10 @@ function memoriaOficina(w){
   const lr = linhasResultados().map(x => ({ ...x, sc:(Number(x.m.cliques)||0)*3 + (Number(x.m.respostas)||0)*3 + (Number(x.m.alcance)||0)/100 })).sort((a,b) => b.sc - a.sc);
   const lin = x => `- ${x.c.data} ${x.tipo} (${x.rede === "facebook" ? "Facebook" : "Instagram"}): ${curto(x.c.tema || x.c.stories?.[0]?.tema)}: alcance ${x.m.alcance ?? "?"}, cliques ${x.m.cliques ?? "?"}, respostas ${x.m.respostas ?? "?"}`;
   const rel = [...S.relatorios].filter(r => !r.exemplo).sort((a,b) => (b.inicio||"").localeCompare(a.inicio||""))[0];
+  const hist = histItens().filter(x => x.fase === "Publicado" && x.data < w.inicio).slice(-80).map(x => `- ${x.data} ${x.formato || ""}: ${curto(x.titulo)} · ${curto(temaHist(x))}`);
   return `MEMÓRIA (conteúdos já criados: não repetir temas nem ângulos; podes retomar o que resultou com um ângulo novo)
 ${feitos.join("\n") || "(ainda nada)"}
+${hist.length ? `\nJÁ PUBLICADO ANTES (histórico do Notion, os 80 mais recentes):\n${hist.join("\n")}` : ""}
 
 O QUE RESULTOU MELHOR
 ${lr.slice(0,5).map(lin).join("\n") || "(ainda sem resultados)"}
@@ -1568,11 +1623,13 @@ document.addEventListener("change", async e => {
   else if (t.matches("[data-act=semAbrir]")) { UI.semAberta = t.value; UI.editSem = null; t.blur(); renderMain(); }
   else if (t.matches("[data-act=sugSel]")) { UI.sugId = t.value; t.blur(); renderMain(); }
   else if (t.matches("[data-act=relSel]")) { UI.relId = t.value; t.blur(); renderMain(); }
+  else if (t.matches("select[data-hist]")) { UI.hist[t.dataset.hist] = t.value; t.blur(); renderMain(); }
   else if (t.matches("[data-act=dSem]")) { UI.dSem = t.value; t.blur(); renderMain(); }
   else if (t.matches("[data-act=moverSel]")) { const c = S.cartoes.find(x => x.id === UI.cardId); if (c && t.value !== c.etapa) await mover(c, t.value); }
   else if (t.matches("[data-of]")) { UI.of[t.dataset.of] = t.value; if (t.tagName === "SELECT") { t.blur(); renderMain(); } }
 });
-document.addEventListener("input", e => { const t = e.target; if (t.matches("[data-of]")) UI.of[t.dataset.of] = t.value; if (t.matches("[data-qa]")) UI.qaTxt = t.value; if (t.matches("[data-ret]")) { UI.of.retTxt[t.dataset.ret] = t.value; } });
+document.addEventListener("input", e => { const t = e.target; if (t.matches("[data-of]")) UI.of[t.dataset.of] = t.value; if (t.matches("[data-qa]")) UI.qaTxt = t.value; if (t.matches("[data-ret]")) { UI.of.retTxt[t.dataset.ret] = t.value; }
+  if (t.matches("[data-hist]")) { UI.hist[t.dataset.hist] = t.value; if (t.tagName === "INPUT") { const pos = t.selectionStart; renderMain(); const n = $("#h-q"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } } } });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && UI.cardId) closeCard(); });
 
 document.addEventListener("submit", async e => {
