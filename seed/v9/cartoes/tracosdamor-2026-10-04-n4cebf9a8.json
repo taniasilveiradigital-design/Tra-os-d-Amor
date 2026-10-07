@@ -1,0 +1,46 @@
+{
+"cliente": "tracosdamor",
+"data": "2026-10-04",
+"tipo": "Storie",
+"formato": null,
+"etapa": "aprovado",
+"titulo": "Domingo: Storie",
+"intencao": "",
+"estrategia": "",
+"tema": "",
+"comoFazer": "",
+"inspiracao": "",
+"legenda": "",
+"linkCriativo": "",
+"linkDrive": "",
+"capaCriativo": "",
+"capaDrive": "",
+"stories": [
+{
+"intencao": "Fechar a semana de fim de coleção sem soltar o argumento comercial de vez, não por um preço sozinho.",
+"estrategia": "Assinatura de marca como fecho, com o preço em baixa ainda presente mas em segundo plano.",
+"tema": "Antes de fechar a semana",
+"texto": "\"Ficam os conjuntos mais leves de preço, esta semana toda. Fica a mesma casa de sempre.\"",
+"comoFazer": "- Still sereno de uma peça da coleção, sem enfeite a mais.\n\nOutros vídeos: https://drive.google.com/file/d/1kPutTQQurEVRg9QwlE1p92559ufBd9bw/view?usp=drive_link https://drive.google.com/file/d/1kqZRe_c0_R3YW9wWeMCaicND3HaZxzmT/view?usp=drive_link https://drive.google.com/file/d/1H7yV3_O2lpjdSZRGymIrewEppsObeiYu/view?usp=drive_link https://drive.google.com/file/d/17sRArCI2-VEN34mpitHVNweM0CivCWGB/view?usp=drive_link https://drive.google.com/file/d/13iolCkpMi5kVKpqXfzI03oaQXTHcX6JY/view?usp=drive_link",
+"inspiracao": "",
+"media": "video",
+"linkCriativo": "https://canva.link/w004787xfjia1wu",
+"linkDrive": "https://drive.google.com/file/d/1-fIEPtGxpkmNauh0vzN8zuzO4RRwVS5r/view?usp=drive_link"
+}
+],
+"origem": "notion",
+"notionId": "3e1eeb1bb989802fae6ce1644cebf9a8",
+"semana": "tracosdamor-2026-09-28",
+"criadoEm": "2026-10-07T15:00:00.000Z",
+"atualizadoEm": "2026-10-07T15:00:00.000Z",
+"historico": [
+{
+"em": "2026-10-07T15:00:00.000Z",
+"etapa": "aprovado",
+"por": "notion"
+}
+],
+"funil": "Confiança",
+"intencaoConteudo": "Gerar Desejo",
+"acaoEsperada": "Ir ao perfil"
+}

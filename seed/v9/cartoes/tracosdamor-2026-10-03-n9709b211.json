@@ -1,0 +1,46 @@
+{
+"cliente": "tracosdamor",
+"data": "2026-10-03",
+"tipo": "Storie",
+"formato": null,
+"etapa": "aprovado",
+"titulo": "Sabado: Storie",
+"intencao": "",
+"estrategia": "",
+"tema": "",
+"comoFazer": "",
+"inspiracao": "",
+"legenda": "",
+"linkCriativo": "",
+"linkDrive": "",
+"capaCriativo": "",
+"capaDrive": "",
+"stories": [
+{
+"intencao": "Dar um respiro à semana de números, um momento sem venda, formato hora + tema",
+"estrategia": "Depois de uma semana inteira a falar de preço, o sábado de manhã fica sem argumento comercial nenhum, só o conjunto e o dia.",
+"tema": "9h · Sábado sem plano",
+"texto": "Não há nenhum plano para hoje. Só um conjunto confortável e o dia pela frente.\"",
+"comoFazer": "- Still simples da criança em casa ou no jardim. Sem preço, sem seta.\n\nOutros vídeos: https://drive.google.com/file/d/1DdiiY8NUVeNYY95whLzsofIQSZkJkN91/view?usp=drive_link",
+"inspiracao": "",
+"media": "video",
+"linkCriativo": "https://canva.link/3nfj5chk3rb4wa8",
+"linkDrive": "https://drive.google.com/file/d/1TS79afw-ml1TJkI0sph_HdkLYwWWLurw/view?usp=drive_link"
+}
+],
+"origem": "notion",
+"notionId": "3e1eeb1bb989803e88a8ede09709b211",
+"semana": "tracosdamor-2026-09-28",
+"criadoEm": "2026-10-07T15:00:00.000Z",
+"atualizadoEm": "2026-10-07T15:00:00.000Z",
+"historico": [
+{
+"em": "2026-10-07T15:00:00.000Z",
+"etapa": "aprovado",
+"por": "notion"
+}
+],
+"funil": "Confiança",
+"intencaoConteudo": "Gerar Desejo",
+"acaoEsperada": "Ir ao perfil"
+}

@@ -514,16 +514,20 @@ function renderQuadro(main){
       if (mesDe(w) !== mesAtual) {
         mesAtual = mesDe(w);
         const doMes = ws.filter(x => mesDe(x) === mesAtual);
-        cols += `<section class="col" aria-label="Mês"><div class="colhd"><span>${cap1(MESES[Number(mesAtual.slice(5))-1])}</span><span class="n">${doMes.length} semanas</span></div>${coverMes(mesAtual)}
+        cols += `<section class="col" aria-label="Mês" data-mes="${mesAtual}"><div class="colhd"><span>${cap1(MESES[Number(mesAtual.slice(5))-1])}</span><span class="n">${doMes.length} semanas</span></div>${coverMes(mesAtual)}
           ${doMes.map(x => `<button class="wklink" data-act="abrirSemana" data-id="${esc(x.id)}"><b>${esc(nomeSemana(x))}</b> · ${esc(x.titulo)}</button>`).join("")}</section>`;
       }
       const its = S.cartoes.filter(c => c.data >= w.inicio && c.data <= w.fim && visivel(c)).sort((a,b) => a.data.localeCompare(b.data) || (a.tipo==="Feed"?-1:1));
-      cols += `<section class="col" aria-label="${esc(nomeSemana(w))}"><div class="colhd"><span>${cap1(MESES[parse(w.inicio).getMonth()])}</span><span class="n">${its.length}</span></div>
+      cols += `<section class="col" aria-label="${esc(nomeSemana(w))}" data-wk="${esc(w.id)}"><div class="colhd"><span>${cap1(MESES[parse(w.inicio).getMonth()])}</span><span class="n">${its.length}</span></div>
         ${coverSemana(w)}${its.map(c => tile(c, false)).join("")}
         ${p === "dona" ? `<button class="addcard" data-act="novoCartao" data-sem="${esc(w.id)}">+ Adicionar um cartão</button>` : ""}</section>`;
     }
+    const meses = [...new Set(ws.map(mesDe))];
     main.innerHTML = `<div class="spread"><div class="row">${vistaSeg}</div>${p === "dona" ? `<button class="btn" data-act="novaSemana">+ Nova semana</button>` : ""}</div>
-      ${ws.length ? `<div class="board">${cols}</div>` : `<div class="empty"><p>Sem semanas.</p></div>`}`;
+      ${meses.length > 1 ? `<div class="row" role="group" aria-label="Ir para o mês">${meses.map(m => `<button class="chip neutral" data-act="irMes" data-m="${m}">${cap1(MESES[Number(m.slice(5))-1])}</button>`).join("")}<button class="chip ok" data-act="irMes" data-m="hoje">Esta semana</button></div>` : ""}
+      ${ws.length ? `<div class="board" id="boardSem">${cols}</div>` : `<div class="empty"><p>Sem semanas.</p></div>`}`;
+    const b = $("#boardSem");
+    if (b) { if (UI.boardX == null) irPara(b, semanaAtual()?.id); else b.scrollLeft = UI.boardX; b.onscroll = () => { UI.boardX = b.scrollLeft; }; }
     return;
   }
   const cards = filtroSemana(S.cartoes.filter(visivel)).sort((a,b) => a.data.localeCompare(b.data));
@@ -532,6 +536,10 @@ function renderQuadro(main){
   <div class="board" style="grid-auto-columns:minmax(240px,1fr)">${cols.map(([k,l]) => { const its = cards.filter(c => c.etapa === k);
     return `<section class="col ${k}" data-col="${k}" aria-label="${esc(l)}"><div class="colhd"><span>${esc(l)}</span><span class="n">${its.length}</span></div>${porSemana(its, p === "dona") || `<p class="small" style="opacity:.6;padding:4px">Vazio</p>`}</section>`; }).join("")}</div>
   ${p === "dona" ? `<p class="small muted">Arrasta os cartões entre colunas, ou abre um cartão e usa os botões.</p>` : ""}`;
+}
+function irPara(b, wk, mes){
+  const el = mes ? b.querySelector(`[data-mes="${mes}"]`) : b.querySelector(`[data-wk="${wk}"]`); if (!el) return;
+  b.scrollLeft += el.getBoundingClientRect().left - b.getBoundingClientRect().left - (mes ? 0 : 284); UI.boardX = b.scrollLeft;
 }
 function porSemana(its, drag){
   const grupos = []; const idx = {};
@@ -542,6 +550,12 @@ function filtroSemana(list){ if (UI.semana === "todas") return list; const w = S
 function semanaPicker(){ return `<select class="inp" style="width:auto" data-act="semSel" id="semSel" aria-label="Semana"><option value="todas">Todas as semanas</option>${semanasOrd().map(w => `<option value="${esc(w.id)}"${UI.semana===w.id?" selected":""}>${esc(nomeSemana(w))} · ${esc(fmtCurto(w.inicio))} – ${esc(fmtCurto(w.fim))}</option>`).join("")}</select>`; }
 
 /* ---------- calendário ---------- */
+function mesesCal(){
+  const ds = [...S.semanas.map(w => w.inicio), ...S.cartoes.map(c => c.data), todayIso, `${UI.mes}-01`].filter(Boolean).sort();
+  const out = []; let [y,m] = ds[0].slice(0,7).split("-").map(Number); const fim = ds[ds.length-1].slice(0,7);
+  while (`${y}-${pad(m)}` <= fim) { out.push(`${y}-${pad(m)}`); m++; if (m > 12) { m = 1; y++; } }
+  return out;
+}
 function renderCal(main){
   const [y,m] = UI.mes.split("-").map(Number);
   const first = `${y}-${pad(m)}-01`; const lastDay = new Date(y, m, 0).getDate();
@@ -555,7 +569,8 @@ function renderCal(main){
       ${its.map(c => `<button class="et et-${esc(c.etapa)}" data-open="${esc(c.id)}" title="${esc(tituloCartao(c))} · ${esc(ETQ[c.etapa])}">${esc(c.tipo==="Feed"?(c.formato||"Feed"):"Stories")}</button>`).join("")}</div>`;
   }
   main.innerHTML = `<div class="spread">
-    <div class="row"><button class="btn" data-act="mes" data-d="-1" aria-label="Mês anterior">‹</button><h2 style="min-width:170px;text-align:center">${cap1(MESES[m-1])} ${y}</h2><button class="btn" data-act="mes" data-d="1" aria-label="Mês seguinte">›</button></div>
+    <div class="row"><button class="btn" data-act="mes" data-d="-1" aria-label="Mês anterior">‹</button><h2 style="min-width:170px;text-align:center">${cap1(MESES[m-1])} ${y}</h2><button class="btn" data-act="mes" data-d="1" aria-label="Mês seguinte">›</button>
+      <select class="inp" style="width:auto" id="mesSel" data-act="mesSel" aria-label="Escolher mês">${mesesCal().map(k => `<option value="${k}"${k===UI.mes?" selected":""}>${cap1(MESES[Number(k.slice(5))-1])} ${k.slice(0,4)}</option>`).join("")}</select></div>
     <div class="row small">${ETAPAS.map(([k,l]) => `<span class="et et-${k}">${l}</span>`).join("")}</div></div>
   <div class="cal">${cells}</div>`;
 }
@@ -1373,12 +1388,13 @@ function blocoSemana(w){
 /* memória: o que já foi criado, o que resultou e o que o último relatório disse, para não repetir e repetir o que vende */
 function memoriaOficina(w){
   const curto = t => (t||"").replace(/\s+/g," ").slice(0,90);
-  const feitos = S.cartoes.filter(c => c.data && (c.data < w.inicio || c.data > w.fim)).sort((a,b) => b.data.localeCompare(a.data)).slice(0,60)
+  const feitos = S.cartoes.filter(c => c.data && (c.data < w.inicio || c.data > w.fim)).sort((a,b) => b.data.localeCompare(a.data)).slice(0,90)
     .map(c => `- ${c.data} ${c.tipo}${c.formato ? " " + c.formato : ""} [${c.etapa||"ideia"}]: ${curto(c.tema || c.titulo)}${(c.stories||[]).length ? " | stories: " + c.stories.map(x => curto(x.tema)).filter(Boolean).join(" / ") : ""}`);
   const lr = linhasResultados().map(x => ({ ...x, sc:(Number(x.m.cliques)||0)*3 + (Number(x.m.respostas)||0)*3 + (Number(x.m.alcance)||0)/100 })).sort((a,b) => b.sc - a.sc);
   const lin = x => `- ${x.c.data} ${x.tipo} (${x.rede === "facebook" ? "Facebook" : "Instagram"}): ${curto(x.c.tema || x.c.stories?.[0]?.tema)}: alcance ${x.m.alcance ?? "?"}, cliques ${x.m.cliques ?? "?"}, respostas ${x.m.respostas ?? "?"}`;
   const rel = [...S.relatorios].filter(r => !r.exemplo).sort((a,b) => (b.inicio||"").localeCompare(a.inicio||""))[0];
-  const hist = histItens().filter(x => x.fase === "Publicado" && x.data < w.inicio).slice(-80).map(x => `- ${x.data} ${x.formato || ""}: ${curto(x.titulo)} · ${curto(temaHist(x))}`);
+  const noQuadro = new Set(S.cartoes.map(c => c.notionId).filter(Boolean));
+  const hist = histItens().filter(x => x.fase === "Publicado" && x.data < w.inicio && !noQuadro.has(x.id)).slice(-80).map(x => `- ${x.data} ${x.formato || ""}: ${curto(x.titulo)} · ${curto(temaHist(x))}`);
   return `MEMÓRIA (conteúdos já criados: não repetir temas nem ângulos; podes retomar o que resultou com um ângulo novo)
 ${feitos.join("\n") || "(ainda nada)"}
 ${hist.length ? `\nJÁ PUBLICADO ANTES (histórico do Notion, os 80 mais recentes):\n${hist.join("\n")}` : ""}
@@ -1435,7 +1451,7 @@ function renderOficina(main){
   <div class="card"><h2>Gerar conteúdo</h2>
     <div class="row"><div class="seg" role="group" aria-label="O quê">${[["semana","Semana completa"],["dia","Um dia"]].map(([k,l]) => `<button data-act="ofModo" data-v="${k}" aria-pressed="${o.modo===k}">${l}</button>`).join("")}</div></div>
     <span class="lbl">${o.modo === "semana" ? "Semana a gerar (carrega noutra para trocar; depois podes juntar mais)" : "Semana"}</span>
-    <div class="row">${ws.map(w => `<button class="chip ${o.semanas.includes(w.id) ? "ok" : "neutral"}" data-act="ofSem" data-id="${esc(w.id)}" aria-pressed="${o.semanas.includes(w.id)}">${o.semanas.includes(w.id) ? "✓ " : ""}${esc(cap1(MESES[parse(w.inicio).getMonth()]).slice(0,3))} · ${esc(nomeSemana(w))} · ${esc(w.titulo)}</button>`).join("")}</div>
+    <div class="row">${ws.filter(w => w.fim >= todayIso || o.semanas.includes(w.id)).map(w => `<button class="chip ${o.semanas.includes(w.id) ? "ok" : "neutral"}" data-act="ofSem" data-id="${esc(w.id)}" aria-pressed="${o.semanas.includes(w.id)}">${o.semanas.includes(w.id) ? "✓ " : ""}${esc(cap1(MESES[parse(w.inicio).getMonth()]).slice(0,3))} · ${esc(nomeSemana(w))} · ${esc(w.titulo)}</button>`).join("")}</div>
     ${o.modo === "dia" ? `<div class="fgrid"><label class="f">Dia<input type="date" id="of-data" data-of="data" value="${esc(o.data || sel[0]?.inicio || "")}"></label>
       <label class="f">Tipo<select id="of-tipo" data-of="tipo"><option${o.tipo==="Feed"?" selected":""}>Feed</option><option${o.tipo==="Storie"?" selected":""}>Storie</option></select></label>
       ${o.tipo === "Feed" ? `<label class="f">Formato<select id="of-formato" data-of="formato">${FORMATOS.map(f => `<option${o.formato===f?" selected":""}>${f}</option>`).join("")}</select></label>` : ""}</div>` : ""}
@@ -1533,6 +1549,7 @@ document.addEventListener("click", async e => {
     case "vista": UI.vista = el.dataset.v; try { localStorage.setItem("td-vista", UI.vista); } catch(x){} renderMain(); break;
     case "abrirSemana": UI.semAberta = el.dataset.id; UI.tab = "semanas"; renderChrome(); renderMain(); break;
     case "verSemana": UI.semana = el.dataset.id; UI.vista = "etapas"; UI.tab = "quadro"; renderChrome(); renderMain(); break;
+    case "irMes": { const b = $("#boardSem"); if (b) el.dataset.m === "hoje" ? irPara(b, semanaAtual()?.id) : irPara(b, null, el.dataset.m); break; }
     case "mes": { const [y,m] = UI.mes.split("-").map(Number); const d = new Date(y, m-1+Number(el.dataset.d), 1); UI.mes = `${d.getFullYear()}-${pad(d.getMonth()+1)}`; renderMain(); break; }
     case "novoCartao": {
       const w = S.semanas.find(x => x.id === el.dataset.sem); if (!w) break;
@@ -1620,6 +1637,7 @@ document.addEventListener("click", async e => {
 document.addEventListener("change", async e => {
   const t = e.target;
   if (t.matches("[data-act=semSel]")) { UI.semana = t.value; renderMain(); }
+  if (t.matches("[data-act=mesSel]")) { UI.mes = t.value; renderMain(); }
   else if (t.matches("[data-act=semAbrir]")) { UI.semAberta = t.value; UI.editSem = null; t.blur(); renderMain(); }
   else if (t.matches("[data-act=sugSel]")) { UI.sugId = t.value; t.blur(); renderMain(); }
   else if (t.matches("[data-act=relSel]")) { UI.relId = t.value; t.blur(); renderMain(); }
