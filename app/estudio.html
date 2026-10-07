@@ -1336,7 +1336,7 @@ ${rel ? `\nÚLTIMO RELATÓRIO (${rel.inicio})\nConclusões: ${(rel.conclusoes||[
 }
 function promptOficina(w, parte){
   const o = UI.of; const c = S.priv || {};
-  const regraDia = d => { const k = dow(d); return [0,2,4,6].includes(k) ? `${d} (${DIAS_L[k]}): Feed, escolhe o formato (Reel, Carrossel ou Estático) com intenção, com 1 storie` : `${d} (${DIAS_L[k]}): só Storie, com 2 stories`; };
+  const regraDia = d => { const k = dow(d); return [0,2,4].includes(k) ? `${d} (${DIAS_L[k]}): Feed, escolhe o formato (Reel, Carrossel ou Estático) com intenção, com 1 storie` : `${d} (${DIAS_L[k]}): só Storie, com 2 stories`; };
   const alvo = o.modo === "semana"
     ? `Esta semana vai de ${w.inicio} a ${w.fim} e é gerada em partes. Gera AGORA APENAS ${parte.dias.length} cartões, um por dia, para estes dias:\n${parte.dias.map(regraDia).join("\n")}${parte.feitos.length ? `\nJá gerados nesta semana (não repetir temas nem ângulos; continua a história da semana):\n${parte.feitos.map(c => `- ${c.data} ${c.tipo}${c.formato ? " " + c.formato : ""}: ${c.tema || (c.stories||[]).map(x => x.tema).join(" / ")}`).join("\n")}` : ""}`
     : `Gera UM cartão para o dia ${o.data || w.inicio}, tipo ${o.tipo}${o.tipo === "Feed" ? `, formato ${o.formato}` : ""}. ${o.tipo === "Feed" ? "Inclui 1 storie." : "Inclui 2 stories."}`;
@@ -1483,7 +1483,7 @@ document.addEventListener("click", async e => {
       const w = S.semanas.find(x => x.id === el.dataset.sem); if (!w) break;
       const usados = new Set(S.cartoes.filter(c => c.data >= w.inicio && c.data <= w.fim).map(c => c.data));
       let data = w.inicio; for (let i = 0; i < 7; i++) { const d = addDays(w.inicio, i); if (!usados.has(d)) { data = d; break; } }
-      const t = [0,2,4,6].includes(dow(data)) ? "Feed" : "Storie"; const id = `${CLIENTE}-${data}-${uidShort()}`;
+      const t = [0,2,4].includes(dow(data)) ? "Feed" : "Storie"; const id = `${CLIENTE}-${data}-${uidShort()}`;
       const body = { cliente:CLIENTE, data, semana:w.id, tipo:t, formato: t==="Feed"?"Reel":null, titulo:"", intencao:"", estrategia:"", tema:"", comoFazer:"", inspiracao:"", legenda:"", stories: t==="Feed" ? [{media:"video"}] : [{media:"video"},{media:"video"}], linkCriativo:"", capaCriativo:"", linkDrive:"", capaDrive:"", etapa:"ideia", historico:[{etapa:"ideia",por:S.me.id,em:new Date().toISOString()}], criadoEm:new Date().toISOString() };
       if (await write(`cartoes/${id}`, body)) { if (!S.cartoes.find(x => x.id === id)) S.cartoes.push({ id, ...body }); openCard(id); }
       break;
