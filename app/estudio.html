@@ -1387,22 +1387,32 @@ function blocoSemana(w){
 }
 /* memória: o que já foi criado, o que resultou e o que o último relatório disse, para não repetir e repetir o que vende */
 function memoriaOficina(w){
-  const curto = t => (t||"").replace(/\s+/g," ").slice(0,90);
-  const feitos = S.cartoes.filter(c => c.data && (c.data < w.inicio || c.data > w.fim)).sort((a,b) => b.data.localeCompare(a.data)).slice(0,90)
-    .map(c => `- ${c.data} ${c.tipo}${c.formato ? " " + c.formato : ""} [${c.etapa||"ideia"}]: ${curto(c.tema || c.titulo)}${(c.stories||[]).length ? " | stories: " + c.stories.map(x => curto(x.tema)).filter(Boolean).join(" / ") : ""}`);
+  const curto = (t,n) => (t||"").replace(/\s+/g," ").trim().slice(0,n||70);
+  // conta como feito: o que já saiu (aprovado, cliente ou publicado) e tudo o que está planeado daqui para a frente; ideias antigas que nunca saíram não contam
+  const feito = c => c.data >= todayIso || ["cliente","aprovado","publicado"].includes(c.etapa);
+  const feitos = S.cartoes.filter(c => c.data && (c.data < w.inicio || c.data > w.fim) && feito(c)).sort((a,b) => a.data.localeCompare(b.data))
+    .map(c => { const st = (c.stories||[]).map(x => curto(x.tema || x.texto || x.comoFazer, 40)).filter(Boolean);
+      return `- ${c.data} ${c.formato || c.tipo}: ${curto(c.tema || c.titulo)}${st.length ? " | st: " + st.join(" / ") : ""}`; });
   const lr = linhasResultados().map(x => ({ ...x, sc:(Number(x.m.cliques)||0)*3 + (Number(x.m.respostas)||0)*3 + (Number(x.m.alcance)||0)/100 })).sort((a,b) => b.sc - a.sc);
-  const lin = x => `- ${x.c.data} ${x.tipo} (${x.rede === "facebook" ? "Facebook" : "Instagram"}): ${curto(x.c.tema || x.c.stories?.[0]?.tema)}: alcance ${x.m.alcance ?? "?"}, cliques ${x.m.cliques ?? "?"}, respostas ${x.m.respostas ?? "?"}`;
+  const lin = x => `- ${x.c.data} ${x.tipo} (${x.rede === "facebook" ? "Facebook" : "Instagram"}): ${curto(x.c.tema || x.c.stories?.[0]?.tema || x.c.titulo, 90)}: alcance ${x.m.alcance ?? "?"}, cliques ${x.m.cliques ?? "?"}, respostas ${x.m.respostas ?? "?"}`;
   const rel = [...S.relatorios].filter(r => !r.exemplo).sort((a,b) => (b.inicio||"").localeCompare(a.inicio||""))[0];
   const noQuadro = new Set(S.cartoes.map(c => c.notionId).filter(Boolean));
-  const hist = histItens().filter(x => x.fase === "Publicado" && x.data < w.inicio && !noQuadro.has(x.id)).slice(-80).map(x => `- ${x.data} ${x.formato || ""}: ${curto(x.titulo)} · ${curto(temaHist(x))}`);
-  return `MEMÓRIA (conteúdos já criados: não repetir temas nem ângulos; podes retomar o que resultou com um ângulo novo)
+  const hist = histItens().filter(x => x.fase === "Publicado" && !noQuadro.has(x.id)).map(x => `- ${x.data || "sem data"} ${x.formato || ""}: ${curto(x.titulo)} · ${curto(temaHist(x))}`);
+  const melhores = lr.length >= 6 ? lr.slice(0, Math.min(8, Math.ceil(lr.length/4))) : [];
+  return `MEMÓRIA: TUDO O QUE JÁ FOI FEITO OU ESTÁ PLANEADO (${feitos.length + hist.length} conteúdos, desde o início)
 ${feitos.join("\n") || "(ainda nada)"}
-${hist.length ? `\nJÁ PUBLICADO ANTES (histórico do Notion, os 80 mais recentes):\n${hist.join("\n")}` : ""}
+${hist.length ? hist.join("\n") : ""}
 
-O QUE RESULTOU MELHOR
-${lr.slice(0,5).map(lin).join("\n") || "(ainda sem resultados)"}
-O QUE RESULTOU PIOR
-${lr.length > 5 ? lr.slice(-3).map(lin).join("\n") : "(ainda sem dados suficientes)"}
+REGRAS DA MEMÓRIA (obrigatórias)
+- Nada do que está na memória se repete: nem tema, nem gancho, nem ângulo, nem frase de abertura, nem a mesma peça mostrada da mesma forma.
+- A única exceção são os conteúdos da lista "PODES REAPROVEITAR". Esses podem voltar, mas sempre de outra forma: outro formato, outra peça, outro gancho ou outro momento da vida da mãe. Nunca copiados.
+- Se a lista "PODES REAPROVEITAR" estiver vazia, ainda não há números suficientes: tudo o que gerares tem de ser novo.
+- Ideias antigas que nunca foram publicadas não estão na memória e não contam: esquece-as.
+
+PODES REAPROVEITAR (os que tiveram melhores resultados reais)
+${melhores.map(lin).join("\n") || "(vazio: ainda sem resultados do Instagram)"}
+NÃO RESULTOU (não repetir este caminho)
+${lr.length >= 6 ? lr.slice(-3).map(lin).join("\n") : "(ainda sem dados suficientes)"}
 ${rel ? `\nÚLTIMO RELATÓRIO (${rel.inicio})\nConclusões: ${(rel.conclusoes||[]).join(" | ")}\nMelhorias: ${(rel.melhorias||[]).map(m => m.acao).join(" | ")}\nMostrar mais: ${(rel.mostrarMais||[]).join(" | ")}\nMostrar menos: ${(rel.mostrarMenos||[]).join(" | ")}` : ""}`;
 }
 function promptOficina(w, parte){
