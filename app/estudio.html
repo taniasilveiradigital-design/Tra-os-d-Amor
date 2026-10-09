@@ -209,7 +209,7 @@ ul.fala li{font-family:"Patrick Hand",cursive;font-size:17px;line-height:1.35}
 .jornada{display:grid;gap:12px} .jpasso{display:grid;gap:4px} .jpasso .v{font-weight:700;font-variant-numeric:tabular-nums}
 .jpasso .tr{height:14px;background:var(--sunk);border-radius:7px;overflow:hidden;display:block} .jpasso .tr span{display:block;height:100%;background:var(--td-terra);border-radius:7px}
 .perde{color:var(--bad);font-weight:700}
-.bfnav{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0} .bfnav a{text-decoration:none} .bfsec{scroll-margin-top:60px;display:grid;gap:12px} .bfrevbox{border-top:1px dashed var(--line);padding-top:10px} .bfrev{display:grid;gap:6px;max-width:560px} .bfgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px} .bfgrid .card{display:grid;gap:6px;align-content:start} .bfgrid .card .btn{justify-self:start} button.chk{display:block;width:100%;text-align:left;background:none;border:0;padding:4px 0;font:inherit;color:inherit;cursor:pointer} .callout{background:var(--warn-bg);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:8px}
+.bfnav{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0} .bfnav a{text-decoration:none} .bfsec{scroll-margin-top:60px;display:grid;gap:12px} .bfrevbox{border-top:1px dashed var(--line);padding-top:10px} .bfrev{display:grid;gap:6px;max-width:560px} .bfgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px} .bfgrid .card{display:grid;gap:6px;align-content:start} .bfgrid .card .btn{justify-self:start} .bfgrid.wide{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))} button.card.camp{text-align:left;font:inherit;color:inherit;cursor:pointer;display:grid;gap:6px;align-content:start;justify-items:start} button.card.camp:hover{border-color:var(--terra)} .pubitem{display:grid;gap:8px;align-content:start} button.chk{display:block;width:100%;text-align:left;background:none;border:0;padding:4px 0;font:inherit;color:inherit;cursor:pointer} .callout{background:var(--warn-bg);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:8px}
 .hist{display:grid;gap:6px} .hitem{border:1px solid var(--line);border-radius:10px;background:var(--surface)} .hitem summary{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;padding:8px 10px;cursor:pointer} .hitem summary .hd{font-variant-numeric:tabular-nums;min-width:62px;font-weight:700} .hitem summary .chip{padding:0 6px;font-size:11px} .hbody{padding:0 12px 12px;display:grid;gap:6px} .hcorpo{white-space:pre-wrap;max-height:420px;overflow:auto;background:var(--sunk);border-radius:8px;padding:10px}
 .plano{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px} .pcol{display:grid;gap:8px;align-content:start} .pit{background:var(--sunk);border-radius:10px;padding:10px;display:grid;gap:6px} .sug .resultado{background:var(--ok-bg, var(--sunk));border-radius:6px;padding:4px 8px} #relForm .inp[type=number]{text-align:right}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--muted)} .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
@@ -318,9 +318,9 @@ const PAPEL_TXT = { dona:"Estratega", equipa:"Equipa criativa", cliente:"Cliente
 
 let db = null, userCap = null, sample = null, mcp = null;
 const APP_URL = "https://claude.ai/artifact/D3MiggwcKrr8yggsoKk3vz";
-const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], relPriv:[], avaliacoes:[], historico:[], bf:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
+const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], relPriv:[], avaliacoes:[], historico:[], bf:[], campanhas:[], emails:[], mensagens:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
 const UI = { menc:[], notif:false, sugId:null, tab:"quadro", vista:"semanas", semana:"todas", semAberta:null, mes:"2026-10", cardId:null, pend:false, editSem:null, editEst:false, editDados:null, relId:null, editMelh:null, qaBusy:false, qaTxt:"",
-  of:{ modo:"semana", semanas:[], data:"", tipo:"Feed", formato:"Reel", brief:"", busy:false, prog:"", out:[], err:"", ret:null, retTxt:{}, rascId:null, insp:"", confSub:false } };
+  of:{ area:"conteudos", camp:"", canal:"instagram", comBrief:"", comOut:[], ini:"", fim:"", modo:"semana", semanas:[], data:"", tipo:"Feed", formato:"Reel", brief:"", busy:false, prog:"", out:[], err:"", ret:null, retTxt:{}, rascId:null, insp:"", confSub:false } };
 try { if (!localStorage.getItem("td-ajuda-vista")) UI.ajuda = true; } catch(e){}
 try { const t = localStorage.getItem("td-tab3"); if (t) UI.tab = t; const v = localStorage.getItem("td-vista"); if (v) UI.vista = v; const es = localStorage.getItem("td-estsub"); if (es) UI.estSub = es; } catch(e){}
 
@@ -365,7 +365,7 @@ async function write(path, data, merge){
   catch(e){ toast(e && e.code === "invalid_argument" ? "Não tens permissão para isto." : "Não gravou. Tenta outra vez."); return false; }
 }
 function sub(name, q){ q.onSnapshot(snap => { S[name] = snap.docs.map(d => { const o = { id:d.id, ...d.data() }; if (name === "cartoes") o.etapa = normEtapa(o.etapa); return o; }); S.loaded[name] = true; onData(name); }, () => { S.loaded[name] = true; onData(name); }); }
-function isEditing(){ const a = document.activeElement; return UI.editSem || UI.editEst || UI.editDados || UI.editRel || (a && $("#main").contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)); }
+function isEditing(){ const a = document.activeElement; return UI.editSem || UI.editEst || UI.editCom || UI.editCamp || UI.editPub || UI.editDados || UI.editRel || (a && $("#main").contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)); }
 function onData(name){
   if (["comentarios","pessoas","inspiracoes"].includes(name)) resolveNames();
   renderChrome();
@@ -389,7 +389,7 @@ function renderMainSafe(){ if (isEditing()) { UI.pend = true; } else renderMain(
   userCap = await window.claude?.use?.("user") ?? null;
   if (userCap) { const me = await userCap.me(); S.me = { id: me.id, isOwner: me.isOwner }; if (me.id && me.name) S.names[me.id] = me.name; }
   db.doc(`clientes/${CLIENTE}`).onSnapshot(s => { S.cliente = s.exists ? s.data() : null; onData("cliente"); }, () => {});
-  for (const c of ["semanas","cartoes","comentarios","inspiracoes","pessoas","relatorios"]) sub(c, db.collection(c).where("cliente","==",CLIENTE));
+  for (const c of ["semanas","cartoes","comentarios","inspiracoes","pessoas","relatorios","emails","mensagens"]) sub(c, db.collection(c).where("cliente","==",CLIENTE));
   if (S.me.isOwner) {
     db.doc(PRIV).onSnapshot(s => { S.priv = s.exists ? s.data() : null; onData("priv"); }, () => {});
     sub("metricas", db.collection(`${PRIV}/metricas`));
@@ -400,6 +400,7 @@ function renderMainSafe(){ if (isEditing()) { UI.pend = true; } else renderMain(
     sub("avaliacoes", db.collection(`${PRIV}/avaliacoes`));
     sub("historico", db.collection(`${PRIV}/historico`));
     sub("bf", db.collection(`${PRIV}/blackfriday`));
+    sub("campanhas", db.collection(`${PRIV}/campanhas`));
     if (S.me.id) sub("rascunhos", db.collection(`data/users/${S.me.id}`));
     sample = await window.claude?.use?.("sample") ?? null;
     mcp = await window.claude?.use?.("mcp") ?? null;
@@ -446,16 +447,16 @@ function renderChrome(){
   const nn = notificacoes().length;
   $("#statusChips").innerHTML = `<button class="chip ${nn ? "bad" : "neutral"}" data-act="notif" aria-expanded="${!!UI.notif}">🔔 ${nn}</button><button class="chip neutral" data-act="ajuda" aria-expanded="${!!UI.ajuda}">? Como funciona</button><span class="chip neutral">${esc(PAPEL_TXT[p])}</span>` +
     (pt.length ? `<button class="chip bad" data-act="paraTi">● ${pt.length} à tua espera</button>` : `<span class="chip ok">Nada à tua espera</span>`);
-  const pub = [["quadro","Quadro"],["calendario","Calendário"],["semanas","Semanas"],["relatorios","Relatórios"]];
+  const pub = [["quadro","Quadro"],["calendario","Calendário"],["semanas","Semanas"],["emails","Email marketing"],["canais","Canais"],["relatorios","Relatórios"]];
   const priv = p === "dona" ? [["estrategia","Estratégia 🔒"],["dados","Dados 🔒"],["historico","Histórico 🔒"],["oficina","Oficina 🔒"]] : [];
   if (![...pub,...priv].find(t => t[0] === UI.tab)) UI.tab = "quadro";
   $("#tabs").innerHTML = pub.map(([k,l]) => `<button role="tab" data-tab="${k}" aria-selected="${UI.tab===k}">${l}</button>`).join("") +
     (priv.length ? `<span class="sep" aria-hidden="true"></span>` + priv.map(([k,l]) => `<button role="tab" data-tab="${k}" aria-selected="${UI.tab===k}" class="priv">${l}</button>`).join("") : "");
 }
 const AJUDA = {
-  dona: ["Planeias cada semana em Semanas (objetivo, oferta, estratégia do feed e dos stories). Só tu editas.", "Na Oficina 🔒 geras conteúdos para uma ou várias semanas, retificas com comentários e envias para o quadro (coluna Ideia).", "Revês cada cartão e envias para a criativa. Quando volta em Revisão estratégica, aprovas e segue para a cliente.", "Depois do OK da cliente, a criativa põe os ficheiros na Drive. Quando é publicado, eu avalio os números (aparece \"avaliação pendente\").", "Estratégia, Dados e Oficina só tu vês. Em Estratégia → Pessoas dás nome e papel a quem entra. Todas as segundas às 8h tens lá as minhas sugestões para aplicar.", "Nos comentários de cada cartão podes identificar pessoas (@). Recebem a notificação no sino 🔔 e respondem com OK."],
+  dona: ["Em Estratégia tens a estratégia geral e as Campanhas (Black Friday, Natal…). A Oficina lê as campanhas: gera o calendário de conteúdos, os emails e as mensagens dos canais alinhados com as datas e as fases.", "Planeias cada semana em Semanas (objetivo, oferta, estratégia do feed e dos stories). Só tu editas.", "Na Oficina 🔒 geras conteúdos para uma ou várias semanas, retificas com comentários e envias para o quadro (coluna Ideia).", "Revês cada cartão e envias para a criativa. Quando volta em Revisão estratégica, aprovas e segue para a cliente.", "Depois do OK da cliente, a criativa põe os ficheiros na Drive. Quando é publicado, eu avalio os números (aparece \"avaliação pendente\").", "Estratégia, Dados e Oficina só tu vês. Em Estratégia → Pessoas dás nome e papel a quem entra. Todas as segundas às 8h tens lá as minhas sugestões para aplicar.", "Nos comentários de cada cartão podes identificar pessoas (@). Recebem a notificação no sino 🔔 e respondem com OK."],
   equipa: ["No Quadro vês todos os cartões por semana. O chip \"à tua espera\" no topo leva-te ao que é teu.", "Abre o cartão: tens intenção, tema, como fazer, legenda e os stories. Faz no Canva ou CapCut e cola os links.", "Quando estiver pronto, carrega em \"Enviar para revisão estratégica\".", "Se vier com \"alterações pedidas\", o pedido está nos comentários do cartão, logo no topo. Quando te identificarem (@), aparece no sino 🔔: responde com ✓ OK.", "Depois do OK da cliente: exporta cada ficheiro, guarda-o na pasta indicada da Drive com o nome indicado e cola o link. Depois de publicar, marca como publicado."],
-  cliente: ["No topo, \"à tua espera\" mostra os conteúdos que precisam do teu OK.", "Abre o cartão, vê o texto e o criativo (botão Abrir nos links).", "Se estiver bem, carrega em \"Dar OK\". Se não, \"Pedir alterações\" e escreve o que queres mudar.", "Em Semanas vês o objetivo, a oferta e a estratégia de cada semana.", "Nos comentários de cada cartão podes identificar a Tânia ou a Ângela (@). Quando te identificam, aparece no sino 🔔.", "Em Relatórios vês como correu cada semana."]
+  cliente: ["No topo, \"à tua espera\" mostra os conteúdos que precisam do teu OK.", "Abre o cartão, vê o texto e o criativo (botão Abrir nos links).", "Se estiver bem, carrega em \"Dar OK\". Se não, \"Pedir alterações\" e escreve o que queres mudar.", "Em Semanas vês o objetivo, a oferta e a estratégia de cada semana.", "Nos comentários de cada cartão podes identificar a Tânia ou a Ângela (@). Quando te identificam, aparece no sino 🔔.", "Em Relatórios vês como correu cada semana.", "Em Email marketing e Canais estão os emails e as mensagens do Instagram e do WhatsApp para aprovares: Aprovar ou Pedir alteração."]
 };
 function ajudaHtml(){ if (!UI.ajuda) return ""; const p = papel();
   return `<div class="card" style="border-left:4px solid var(--terra)"><div class="spread"><h3>Como funciona · ${esc(PAPEL_TXT[p])}</h3><button class="btn sm" data-act="ajuda">Fechar</button></div><ol class="clean">${AJUDA[p].map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>`; }
@@ -465,7 +466,7 @@ function renderMain(){
   if (!S.loaded.cartoes) { main.innerHTML = `<div class="empty"><p>A carregar…</p></div>`; return; }
   const priv = { estrategia:renderEstrategia, dados:renderDados, historico:renderHistorico, oficina:renderOficina };
   if (priv[UI.tab] && !isDona()) UI.tab = "quadro";
-  const fn = {quadro:renderQuadro, calendario:renderCal, semanas:renderSemanas, relatorios:renderRelatorios, ...priv}[UI.tab] || renderQuadro;
+  const fn = {quadro:renderQuadro, calendario:renderCal, semanas:renderSemanas, emails:renderEmails, canais:renderCanais, relatorios:renderRelatorios, ...priv}[UI.tab] || renderQuadro;
   if (UI.tab === "dados" || UI.tab === "estrategia") comSimulacao(() => fn(main)); else fn(main);
   if (UI.ajuda) main.insertAdjacentHTML("afterbegin", ajudaHtml());
   if (UI.notif) main.insertAdjacentHTML("afterbegin", notifHtml());
@@ -785,9 +786,9 @@ function bfCalcForm(c){
   <div class="tbl"><table><thead><tr><th>Peça</th><th>PVP com IVA</th><th>Custo sem IVA</th><th>Stock</th><th>Preço BF</th></tr></thead><tbody>${(c.pecas||[]).map((p,i) => `<tr><td><input class="inp" data-bfp="${i}.nome" value="${esc(p.nome)}"></td>${["pvp","custo","stock","precoBF"].map(k => `<td><input class="inp" type="number" step="any" style="max-width:110px" data-bfp="${i}.${k}" value="${p[k] ?? ""}"></td>`).join("")}</tr>`).join("")}</tbody></table></div>
   <div class="row"><button class="btn" data-act="bfPeca">+ Peça</button><button class="btn primary" data-act="bfCalcSave">Guardar valores</button></div>`;
 }
-function renderBlackFriday(main){
+function renderBlackFriday(main, topIn, camp){
   const b = bfPlano();
-  const top = `<div class="seg" role="group" aria-label="Estratégia">${[["geral","Estratégia geral"],["bf","Black Friday 🔒"]].map(([k,l]) => `<button data-act="estSub" data-v="${k}" aria-pressed="${(UI.estSub||"geral")===k}">${l}</button>`).join("")}</div>`;
+  const top = (topIn || "") + `<div class="spread"><button class="btn" data-act="voltarCamp">← Campanhas</button><div class="row"><button class="btn" data-act="ofCamp" data-id="${esc(camp?.id || "")}">Gerar na Oficina</button><button class="btn" data-act="editCamp">Editar datas e fases</button></div></div>`;
   if (!b) { main.innerHTML = `${top}<div class="empty"><h3>Ainda não há plano de Black Friday</h3></div>`; return; }
   UI.bfCalc = UI.bfCalc || JSON.parse(JSON.stringify(b.calc || {}));
   const r = b.resumo, cm = b.comunicacao;
@@ -842,8 +843,207 @@ async function bfCopiar(txt, el){
   const ok = () => { const o = el.textContent; el.textContent = "Copiado"; setTimeout(() => { el.textContent = o; }, 1500); };
   try { await navigator.clipboard.writeText(txt); ok(); } catch(e){ const t = document.createElement("textarea"); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); ok(); } catch(x){ toast("Não consegui copiar."); } t.remove(); }
 }
+/* ---------- campanhas e comunicação (estratégia privada) + email e canais (públicos) ---------- */
+const CANAIS = [["instagram","Canal do Instagram"],["whatsapp","WhatsApp"]];
+const EST_PUB = [["aprovar","Para aprovar"],["alterar","Pedido de alteração"],["aprovado","Aprovado"],["agendado","Agendado"],["enviado","Enviado"]];
+const EST_PUB_CHIP = { aprovar:"warn", alterar:"bad", aprovado:"ok", agendado:"neutral", enviado:"ok" };
+const EST_CAMP = [["rascunho","Rascunho"],["ativa","Ativa"],["terminada","Terminada"]];
+const campanhasOrd = () => [...(S.campanhas||[])].sort((a,b) => (a.inicio||"").localeCompare(b.inicio||""));
+const campanhasEm = (ini, fim) => campanhasOrd().filter(c => c.inicio && c.fim && c.inicio <= fim && c.fim >= ini);
+const nomeCampanha = id => (S.campanhas||[]).find(c => c.id === id)?.nome || "";
+const linhasDe = t => String(t||"").split("\n").map(x => x.trim()).filter(Boolean);
+const faseHoje = c => (c.fases||[]).find(f => f.inicio <= todayIso && todayIso <= f.fim);
+function contextoCampanhas(ini, fim){
+  const cs = campanhasEm(ini, fim); if (!cs.length) return "";
+  return cs.map(c => {
+    const plano = c.plano ? (S.bf||[]).find(x => x.id === c.plano) : null;
+    const fases = (c.fases||[]).filter(f => f.inicio <= fim && f.fim >= ini).map(f => `- ${f.fase} (${f.inicio} a ${f.fim}): ${f.objetivo}${f.mensagem ? ` Mensagem: ${f.mensagem}` : ""}${f.canais ? ` Canais: ${f.canais}` : ""}`).join("\n");
+    const dias = plano ? plano.calendario.filter(x => x.data >= ini && x.data <= fim).map(x => `- ${x.data} (${x.fase}) ${x.formato}: ${x.tema}. Peça: ${x.peca}. Gancho: ${x.gancho}. CTA: ${x.cta}. Imagem: ${x.imagem}.${x.texto ? ` Texto já aprovado no plano: ${x.texto.replace(/\n+/g," / ")}` : ""}`).join("\n") : "";
+    const ems = [...(plano?.comunicacao?.emails||[]).map(e => ({ data:e.data, assunto:e.assunto })), ...(S.emails||[]).filter(e => e.campanha === c.id).map(e => ({ data:e.data, assunto:e.assunto }))].filter(e => e.data >= ini && e.data <= fim);
+    return `CAMPANHA: ${c.nome} (${c.inicio} a ${c.fim})
+Objetivo: ${c.objetivo || "-"}
+Oferta: ${c.oferta || "-"}
+Público: ${c.publico || "-"}
+Mensagem central: ${c.mensagem || "-"}
+Regras da campanha:
+${linhasDe(c.regras).map(r => "- " + r).join("\n") || "-"}
+O que não fazemos:
+${linhasDe(c.naoFazer).map(r => "- " + r).join("\n") || "-"}
+Fases que caem nestes dias:
+${fases || "-"}
+${dias ? `PLANO DA CAMPANHA PARA ESTES DIAS (segue-o: mesmo dia, fase, formato, tema e gancho; escreve o conteúdo completo e, se o plano já tem texto, usa-o tal como está):\n${dias}` : ""}
+${ems.length ? `Emails da campanha nestes dias (o feed e os stories têm de bater certo com eles):\n${ems.map(e => `- ${e.data}: ${e.assunto}`).join("\n")}` : ""}`;
+  }).join("\n\n");
+}
+const REGRA_CAMPANHA = `Se houver CAMPANHA nestes dias, ela manda sobre tudo o resto: respeita as fases e as datas, não fales da oferta antes da fase em que ela é anunciada e não contradigas as regras da campanha.`;
+
+/* comunicação: email, canal do Instagram e WhatsApp */
+const COM_CANAIS = [["email","Email marketing"],["instagram","Canal do Instagram"],["whatsapp","WhatsApp"]];
+function comunicacaoHtml(){
+  const cm = S.priv?.comunicacao || {};
+  if (UI.editCom) return `<form class="card" data-form="comunicacao"><h2>Editar comunicação</h2>${COM_CANAIS.map(([k,l]) => { const x = cm[k] || {};
+    return `<div class="sec"><h3>${l}</h3><label class="f">Nome<input name="${k}_nome" value="${esc(x.nome)}"></label><label class="f">Para que serve<textarea name="${k}_porque">${esc(x.porque)}</textarea></label>
+      <label class="f">Cadência<input name="${k}_cadencia" value="${esc(x.cadencia)}"></label><label class="f">O que se envia (um por linha)<textarea name="${k}_tipos" style="min-height:100px">${esc(x.tipos)}</textarea></label>
+      <label class="f">Regras (uma por linha)<textarea name="${k}_regras" style="min-height:100px">${esc(x.regras)}</textarea></label></div>`; }).join("")}
+    <div class="row"><button class="btn primary" type="submit">Guardar</button><button class="btn" type="button" data-act="cancelCom">Cancelar</button></div></form>`;
+  return `<div class="card"><div class="spread"><h2>Comunicação: email, canal do Instagram e WhatsApp</h2><button class="btn" data-act="editCom">Editar</button></div>
+    ${cm.recomendacao ? `<p>${esc(cm.recomendacao)}</p>` : ""}
+    <div class="bfgrid">${COM_CANAIS.map(([k,l]) => { const x = cm[k]; if (!x) return `<div class="card"><h3>${l}</h3><p class="muted small">Por definir.</p></div>`;
+      return `<div class="card"><span class="lbl">${l}</span><h3>${esc(x.nome || l)}</h3><p class="small">${esc(x.porque)}</p><p class="small"><b>Cadência:</b> ${esc(x.cadencia)}</p>
+        ${linhasDe(x.tipos).length ? `<span class="lbl">O que se envia</span><ul class="clean small">${linhasDe(x.tipos).map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}
+        ${linhasDe(x.regras).length ? `<span class="lbl">Regras</span><ol class="clean small">${linhasDe(x.regras).map(t => `<li>${esc(t)}</li>`).join("")}</ol>` : ""}</div>`; }).join("")}</div></div>`;
+}
+function campanhasResumoHtml(){
+  const cs = campanhasOrd(); if (!cs.length) return "";
+  return `<div class="card"><div class="spread"><h2>Campanhas do ano</h2><button class="btn" data-act="estSub" data-v="campanhas">Abrir campanhas</button></div>
+    <div class="bfgrid">${cs.map(c => { const f = faseHoje(c); return `<button class="card camp" data-act="abrirCamp" data-id="${esc(c.id)}"><span class="chip ${c.estado === "ativa" ? "ok" : c.estado === "terminada" ? "neutral" : "warn"}">${esc((EST_CAMP.find(e => e[0] === c.estado)||[])[1] || c.estado)}</span><h3>${esc(c.nome)}</h3><span class="small muted">${esc(fmtCurto(c.inicio))} a ${esc(fmtCurto(c.fim))}${f ? ` · hoje: ${esc(f.fase)}` : ""}</span></button>`; }).join("")}</div></div>`;
+}
+function renderCampanhas(main, top){
+  const c = UI.campId ? (S.campanhas||[]).find(x => x.id === UI.campId) : null;
+  if (c && c.plano && !UI.editCamp) { renderBlackFriday(main, top, c); return; }
+  if (c || UI.editCamp === "nova") { main.innerHTML = top + campanhaHtml(c); return; }
+  main.innerHTML = `${top}<div class="priv-banner">🔒 <b>Campanhas.</b> Cada campanha tem datas, fases e regras. A Oficina lê-as quando geras conteúdos, emails e mensagens para essas datas. A cliente não vê nada disto, só o resultado.</div>
+    <div class="spread"><h2>Campanhas</h2><button class="btn primary" data-act="novaCamp">+ Nova campanha</button></div>
+    <div class="bfgrid">${campanhasOrd().map(x => { const f = faseHoje(x); return `<button class="card camp" data-act="abrirCamp" data-id="${esc(x.id)}"><span class="chip ${x.estado === "ativa" ? "ok" : x.estado === "terminada" ? "neutral" : "warn"}">${esc((EST_CAMP.find(e => e[0] === x.estado)||[])[1] || x.estado)}</span><h3>${esc(x.nome)}</h3><span class="small muted">${esc(fmtCurto(x.inicio))} a ${esc(fmtCurto(x.fim))}${f ? ` · hoje: ${esc(f.fase)}` : ""}</span><span class="small">${esc(x.objetivo || "")}</span>${x.plano ? `<span class="chip neutral">plano completo</span>` : ""}</button>`; }).join("") || `<p class="muted">Ainda não há campanhas.</p>`}</div>`;
+}
+function campanhaHtml(c){
+  const x = c || { nome:"", inicio:"", fim:"", estado:"rascunho", fases:[] };
+  if (UI.editCamp) { const fs = UI.campFases || (UI.campFases = JSON.parse(JSON.stringify(x.fases || [])));
+    return `<form class="card" data-form="campanha" data-id="${esc(c?.id || "")}"><div class="spread"><h2>${c ? "Editar campanha" : "Nova campanha"}</h2><button class="btn" type="button" data-act="voltarCamp">← Campanhas</button></div>
+      <div class="fgrid"><label class="f">Nome<input name="nome" value="${esc(x.nome)}" required placeholder="Ex.: Natal"></label><label class="f">Início<input type="date" name="inicio" value="${esc(x.inicio)}" required></label><label class="f">Fim<input type="date" name="fim" value="${esc(x.fim)}" required></label>
+        <label class="f">Estado<select name="estado">${EST_CAMP.map(([k,l]) => `<option value="${k}"${x.estado===k?" selected":""}>${l}</option>`).join("")}</select></label></div>
+      <label class="f">Objetivo<textarea name="objetivo">${esc(x.objetivo)}</textarea></label>
+      <label class="f">Oferta<textarea name="oferta">${esc(x.oferta)}</textarea></label>
+      <label class="f">Público<textarea name="publico">${esc(x.publico)}</textarea></label>
+      <label class="f">Mensagem central<textarea name="mensagem">${esc(x.mensagem)}</textarea></label>
+      <label class="f">Regras (uma por linha)<textarea name="regras" style="min-height:110px">${esc(x.regras)}</textarea></label>
+      <label class="f">O que não fazemos (uma por linha)<textarea name="naoFazer">${esc(x.naoFazer)}</textarea></label>
+      <span class="lbl">Fases</span><div class="tbl"><table><thead><tr><th>Fase</th><th>Início</th><th>Fim</th><th>Objetivo</th><th>Mensagem</th><th>Canais</th><th></th></tr></thead><tbody>
+        ${fs.map((f,i) => `<tr>${[["fase","text"],["inicio","date"],["fim","date"],["objetivo","text"],["mensagem","text"],["canais","text"]].map(([k,t]) => `<td><input class="inp" type="${t}" data-cf="${i}.${k}" value="${esc(f[k])}"></td>`).join("")}<td><button class="btn ghost sm danger" type="button" data-act="rmFase" data-i="${i}">✕</button></td></tr>`).join("")}</tbody></table></div>
+      <button class="btn" type="button" data-act="addFase">+ Fase</button>
+      <label class="f">Notas<textarea name="notas">${esc(x.notas)}</textarea></label>
+      <div class="row"><button class="btn primary" type="submit">Guardar</button><button class="btn" type="button" data-act="voltarCamp">Cancelar</button>${c && !c.plano ? `<button class="btn ghost danger" type="button" data-act="apagarCamp" data-id="${esc(c.id)}">Apagar campanha</button>` : ""}</div></form>`; }
+  const em = (S.emails||[]).filter(e => e.campanha === c.id), ms = (S.mensagens||[]).filter(m => m.campanha === c.id);
+  return `<div class="spread"><button class="btn" data-act="voltarCamp">← Campanhas</button><div class="row"><button class="btn" data-act="ofCamp" data-id="${esc(c.id)}">Gerar na Oficina</button><button class="btn" data-act="editCamp">Editar</button></div></div>
+    <div class="rep-hero" style="padding:18px 20px 30px"><span class="lbl" style="color:var(--cover-ink)">${esc(c.nome)} · ${esc(fmtCurto(c.inicio))} a ${esc(fmtCurto(c.fim))}</span><p style="font-size:20px">${esc(c.mensagem || c.objetivo || "")}</p></div>
+    <div class="grid2"><div class="card"><h3>Objetivo</h3><p>${esc(c.objetivo || "—")}</p><h3>Oferta</h3><p>${esc(c.oferta || "—")}</p><h3>Público</h3><p>${esc(c.publico || "—")}</p></div>
+      <div class="card"><h3>Regras</h3><ol class="clean">${linhasDe(c.regras).map(r => `<li>${esc(r)}</li>`).join("") || "<li>—</li>"}</ol>${linhasDe(c.naoFazer).length ? `<h3>O que não fazemos</h3><ol class="clean">${linhasDe(c.naoFazer).map(r => `<li>${esc(r)}</li>`).join("")}</ol>` : ""}</div></div>
+    <div class="card"><h3>Fases</h3><div class="tbl"><table><thead><tr><th>Fase</th><th>Datas</th><th>Objetivo</th><th>Mensagem</th><th>Canais</th></tr></thead><tbody>${(c.fases||[]).map(f => `<tr><td>${esc(f.fase)}</td><td>${esc(fmtCurto(f.inicio))} a ${esc(fmtCurto(f.fim))}</td><td>${esc(f.objetivo)}</td><td>${esc(f.mensagem)}</td><td>${esc(f.canais)}</td></tr>`).join("")}</tbody></table></div></div>
+    <div class="card"><h3>Já enviado para a cliente</h3><p class="small">${em.length} emails · ${ms.length} mensagens de canais</p></div>
+    ${c.notas ? `<div class="card"><h3>Notas</h3><p class="readv">${esc(c.notas)}</p></div>` : ""}`;
+}
+
+/* email marketing e canais: o que a cliente vê */
+function itemPubHtml(x, tipo){
+  const p = papel(); const ed = UI.editPub === x.id && p === "dona";
+  const col = tipo === "email" ? "emails" : "mensagens";
+  const estadoSel = p === "dona" || p === "equipa" ? `<select class="inp" style="width:auto" data-act="pubEstado" data-col="${col}" data-id="${esc(x.id)}" aria-label="Estado">${EST_PUB.filter(([k]) => p === "dona" || ["aprovado","agendado","enviado"].includes(k) || k === x.estado).map(([k,l]) => `<option value="${k}"${x.estado===k?" selected":""}>${l}</option>`).join("")}</select>` : `<span class="chip ${EST_PUB_CHIP[x.estado]||"neutral"}">${esc((EST_PUB.find(e => e[0] === x.estado)||[])[1] || x.estado)}</span>`;
+  const txt = tipo === "email" ? `Assunto: ${x.assunto}\n${x.preview ? `Pré-visualização: ${x.preview}\n` : ""}\n${x.corpo}` : x.texto;
+  BF_TXT["pub-" + x.id] = txt;
+  return `<div class="card pubitem"><div class="spread"><span class="small muted">${esc(fmtDia(x.data))}${x.hora ? " · " + esc(x.hora) : ""}${tipo === "email" && x.segmento ? " · " + esc(x.segmento) : ""}${tipo !== "email" ? " · " + esc((CANAIS.find(c => c[0] === x.canal)||[])[1] || x.canal) : ""}</span>${estadoSel}</div>
+    ${ed ? `<form data-form="pubEdit" data-col="${col}" data-id="${esc(x.id)}" class="panel" style="gap:8px">${tipo === "email" ? `<label class="f">Assunto<input name="assunto" value="${esc(x.assunto)}"></label><label class="f">Pré-visualização<input name="preview" value="${esc(x.preview)}"></label><label class="f">Texto<textarea name="corpo" style="min-height:220px">${esc(x.corpo)}</textarea></label>` : `<label class="f">Mensagem<textarea name="texto" style="min-height:140px">${esc(x.texto)}</textarea></label>`}
+      <div class="fgrid"><label class="f">Dia<input type="date" name="data" value="${esc(x.data)}"></label><label class="f">Hora<input name="hora" value="${esc(x.hora)}"></label></div>
+      <div class="row"><button class="btn primary" type="submit">Guardar</button><button class="btn" type="button" data-act="pubCancel">Cancelar</button><button class="btn ghost danger" type="button" data-act="pubApagar" data-col="${col}" data-id="${esc(x.id)}">Apagar</button></div></form>`
+    : `${tipo === "email" ? `<h3>${esc(x.assunto)}</h3>${x.preview ? `<p class="small muted">${esc(x.preview)}</p>` : ""}<div class="readv">${esc(x.corpo)}</div>` : `<div class="readv">${esc(x.texto)}</div>`}`}
+    ${x.nota ? `<div class="callout"><b>Pedido de alteração:</b> ${esc(x.nota)}</div>` : ""}
+    ${ed ? "" : `<div class="row">${bfCopiavel("pub-" + x.id, txt)}${p === "dona" ? `<button class="btn" data-act="pubEdit" data-id="${esc(x.id)}">Editar</button>` : ""}
+      ${p === "cliente" && ["aprovar","alterar"].includes(x.estado) ? `<button class="btn primary" data-act="pubAprovar" data-col="${col}" data-id="${esc(x.id)}">Aprovar</button><button class="btn" data-act="pubAlterar" data-col="${col}" data-id="${esc(x.id)}">Pedir alteração</button>` : ""}</div>`}
+    ${UI.pubAlt === x.id ? `<div class="panel" style="gap:6px"><label class="f">O que queres mudar?<textarea id="pubNota" style="min-height:60px"></textarea></label><div class="row"><button class="btn primary" data-act="pubAltEnviar" data-col="${col}" data-id="${esc(x.id)}">Enviar</button><button class="btn" data-act="pubAltCancel">Cancelar</button></div></div>` : ""}</div>`;
+}
+function listaPub(itens, tipo, vazio){
+  const grupos = {}; [...itens].sort((a,b) => (a.data||"").localeCompare(b.data||"") || (a.hora||"").localeCompare(b.hora||"")).forEach(x => { const k = x.campanhaNome || (tipo === "email" ? "Newsletter e outros" : "Sem campanha"); (grupos[k] = grupos[k] || []).push(x); });
+  return Object.entries(grupos).map(([k, xs]) => `<h2 class="serif" style="font-size:24px">${esc(k)} <span class="small muted">${xs.length}</span></h2><div class="bfgrid wide">${xs.map(x => itemPubHtml(x, tipo)).join("")}</div>`).join("") || `<div class="empty"><p>${vazio}</p></div>`;
+}
+function renderEmails(main){
+  const p = papel();
+  main.innerHTML = `<div class="spread"><h2>Email marketing</h2>${p === "dona" ? `<button class="btn" data-act="irOficina" data-area="email">Criar emails na Oficina 🔒</button>` : ""}</div>
+    <p class="small muted">${p === "cliente" ? "Os emails para aprovares. Quando estiver bem, carrega em Aprovar. Se não, Pedir alteração e escreve o que queres mudar." : p === "equipa" ? "Copia o texto para a ferramenta de email e marca Agendado ou Enviado." : "O que está aqui a cliente e a equipa veem. Os rascunhos ficam na Oficina."}</p>
+    ${listaPub(S.emails || [], "email", "Ainda não há emails.")}`;
+}
+function renderCanais(main){
+  const p = papel(); const f = UI.canalF || "";
+  const its = (S.mensagens || []).filter(m => !f || m.canal === f);
+  main.innerHTML = `<div class="spread"><h2>Canais</h2><div class="row"><div class="seg" role="group" aria-label="Canal">${[["","Todos"], ...CANAIS].map(([k,l]) => `<button data-act="canalF" data-v="${k}" aria-pressed="${f===k}">${l}</button>`).join("")}</div>${p === "dona" ? `<button class="btn" data-act="irOficina" data-area="canais">Criar mensagens na Oficina 🔒</button>` : ""}</div></div>
+    <p class="small muted">Mensagens para o canal de transmissão do Instagram e para a lista VIP do WhatsApp.</p>
+    ${listaPub(its, "canal", "Ainda não há mensagens.")}`;
+}
+
+/* oficina: email marketing e canais */
+function promptOfCom(area){
+  const o = UI.of; const c = (S.campanhas||[]).find(x => x.id === o.camp); const cm = S.priv?.comunicacao || {};
+  const ini = c ? c.inicio : (o.ini || todayIso), fim = c ? c.fim : (o.fim || addDays(todayIso, 30));
+  const canal = area === "email" ? cm.email : cm[o.canal];
+  const plano = c?.plano ? (S.bf||[]).find(x => x.id === c.plano) : null;
+  const jaFeito = area === "email"
+    ? [...(plano?.comunicacao?.emails||[]).map(e => `- ${e.data}: ${e.assunto} (no plano)`), ...(S.emails||[]).filter(e => !c || e.campanha === c.id).map(e => `- ${e.data}: ${e.assunto} (já enviado para a cliente)`)]
+    : [...(plano?.comunicacao?.whatsapp ? [`- ${plano.comunicacao.whatsapp.data}: WhatsApp VIP (no plano)`] : []), ...(S.mensagens||[]).filter(m => m.canal === o.canal && (!c || m.campanha === c.id)).map(m => `- ${m.data}: ${m.texto.slice(0,80)}`)];
+  const conteudos = S.cartoes.filter(x => x.data >= ini && x.data <= fim).map(x => `- ${x.data} ${x.formato || x.tipo}: ${(x.tema || x.titulo || "").slice(0,80)}`);
+  const pedido = area === "email"
+    ? `Cria os emails ${c ? `da campanha ${c.nome}` : "da newsletter"} entre ${ini} e ${fim}.${o.emTipo === "newsletter" ? " É a newsletter: segue a estrutura definida na comunicação." : ""} Para cada email: data, hora, segmento (quem recebe), assunto (curto, sem emojis, sem maiúsculas a gritar), pré-visualização, texto completo pronto a colar, assinado pela Sílvia, e o objetivo do email numa frase. Onde falta um dado (preço, data limite, link), usa [parênteses retos].`
+    : `Cria as mensagens para o ${o.canal === "whatsapp" ? "WhatsApp (lista VIP)" : "canal de transmissão do Instagram"} entre ${ini} e ${fim}${c ? `, para a campanha ${c.nome}` : ""}. Para cada mensagem: data, hora, tipo (texto, foto, áudio, sondagem ou link) e o texto final, curto, na voz da Sílvia. Onde falta um dado, usa [parênteses retos].`;
+  return `És a estrategista de comunicação sénior da Tânia Silveira a trabalhar para a marca Traços D'Amor. Escreves em português de Portugal.
+
+MARCA
+${MARCA}
+
+ESTRATÉGIA DESTE CANAL
+${canal ? `${canal.nome}: ${canal.porque}\nCadência: ${canal.cadencia}\nO que se envia:\n${linhasDe(canal.tipos).map(t => "- " + t).join("\n")}\nRegras:\n${linhasDe(canal.regras).map(t => "- " + t).join("\n")}` : "(por definir)"}
+
+${contextoCampanhas(ini, fim) || "Sem campanha nestas datas."}
+${REGRA_CAMPANHA}
+
+JÁ EXISTE (não repetir; completa o que falta à volta disto):
+${jaFeito.join("\n") || "(nada)"}
+
+CONTEÚDOS DO INSTAGRAM NESTAS DATAS (o ${area === "email" ? "email" : "canal"} tem de bater certo com eles):
+${conteudos.join("\n") || "(ainda nada no quadro)"}
+
+PEDIDO DA TÂNIA
+${o.comBrief || "(sem notas: segue a estratégia)"}
+
+TAREFA
+${pedido}
+Responde só com JSON: ${area === "email" ? `{"itens":[{"data":"AAAA-MM-DD","hora":"10h","segmento":"","assunto":"","preview":"","corpo":"","objetivo":""}],"notaParaTania":""}` : `{"itens":[{"data":"AAAA-MM-DD","hora":"","tipo":"","texto":"","objetivo":""}],"notaParaTania":""}`}`;
+}
+async function gerarCom(area){
+  if (!sample) return; const o = UI.of;
+  o.busy = true; o.err = ""; o.comOut = []; o.comNota = ""; o.prog = "A pensar… (até 1 minuto)"; renderMain();
+  try { const res = await sample.json(promptOfCom(area), { modelTier:"complex", cache:false });
+    if (!res || !Array.isArray(res.itens)) throw { code:"invalid_json" };
+    o.comOut = res.itens; o.comNota = res.notaParaTania || ""; o.comArea = area;
+  } catch(e){ o.err = e?.code === "not_granted" ? "Não deste permissão para usar o Claude nesta página." : e?.code === "rate_limited" ? "Muitos pedidos seguidos. Espera um minuto." : "Não consegui gerar. Carrega outra vez."; }
+  o.busy = false; o.prog = ""; renderMain();
+}
+async function enviarPub(area, x){
+  const o = UI.of; const c = (S.campanhas||[]).find(k => k.id === (x.campanha ?? o.camp));
+  const base = { cliente:CLIENTE, campanha: c?.id || "", campanhaNome: c?.nome || "", data: x.data || todayIso, hora: x.hora || "", estado:"aprovar", nota:"", criadoEm:new Date().toISOString() };
+  if (area === "email") return write(`emails/${CLIENTE}-${base.data}-${uidShort()}`, { ...base, segmento:x.segmento||"", assunto:x.assunto||"", preview:x.preview||"", corpo:x.corpo||"" });
+  return write(`mensagens/${CLIENTE}-${base.data}-${uidShort()}`, { ...base, canal: x.canal || o.canal, tipo:x.tipo||"texto", texto:x.texto||"" });
+}
+function planoProntoCom(area){
+  const o = UI.of; const c = (S.campanhas||[]).find(x => x.id === o.camp); const plano = c?.plano ? (S.bf||[]).find(x => x.id === c.plano) : null; if (!plano) return [];
+  if (area === "email") return [...plano.comunicacao.emails.map(e => ({ data:e.data, hora:"10h", segmento:e.fase === "Lista VIP" ? "Toda a lista" : e.fase === "Acesso VIP" ? "Lista VIP" : "Toda a lista", assunto:e.assunto, preview:e.preview, corpo:e.corpo, objetivo:e.fase }))];
+  return o.canal === "whatsapp" && plano.comunicacao.whatsapp ? [{ data:plano.comunicacao.whatsapp.data, hora:"10h", tipo:"texto", texto:plano.comunicacao.whatsapp.texto, objetivo:"Acesso VIP" }] : [];
+}
+function ofComHtml(area){
+  const o = UI.of; const cs = campanhasOrd().filter(c => c.fim >= todayIso);
+  const prontos = planoProntoCom(area);
+  const item = (x, i, origem) => `<div class="sec"><div class="spread"><span class="small muted">${esc(x.data ? fmtDia(x.data) : "")}${x.hora ? " · " + esc(x.hora) : ""}${x.segmento ? " · " + esc(x.segmento) : ""}${x.tipo ? " · " + esc(x.tipo) : ""}</span><button class="btn primary sm" data-act="comEnviar" data-o="${origem}" data-i="${i}">Enviar para ${area === "email" ? "Email marketing" : "Canais"}</button></div>
+    ${x.assunto ? `<h3>${esc(x.assunto)}</h3>` : ""}${x.preview ? `<p class="small muted">${esc(x.preview)}</p>` : ""}<div class="readv">${esc(x.corpo || x.texto || "")}</div>${x.objetivo ? `<p class="small"><span class="lbl">Objetivo</span> ${esc(x.objetivo)}</p>` : ""}</div>`;
+  return `<div class="card"><h2>${area === "email" ? "Email marketing" : "Canais"}</h2>
+    <div class="fgrid"><label class="f">Campanha<select data-act="ofCampSel" id="of-camp"><option value="">${area === "email" ? "Newsletter (sem campanha)" : "Sem campanha"}</option>${cs.map(c => `<option value="${esc(c.id)}"${o.camp===c.id?" selected":""}>${esc(c.nome)} · ${esc(fmtCurto(c.inicio))} a ${esc(fmtCurto(c.fim))}</option>`).join("")}</select></label>
+      ${area === "canais" ? `<label class="f">Canal<select data-act="ofCanalSel" id="of-canal">${CANAIS.map(([k,l]) => `<option value="${k}"${o.canal===k?" selected":""}>${l}</option>`).join("")}</select></label>` : ""}
+      ${!o.camp ? `<label class="f">De<input type="date" data-of="ini" value="${esc(o.ini || todayIso)}"></label><label class="f">Até<input type="date" data-of="fim" value="${esc(o.fim || addDays(todayIso, 30))}"></label>` : ""}</div>
+    <label class="f">O que queres que eu faça<textarea data-of="comBrief" id="of-combrief" style="min-height:90px" placeholder="${area === "email" ? "Ex.: 3 emails, o primeiro só para quem já comprou." : "Ex.: 2 mensagens por semana, uma com áudio da Sílvia."}">${esc(o.comBrief)}</textarea></label>
+    <div class="row"><button class="btn primary" data-act="gerarCom" data-area="${area}" ${o.busy || !sample ? "disabled" : ""}>${o.busy ? esc(o.prog) : area === "email" ? "Gerar emails" : "Gerar mensagens"}</button>${!sample ? `<span class="small muted">Só funciona dentro do claude.ai.</span>` : ""}</div>
+    ${o.err ? `<p class="small" style="color:var(--bad)">${esc(o.err)}</p>` : ""}</div>
+  ${prontos.length ? `<div class="card"><h2>Já escrito no plano da campanha</h2><p class="small muted">Vem do plano que validaste. Envia quando estiver pronto.</p>${prontos.map((x,i) => item(x, i, "plano")).join("")}</div>` : ""}
+  ${o.comOut?.length && o.comArea === area ? `<div class="card"><div class="spread"><h2>Proposta</h2><button class="btn primary" data-act="comEnviarTodos">Enviar tudo</button></div>${o.comNota ? `<p class="chip warn" style="white-space:normal">${esc(o.comNota)}</p>` : ""}${o.comOut.map((x,i) => item(x, i, "out")).join("")}</div>` : ""}`;
+}
 function renderEstrategia(main){
-  if (UI.estSub === "bf") { renderBlackFriday(main); return; }
+  if (UI.estSub === "bf") { UI.estSub = "campanhas"; UI.campId = "blackfriday"; }
+  const topEst = `<div class="seg" role="group" aria-label="Estratégia">${[["geral","Estratégia geral"],["campanhas","Campanhas"]].map(([k,l]) => `<button data-act="estSub" data-v="${k}" aria-pressed="${(UI.estSub||"geral")===k}">${l}</button>`).join("")}</div>`;
+  if (UI.estSub === "campanhas") { renderCampanhas(main, topEst); return; }
   const c = S.priv || {}; const pub = S.cliente || {};
   const pessoas = S.pessoas.filter(p => p.id !== S.me.id);
   if (UI.editEst) {
@@ -860,7 +1060,7 @@ function renderEstrategia(main){
       <div class="row"><button class="btn primary" type="submit">Guardar</button><button class="btn" type="button" data-act="cancelEst">Cancelar</button></div></form>`;
     return;
   }
-  main.innerHTML = `<div class="seg" role="group" aria-label="Estratégia">${[["geral","Estratégia geral"],["bf","Black Friday 🔒"]].map(([k,l]) => `<button data-act="estSub" data-v="${k}" aria-pressed="${(UI.estSub||"geral")===k}">${l}</button>`).join("")}</div>
+  main.innerHTML = `${topEst}
   <div class="priv-banner">🔒 <b>Área privada.</b> A equipa e a cliente não veem este separador.</div>
   ${simBanner()}${UI.sim ? "" : `<div class="row" style="justify-content:flex-end">${simBotao()}</div>`}
   ${estadoEstrategiaHtml()}
@@ -873,6 +1073,8 @@ function renderEstrategia(main){
     <div class="card"><h3>Ritmo</h3><p class="readv">${esc(c.ritmo || "—")}</p>${c.metas ? `<h3>Metas por semana</h3><div class="kpis">${[["cliquesLink","Cliques no link"],["dms","DMs de venda"],["vendasOnline","Vendas online"],["alcance","Alcance"]].filter(([k]) => c.metas[k] != null).map(([k,l]) => `<div class="kpi" style="padding:10px"><span class="lbl">${l}</span><span class="v" style="font-size:22px">${fmtN(c.metas[k])}</span></div>`).join("")}</div>` : ""}</div></div>
   ${(c.regras||[]).length ? `<div class="card"><h3>Regras</h3><ol class="clean">${c.regras.map(r => `<li>${esc(r)}</li>`).join("")}</ol></div>` : ""}
   ${c.tom ? `<div class="card"><h3>Tom de voz</h3><p class="readv">${esc(c.tom)}</p></div>` : ""}
+  ${campanhasResumoHtml()}
+  ${comunicacaoHtml()}
   <div class="card"><h3>Pastas da Drive</h3><div class="row">${PASTAS.map(([k,l]) => pub.pastas?.[k] ? `<a class="btn" href="${esc(pub.pastas[k])}" target="_blank" rel="noopener">${l}</a>` : `<span class="chip warn">${l}: por definir</span>`).join("")}</div></div>
   <div class="card"><h3>Pessoas com acesso</h3>
     <p class="small muted">Quem abre a app aparece aqui. Dá o nome e o papel a cada pessoa. É esse nome que aparece nos comentários. Partilha a app como <b>Contributor</b>, não como Editor. O email serve para lhes chegar um aviso quando as identificas num comentário: só tu o vês e sai do teu Gmail.</p>
@@ -1555,6 +1757,9 @@ ${(c.regras||[]).map(r => "- " + r).join("\n")}
 
 ${blocoSemana(w)}
 
+${contextoCampanhas(w.inicio, w.fim)}
+${contextoCampanhas(w.inicio, w.fim) ? REGRA_CAMPANHA : ""}
+
 ${memoriaOficina(w)}
 
 ${EXEMPLO}
@@ -1577,17 +1782,22 @@ Nos cartões Storie, os campos de feed ficam vazios e tudo vai em "stories".`;
 }
 function renderOficina(main){
   const o = UI.of; const ws = semanasOrd();
+  const areaSeg = `<div class="seg" role="group" aria-label="Área">${[["conteudos","Calendário de conteúdos"],["email","Email marketing"],["canais","Canais"]].map(([k,l]) => `<button data-act="ofArea" data-v="${k}" aria-pressed="${o.area===k}">${l}</button>`).join("")}</div>`;
+  if (o.area !== "conteudos") { main.innerHTML = `<div class="priv-banner">🔒 <b>Oficina privada.</b> Os rascunhos só tu vês. O que envias passa para ${o.area === "email" ? "Email marketing" : "Canais"}, onde a cliente aprova.</div>${areaSeg}${ofComHtml(o.area)}`; return; }
+  const campsOf = campanhasOrd().filter(c => c.fim >= todayIso);
   if (!o.semanas.length && ws.length) { o.semanas = [(semanaAtual() || ws[0]).id]; o.auto = true; }
   const sel = ws.filter(w => o.semanas.includes(w.id));
   main.innerHTML = `<div class="priv-banner">🔒 <b>Oficina privada.</b> Só tu vês este separador e os rascunhos. O que envias para o quadro passa a ser visível para a equipa.</div>
+  ${areaSeg}
   <div class="card"><h2>Gerar conteúdo</h2>
+    ${campsOf.length ? `<span class="lbl">Campanhas (seleciona as semanas da campanha de uma vez)</span><div class="row">${campsOf.map(c => `<button class="chip ${o.camp === c.id ? "ok" : "neutral"}" data-act="ofCamp" data-id="${esc(c.id)}">${esc(c.nome)} · ${esc(fmtCurto(c.inicio))} a ${esc(fmtCurto(c.fim))}</button>`).join("")}</div>` : ""}
     <div class="row"><div class="seg" role="group" aria-label="O quê">${[["semana","Semana completa"],["dia","Um dia"]].map(([k,l]) => `<button data-act="ofModo" data-v="${k}" aria-pressed="${o.modo===k}">${l}</button>`).join("")}</div></div>
     <span class="lbl">${o.modo === "semana" ? "Semana a gerar (carrega noutra para trocar; depois podes juntar mais)" : "Semana"}</span>
     <div class="row">${ws.filter(w => w.fim >= todayIso || o.semanas.includes(w.id)).map(w => `<button class="chip ${o.semanas.includes(w.id) ? "ok" : "neutral"}" data-act="ofSem" data-id="${esc(w.id)}" aria-pressed="${o.semanas.includes(w.id)}">${o.semanas.includes(w.id) ? "✓ " : ""}${esc(cap1(MESES[parse(w.inicio).getMonth()]).slice(0,3))} · ${esc(nomeSemana(w))} · ${esc(w.titulo)}</button>`).join("")}</div>
     ${o.modo === "dia" ? `<div class="fgrid"><label class="f">Dia<input type="date" id="of-data" data-of="data" value="${esc(o.data || sel[0]?.inicio || "")}"></label>
       <label class="f">Tipo<select id="of-tipo" data-of="tipo"><option${o.tipo==="Feed"?" selected":""}>Feed</option><option${o.tipo==="Storie"?" selected":""}>Storie</option></select></label>
       ${o.tipo === "Feed" ? `<label class="f">Formato<select id="of-formato" data-of="formato">${FORMATOS.map(f => `<option${o.formato===f?" selected":""}>${f}</option>`).join("")}</select></label>` : ""}</div>` : ""}
-    ${sel.map(w => `<details class="sec"><summary style="cursor:pointer;font-weight:700">O que já está definido para ${esc(nomeSemana(w))} · ${esc(w.titulo)}</summary><p class="readv small">${esc(blocoSemana(w))}</p></details>`).join("")}
+    ${sel.map(w => `<details class="sec"><summary style="cursor:pointer;font-weight:700">O que já está definido para ${esc(nomeSemana(w))} · ${esc(w.titulo)}</summary><p class="readv small">${esc(blocoSemana(w))}</p>${contextoCampanhas(w.inicio, w.fim) ? `<p class="readv small" style="border-top:1px dashed var(--line);padding-top:6px">${esc(contextoCampanhas(w.inicio, w.fim))}</p>` : ""}</details>`).join("")}
     <label class="f">Inspiração (links e notas, um por linha)<textarea id="of-insp" data-of="insp" style="min-height:80px" placeholder="https://pinterest.com/pin/… → story de quarta, composição com o embrulho\nhttps://instagram.com/p/… → reel de segunda, ritmo dos cortes">${esc(o.insp)}</textarea></label>
     <label class="f">O que queres que eu faça<textarea id="of-brief" data-of="brief" style="min-height:130px" placeholder="Ex.: temos vídeos da Sílvia a abrir caixas e fotos dos conjuntos no jardim. Quero spoiler na segunda e revelação na quarta às 10h.">${esc(o.brief)}</textarea></label>
     <div class="row"><button class="btn primary" data-act="gerar" ${o.busy || !sample || !sel.length ? "disabled" : ""}>${o.busy ? esc(o.prog || "A pensar…") : o.modo === "semana" && sel.length > 1 ? `Gerar ${sel.length} semanas` : "Gerar"}</button>${o.busy ? `<button class="btn" data-act="parar">Parar</button>` : ""}${!sample ? `<span class="small muted">Só funciona dentro do claude.ai.</span>` : ""}</div>
@@ -1681,7 +1891,34 @@ document.addEventListener("click", async e => {
     case "vista": UI.vista = el.dataset.v; try { localStorage.setItem("td-vista", UI.vista); } catch(x){} renderMain(); break;
     case "abrirSemana": UI.semAberta = el.dataset.id; UI.tab = "semanas"; renderChrome(); renderMain(); break;
     case "verSemana": UI.semana = el.dataset.id; UI.vista = "etapas"; UI.tab = "quadro"; renderChrome(); renderMain(); break;
-    case "estSub": UI.estSub = el.dataset.v; try { localStorage.setItem("td-estsub", UI.estSub); } catch(x){} renderMain(); window.scrollTo(0,0); break;
+    case "abrirCamp": UI.estSub = "campanhas"; UI.campId = el.dataset.id; UI.editCamp = null; UI.campFases = null; renderMain(); window.scrollTo(0,0); break;
+    case "voltarCamp": UI.campId = null; UI.editCamp = null; UI.campFases = null; renderMain(); window.scrollTo(0,0); break;
+    case "novaCamp": UI.campId = null; UI.editCamp = "nova"; UI.campFases = [{ fase:"", inicio:"", fim:"", objetivo:"", mensagem:"", canais:"" }]; renderMain(); break;
+    case "editCamp": UI.editCamp = "edit"; UI.campFases = null; renderMain(); window.scrollTo(0,0); break;
+    case "addFase": UI.campFases.push({ fase:"", inicio:"", fim:"", objetivo:"", mensagem:"", canais:"" }); renderMain(); break;
+    case "rmFase": UI.campFases.splice(Number(el.dataset.i), 1); renderMain(); break;
+    case "apagarCamp": if (confirm("Apagar esta campanha?")) { try { await db.doc(`${PRIV}/campanhas/${el.dataset.id}`).delete(); UI.campId = null; UI.editCamp = null; renderMain(); } catch(x){ toast("Não apagou."); } } break;
+    case "editCom": UI.editCom = true; renderMain(); break;
+    case "cancelCom": UI.editCom = false; renderMain(); break;
+    case "ofArea": UI.of.area = el.dataset.v; UI.of.err = ""; renderMain(); break;
+    case "irOficina": UI.tab = "oficina"; UI.of.area = el.dataset.area; renderChrome(); renderMain(); window.scrollTo(0,0); break;
+    case "ofCamp": { const c = (S.campanhas||[]).find(x => x.id === el.dataset.id); if (!c) break; const ws = semanasOrd().filter(w => w.inicio <= c.fim && w.fim >= c.inicio && w.fim >= todayIso);
+      UI.tab = "oficina"; UI.of.area = "conteudos"; UI.of.modo = "semana"; UI.of.camp = c.id; UI.of.semanas = ws.map(w => w.id); UI.of.auto = false;
+      if (!ws.length) toast("Não há semanas criadas para as datas desta campanha. Cria-as em Semanas."); renderChrome(); renderMain(); window.scrollTo(0,0); break; }
+    case "gerarCom": gerarCom(el.dataset.area); break;
+    case "comEnviar": { const area = UI.of.area; const lista = el.dataset.o === "plano" ? planoProntoCom(area) : UI.of.comOut; const x = lista[Number(el.dataset.i)]; if (!x) break;
+      if (await enviarPub(area, x)) { if (el.dataset.o === "out") UI.of.comOut.splice(Number(el.dataset.i), 1); toast(area === "email" ? "Enviado para Email marketing." : "Enviado para Canais."); renderMain(); } break; }
+    case "comEnviarTodos": { const area = UI.of.area; let n = 0; for (const x of UI.of.comOut) if (await enviarPub(area, x)) n++; UI.of.comOut = []; toast(`${n} enviados.`); renderMain(); break; }
+    case "canalF": UI.canalF = el.dataset.v; renderMain(); break;
+    case "pubEdit": UI.editPub = el.dataset.id; renderMain(); break;
+    case "pubCancel": UI.editPub = null; renderMain(); break;
+    case "pubApagar": if (confirm("Apagar?")) { try { await db.doc(`${el.dataset.col}/${el.dataset.id}`).delete(); UI.editPub = null; renderMain(); } catch(x){ toast("Não apagou."); } } break;
+    case "pubAprovar": if (await write(`${el.dataset.col}/${el.dataset.id}`, { estado:"aprovado", nota:"", aprovadoPor:S.me.id, atualizadoEm:new Date().toISOString() }, true)) toast("Aprovado."); break;
+    case "pubAlterar": UI.pubAlt = el.dataset.id; renderMain(); break;
+    case "pubAltCancel": UI.pubAlt = null; renderMain(); break;
+    case "pubAltEnviar": { const nota = ($("#pubNota")?.value || "").trim(); if (!nota) { toast("Escreve o que queres mudar."); break; }
+      if (await write(`${el.dataset.col}/${el.dataset.id}`, { estado:"alterar", nota, atualizadoEm:new Date().toISOString() }, true)) { UI.pubAlt = null; toast("Pedido enviado."); renderMain(); } break; }
+    case "estSub": if (el.dataset.v === "campanhas") { UI.campId = null; UI.editCamp = null; } UI.estSub = el.dataset.v; try { localStorage.setItem("td-estsub", UI.estSub); } catch(x){} renderMain(); window.scrollTo(0,0); break;
     case "bfCopy": bfCopiar(BF_TXT[el.dataset.k] || "", el); break;
     case "bfRev": case "bfNota": { const b = bfPlano(); if (!b) break; const rv = JSON.parse(JSON.stringify(b.revisao || {})); const cur = rv[el.dataset.sec] || {};
       const nota = $(`#bfn-${el.dataset.sec}`)?.value ?? cur.nota ?? "";
@@ -1781,6 +2018,9 @@ document.addEventListener("change", async e => {
   if (t.matches("[data-act=semSel]")) { UI.semana = t.value; renderMain(); }
   if (t.matches("[data-act=mesSel]")) { UI.mes = t.value; renderMain(); }
   if (t.matches("[data-act=bfFase]")) { UI.bfFase = t.value; t.blur(); renderMain(); }
+  if (t.matches("[data-act=ofCampSel]")) { UI.of.camp = t.value; UI.of.comOut = []; t.blur(); renderMain(); }
+  if (t.matches("[data-act=ofCanalSel]")) { UI.of.canal = t.value; UI.of.comOut = []; t.blur(); renderMain(); }
+  if (t.matches("[data-act=pubEstado]")) { if (await write(`${t.dataset.col}/${t.dataset.id}`, { estado:t.value, atualizadoEm:new Date().toISOString() }, true)) toast("Estado atualizado."); t.blur(); }
   else if (t.matches("[data-act=semAbrir]")) { UI.semAberta = t.value; UI.editSem = null; t.blur(); renderMain(); }
   else if (t.matches("[data-act=sugSel]")) { UI.sugId = t.value; t.blur(); renderMain(); }
   else if (t.matches("[data-act=relSel]")) { UI.relId = t.value; t.blur(); renderMain(); }
@@ -1790,6 +2030,7 @@ document.addEventListener("change", async e => {
   else if (t.matches("[data-of]")) { UI.of[t.dataset.of] = t.value; if (t.tagName === "SELECT") { t.blur(); renderMain(); } }
 });
 document.addEventListener("input", e => { const t = e.target; if (t.matches("[data-of]")) UI.of[t.dataset.of] = t.value; if (t.matches("[data-qa]")) UI.qaTxt = t.value; if (t.matches("[data-ret]")) { UI.of.retTxt[t.dataset.ret] = t.value; }
+  if (t.matches("[data-cf]") && UI.campFases) { const [i,k] = t.dataset.cf.split("."); UI.campFases[i][k] = t.value; }
   if (t.matches("[data-bfc],[data-bfp]")) { const num = v => v === "" ? null : Number(v);
     if (t.dataset.bfc) UI.bfCalc[t.dataset.bfc] = num(t.value);
     else { const [i,k] = t.dataset.bfp.split("."); UI.bfCalc.pecas[i][k] = k === "nome" ? t.value : num(t.value); }
@@ -1818,6 +2059,20 @@ document.addEventListener("submit", async e => {
     ["inicio","fim","palavraChave","titulo","objetivo","oferta","estrategiaStories","estrategiaFeed"].forEach(k => { if (fd.has(k)) cur[k] = fd.get(k); });
     const n = Number(fd.get("numero")); cur.numero = n > 0 ? n : null;
     if (await write(`semanas/${f.dataset.id}`, cur)) { UI.editSem = null; toast("Guardado."); renderMain(); }
+  } else if (f.dataset.form === "comunicacao") {
+    const comunicacao = { ...(S.priv?.comunicacao || {}) };
+    COM_CANAIS.forEach(([k]) => { comunicacao[k] = { ...(comunicacao[k]||{}) }; ["nome","porque","cadencia","tipos","regras"].forEach(x => comunicacao[k][x] = fd.get(`${k}_${x}`) || ""); });
+    if (await write(PRIV, { ...(S.priv || {}), comunicacao })) { UI.editCom = false; toast("Guardado."); renderMain(); }
+  } else if (f.dataset.form === "campanha") {
+    const id = f.dataset.id || `${CLIENTE}-${String(fd.get("nome")||"campanha").toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}-${uidShort()}`;
+    const cur = { ...((S.campanhas||[]).find(x => x.id === id) || {}) }; delete cur.id;
+    ["nome","inicio","fim","estado","objetivo","oferta","publico","mensagem","regras","naoFazer","notas"].forEach(k => cur[k] = fd.get(k) || "");
+    cur.fases = (UI.campFases || cur.fases || []).filter(x => x.fase || x.inicio); cur.atualizadoEm = new Date().toISOString();
+    if (cur.fim < cur.inicio) { toast("O fim é antes do início."); return; }
+    if (await write(`${PRIV}/campanhas/${id}`, cur)) { UI.editCamp = null; UI.campFases = null; UI.campId = id; toast("Campanha guardada."); renderMain(); }
+  } else if (f.dataset.form === "pubEdit") {
+    const body = { atualizadoEm:new Date().toISOString() }; ["assunto","preview","corpo","texto","data","hora"].forEach(k => { if (fd.has(k)) body[k] = fd.get(k); });
+    if (await write(`${f.dataset.col}/${f.dataset.id}`, body, true)) { UI.editPub = null; toast("Guardado."); renderMain(); }
   } else if (f.dataset.form === "estrategia") {
     const cur = { ...(S.priv || {}) };
     ["objetivo","diagnostico","ritmo","tom"].forEach(k => cur[k] = fd.get(k));
