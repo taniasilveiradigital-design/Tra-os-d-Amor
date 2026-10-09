@@ -209,6 +209,7 @@ ul.fala li{font-family:"Patrick Hand",cursive;font-size:17px;line-height:1.35}
 .jornada{display:grid;gap:12px} .jpasso{display:grid;gap:4px} .jpasso .v{font-weight:700;font-variant-numeric:tabular-nums}
 .jpasso .tr{height:14px;background:var(--sunk);border-radius:7px;overflow:hidden;display:block} .jpasso .tr span{display:block;height:100%;background:var(--td-terra);border-radius:7px}
 .perde{color:var(--bad);font-weight:700}
+.bfnav{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0} .bfnav a{text-decoration:none} .bfsec{scroll-margin-top:60px;display:grid;gap:12px} .bfrevbox{border-top:1px dashed var(--line);padding-top:10px} .bfrev{display:grid;gap:6px;max-width:560px} .bfgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px} .bfgrid .card{display:grid;gap:6px;align-content:start} .bfgrid .card .btn{justify-self:start} button.chk{display:block;width:100%;text-align:left;background:none;border:0;padding:4px 0;font:inherit;color:inherit;cursor:pointer} .callout{background:var(--warn-bg);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:8px}
 .hist{display:grid;gap:6px} .hitem{border:1px solid var(--line);border-radius:10px;background:var(--surface)} .hitem summary{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;padding:8px 10px;cursor:pointer} .hitem summary .hd{font-variant-numeric:tabular-nums;min-width:62px;font-weight:700} .hitem summary .chip{padding:0 6px;font-size:11px} .hbody{padding:0 12px 12px;display:grid;gap:6px} .hcorpo{white-space:pre-wrap;max-height:420px;overflow:auto;background:var(--sunk);border-radius:8px;padding:10px}
 .plano{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px} .pcol{display:grid;gap:8px;align-content:start} .pit{background:var(--sunk);border-radius:10px;padding:10px;display:grid;gap:6px} .sug .resultado{background:var(--ok-bg, var(--sunk));border-radius:6px;padding:4px 8px} #relForm .inp[type=number]{text-align:right}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--muted)} .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
@@ -317,11 +318,11 @@ const PAPEL_TXT = { dona:"Estratega", equipa:"Equipa criativa", cliente:"Cliente
 
 let db = null, userCap = null, sample = null, mcp = null;
 const APP_URL = "https://claude.ai/artifact/D3MiggwcKrr8yggsoKk3vz";
-const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], relPriv:[], avaliacoes:[], historico:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
+const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], relPriv:[], avaliacoes:[], historico:[], bf:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
 const UI = { menc:[], notif:false, sugId:null, tab:"quadro", vista:"semanas", semana:"todas", semAberta:null, mes:"2026-10", cardId:null, pend:false, editSem:null, editEst:false, editDados:null, relId:null, editMelh:null, qaBusy:false, qaTxt:"",
   of:{ modo:"semana", semanas:[], data:"", tipo:"Feed", formato:"Reel", brief:"", busy:false, prog:"", out:[], err:"", ret:null, retTxt:{}, rascId:null, insp:"", confSub:false } };
 try { if (!localStorage.getItem("td-ajuda-vista")) UI.ajuda = true; } catch(e){}
-try { const t = localStorage.getItem("td-tab3"); if (t) UI.tab = t; const v = localStorage.getItem("td-vista"); if (v) UI.vista = v; } catch(e){}
+try { const t = localStorage.getItem("td-tab3"); if (t) UI.tab = t; const v = localStorage.getItem("td-vista"); if (v) UI.vista = v; const es = localStorage.getItem("td-estsub"); if (es) UI.estSub = es; } catch(e){}
 
 /* ---------- helpers ---------- */
 const $ = s => document.querySelector(s);
@@ -398,6 +399,7 @@ function renderMainSafe(){ if (isEditing()) { UI.pend = true; } else renderMain(
     sub("relPriv", db.collection(`${PRIV}/relatorios`));
     sub("avaliacoes", db.collection(`${PRIV}/avaliacoes`));
     sub("historico", db.collection(`${PRIV}/historico`));
+    sub("bf", db.collection(`${PRIV}/blackfriday`));
     if (S.me.id) sub("rascunhos", db.collection(`data/users/${S.me.id}`));
     sample = await window.claude?.use?.("sample") ?? null;
     mcp = await window.claude?.use?.("mcp") ?? null;
@@ -734,7 +736,114 @@ function renderSemanas(main){
 }
 
 /* ---------- estratégia (privado) ---------- */
+/* ---------- Black Friday (privado): os 9 prompts da Imersão Fibra IA aplicados à Traços ---------- */
+const BF_SECS = [["resumo","Decisão"],["faltam","O que falta"],["passos","Passos 0 a 4"],["calc","Calculadora"],["comunicacao","Comunicação"],["calendario","Calendário"],["producao","Produção"],["kit","Kit operacional"],["pos","Pós-campanha"]];
+const BF_REV = [["ok","Faz sentido"],["mudar","Mudar"],["nao","Não faz sentido"]];
+const BF_TXT = {};
+const bfPlano = () => (S.bf || []).find(x => x.id === "plano");
+const eur = v => v == null || !isFinite(v) ? "—" : v.toLocaleString("pt-PT", { minimumFractionDigits:2, maximumFractionDigits:2 }) + " €";
+const pctF = v => v == null || !isFinite(v) ? "—" : Math.round(v * 100) + "%";
+function bfCopiavel(k, txt, label){ BF_TXT[k] = txt; return `<button class="btn" data-act="bfCopy" data-k="${esc(k)}">${label || "Copiar"}</button>`; }
+function bfRevisao(sec){
+  const r = (bfPlano()?.revisao || {})[sec] || {};
+  return `<div class="bfrev"><span class="lbl">A tua revisão</span><div class="row">${BF_REV.map(([k,l]) => `<button class="chip ${r.estado === k ? (k === "ok" ? "ok" : k === "nao" ? "bad" : "warn") : "neutral"}" data-act="bfRev" data-sec="${sec}" data-v="${k}" aria-pressed="${r.estado === k}">${l}</button>`).join("")}</div>
+    <textarea class="inp" id="bfn-${sec}" placeholder="O que mudavas aqui?" style="min-height:44px">${esc(r.nota || "")}</textarea>
+    <div class="row"><button class="btn" data-act="bfNota" data-sec="${sec}">Guardar nota</button>${r.em ? `<span class="small muted">Guardado ${esc(fmtQuando(r.em))}</span>` : ""}</div></div>`;
+}
+function bfCalcRes(c){
+  const ivaF = 1 + (Number(c.iva) || 0) / 100, dev = (Number(c.devol) || 0) / 100, pe = Number(c.pecasEnc) || 1;
+  const pub = (Number(c.anuncios) || 0) / (Number(c.unidades) || 1);
+  const lucro = (p, preco) => {
+    if (p.custo == null || p.custo === "" || !preco) return null;
+    const rl = preco / ivaF, cp = (Number(c.portes) || 0) / pe + (Number(c.embalagem) || 0) / pe + (Number(c.taxa) || 0) / 100 * preco + pub;
+    const l = (rl - Number(p.custo)) * (1 - dev) - cp - (Number(c.custoDevol) || 0) * dev;
+    return { l, m: l / rl };
+  };
+  return (c.pecas || []).map(p => {
+    const pvp = Number(p.pvp) || 0; const at = d => lucro(p, pvp * (1 - d));
+    const cheio = at(0); const linhas = [0, .2, .3, .4].map(d => ({ d, r: at(d) }));
+    const bfPreco = Number(p.precoBF) || 0; const bf = bfPreco ? { d: pvp ? 1 - bfPreco / pvp : 0, r: lucro(p, bfPreco) } : null;
+    let max = null, prej = null;
+    if (cheio) for (let d = 0; d <= .9; d += .005) { const r = at(d); if (r.m * 100 >= Number(c.piso)) max = d; if (prej == null && r.l <= 0) prej = d; }
+    return { p, pvp, cheio, linhas, bf, max, prej };
+  });
+}
+function bfCalcHtml(c){
+  const res = bfCalcRes(c);
+  const mult = (a, b) => !a || !b ? "—" : b.l <= 0 ? "nunca compensa" : (a.l / b.l).toFixed(1).replace(".", ",") + "×";
+  const cel = (x, cheio) => x ? `<td class="n">${eur(x.l)}<br><span class="small muted">${pctF(x.m)} · ${mult(cheio, x)}</span></td>` : `<td class="n muted">falta custo</td>`;
+  return `<div class="tbl"><table><thead><tr><th>Peça</th><th class="n">Preço cheio</th><th class="n">−20%</th><th class="n">−30%</th><th class="n">−40%</th><th class="n">Preço BF proposto</th><th class="n">Desconto máx. (piso ${esc(c.piso)}%)</th><th class="n">Prejuízo a partir de</th></tr></thead><tbody>
+    ${res.map(r => `<tr><td>${esc(r.p.nome)}<br><span class="small muted">PVP ${eur(r.pvp || null)}</span></td>${r.linhas.map(x => cel(x.r, r.cheio)).join("")}
+      ${r.bf ? `<td class="n">${eur(Number(r.p.precoBF))} (−${pctF(r.bf.d)})<br>${r.bf.r ? `<span class="small">${eur(r.bf.r.l)} · ${pctF(r.bf.r.m)}</span>` : `<span class="small muted">falta custo</span>`}${r.pvp && Number(r.p.precoBF) < (Number(c.portesGratis) || 0) ? `<br><span class="chip warn">abaixo dos portes grátis</span>` : ""}</td>` : `<td class="n muted">fica fora</td>`}
+      <td class="n">${r.cheio ? (r.max == null ? "nenhum" : pctF(r.max)) : "—"}</td><td class="n">${r.cheio ? (r.prej == null ? "acima de 90%" : pctF(r.prej)) : "—"}</td></tr>`).join("")}
+  </tbody></table></div>
+  <p class="small muted">Em cada célula: lucro real por peça · margem · quantas vezes mais vale a peça a preço cheio. Portes pagos sempre pela marca.</p>`;
+}
+function bfCalcForm(c){
+  const f = (k, l, suf) => `<label class="f">${l}<input type="number" step="any" data-bfc="${k}" value="${c[k] ?? ""}" id="bfc-${k}">${suf ? `<span class="hint">${suf}</span>` : ""}</label>`;
+  return `<div class="fgrid">${f("iva","IVA (%)","0 se isenta (art. 53.º)")}${f("portes","Portes por encomenda (€)")}${f("portesGratis","Portes grátis a partir de (€)")}${f("pecasEnc","Peças por encomenda")}${f("embalagem","Embalagem por encomenda (€)")}${f("taxa","Taxa de pagamento (%)")}${f("devol","Devoluções (%)")}${f("custoDevol","Custo por devolução (€)")}${f("anuncios","Anúncios na campanha (€)")}${f("unidades","Unidades a vender")}${f("piso","Piso de margem (%)")}</div>
+  <div class="tbl"><table><thead><tr><th>Peça</th><th>PVP com IVA</th><th>Custo sem IVA</th><th>Stock</th><th>Preço BF</th></tr></thead><tbody>${(c.pecas||[]).map((p,i) => `<tr><td><input class="inp" data-bfp="${i}.nome" value="${esc(p.nome)}"></td>${["pvp","custo","stock","precoBF"].map(k => `<td><input class="inp" type="number" step="any" style="max-width:110px" data-bfp="${i}.${k}" value="${p[k] ?? ""}"></td>`).join("")}</tr>`).join("")}</tbody></table></div>
+  <div class="row"><button class="btn" data-act="bfPeca">+ Peça</button><button class="btn primary" data-act="bfCalcSave">Guardar valores</button></div>`;
+}
+function renderBlackFriday(main){
+  const b = bfPlano();
+  const top = `<div class="seg" role="group" aria-label="Estratégia">${[["geral","Estratégia geral"],["bf","Black Friday 🔒"]].map(([k,l]) => `<button data-act="estSub" data-v="${k}" aria-pressed="${(UI.estSub||"geral")===k}">${l}</button>`).join("")}</div>`;
+  if (!b) { main.innerHTML = `${top}<div class="empty"><h3>Ainda não há plano de Black Friday</h3></div>`; return; }
+  UI.bfCalc = UI.bfCalc || JSON.parse(JSON.stringify(b.calc || {}));
+  const r = b.resumo, cm = b.comunicacao;
+  const fasesCal = [...new Set(b.calendario.map(x => x.fase))];
+  const fFase = UI.bfFase || "";
+  const cal = b.calendario.filter(x => !fFase || x.fase === fFase);
+  const sec = (id, titulo, corpo) => `<section class="card bfsec" id="bf-${id}"><h2>${titulo}</h2>${corpo}<div class="bfrevbox">${bfRevisao(id)}</div></section>`;
+  const tabela = (cab, rows) => `<div class="tbl"><table><thead><tr>${cab.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.map(rw => `<tr>${rw.map(v => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  const revs = b.revisao || {}; const nRev = BF_SECS.filter(([k]) => revs[k]?.estado).length;
+  main.innerHTML = `${top}
+  <div class="priv-banner">🔒 <b>Black Friday da Traços D'Amor.</b> Os 9 prompts da Imersão Fibra IA aplicados à marca. Só tu vês. Nada daqui vai para o quadro nem para a cliente até tu validares. Revistas: ${nRev} de ${BF_SECS.length} secções.</div>
+  <nav class="row bfnav" aria-label="Secções">${BF_SECS.map(([k,l]) => `<a class="chip ${revs[k]?.estado === "ok" ? "ok" : revs[k]?.estado === "nao" ? "bad" : revs[k]?.estado ? "warn" : "neutral"}" href="#bf-${k}">${l}</a>`).join("")}</nav>
+  ${sec("resumo", "A decisão", `<div class="rep-hero" style="padding:18px 20px 30px"><span class="lbl" style="color:var(--cover-ink)">${esc(r.veredito)}</span><p style="font-size:20px">${esc(r.frase)}</p></div>
+    <div class="grid2"><div><h3>Objetivo único</h3><p>${esc(r.objetivo)}</p><h3>Prioridades</h3><ol class="clean">${r.prioridades.map(x => `<li>${esc(x)}</li>`).join("")}</ol><p class="small">${esc(r.porque)}</p></div>
+    <div><h3>O que não vamos fazer</h3><ol class="clean">${r.naoFazer.map(x => `<li>${esc(x)}</li>`).join("")}</ol><div class="callout"><b>Conflito a decidir.</b> ${esc(r.conflito)}</div></div></div>`)}
+  ${sec("faltam", "O que falta para fechar os números", `<p class="small muted">Sem isto, os números são exemplos. Pede à Sílvia por esta ordem.</p>${tabela(["Dado","Quem","Porque importa"], b.faltam)}`)}
+  ${sec("passos", "Passos 0 a 4: da marca à oferta", b.passos.map(p => `<details class="hitem" ${p.n === "4" ? "open" : ""}><summary><span class="chip neutral">${esc(p.n)}</span><b>${esc(p.titulo)}</b><span class="small muted">${esc(p.estado)}</span></summary><div class="hbody">
+      <p class="small"><b>O que fiz:</b> ${esc(p.oQueFiz)}</p>
+      ${p.tabela ? tabela(p.n === "2" ? ["Peças","Coleção","Classe","Rota"] : ["Mecânica","Peças","Lucro","Imagem da marca","Operação","Veredito"], p.tabela) : ""}
+      <div class="readv small">${esc(p.texto || "")}</div>${p.n === "0" ? bfCopiavel("p0", p.texto, "Copiar prompt 0 preenchido") : ""}</div></details>`).join(""))}
+  ${sec("calc", "Calculadora: desconto vs. margem", `<p class="small">${esc(b.passos.find(p => p.n === "3")?.texto || "")}</p><div id="bfCalcRes">${bfCalcHtml(UI.bfCalc)}</div><details class="hitem"><summary><b>Mudar os valores</b><span class="small muted">os custos são exemplo até chegar o ficheiro</span></summary><div class="hbody">${bfCalcForm(UI.bfCalc)}</div></details>`)}
+  ${sec("comunicacao", "Plano de comunicação", `${tabela(["Fase","Datas","Objetivo","Mensagem","Canais"], cm.fases.map(f => [f.fase, f.datas, f.objetivo, f.mensagem, f.canais]))}
+    <h3>Emails</h3><div class="bfgrid">${cm.emails.map(e => `<div class="card"><span class="chip neutral">${esc(fmtDia(e.data))} · ${esc(e.fase)}</span><h3>${esc(e.assunto)}</h3><p class="small muted">${esc(e.preview)}</p><div class="readv small">${esc(e.corpo)}</div>${bfCopiavel("em-" + e.id, `Assunto: ${e.assunto}\nPré-visualização: ${e.preview}\n\n${e.corpo}`)}</div>`).join("")}</div>
+    <h3>Legendas de Instagram</h3><div class="bfgrid">${cm.legendas.map((l,i) => `<div class="card"><span class="chip neutral">${esc(fmtDia(l.data))} · ${esc(l.fase)}</span><div class="readv hand" style="font-size:16px">${esc(l.texto)}</div>${bfCopiavel("lg" + i, l.texto)}</div>`).join("")}</div>
+    <h3>WhatsApp à lista VIP</h3><div class="card"><span class="chip neutral">${esc(fmtDia(cm.whatsapp.data))}</span><div class="readv">${esc(cm.whatsapp.texto)}</div>${bfCopiavel("wa", cm.whatsapp.texto)}</div>`)}
+  ${sec("calendario", "Calendário de conteúdos · 2 nov a 6 dez", `<div class="row"><label class="f" style="width:auto">Fase<select class="inp" data-act="bfFase" id="bfFase"><option value="">Todas</option>${fasesCal.map(f => `<option${f===fFase?" selected":""}>${esc(f)}</option>`).join("")}</select></label><span class="small muted">${cal.length} dias · feed às segundas, quartas e sextas, como no ritmo do Notion</span></div>
+    <div class="hist">${cal.map((x,i) => `<details class="hitem"><summary><span class="hd">${esc(DIAS_L[dow(x.data)].slice(0,3) + " " + fmtCurto(x.data))}</span><span class="chip neutral">${esc(x.fase)}</span><span class="chip neutral">${esc(x.formato)}</span><b>${esc(x.tema)}</b><span class="small muted">${esc(x.gancho)}</span></summary>
+      <div class="hbody"><p class="small">${[["Hora",x.hora],["Canal",x.canal],["Peça",x.peca],["CTA",x.cta],["Imagem",x.imagem]].map(([l,v]) => `<span class="lbl">${l}</span> ${esc(v)}`).join(" · ")}</p>${x.texto ? `<div class="readv">${esc(x.texto)}</div>${bfCopiavel("cal" + x.data + i, x.texto)}` : ""}</div></details>`).join("")}</div>
+    <div class="row">${bfCopiavel("csv", bfCsv(b.calendario), "Copiar calendário em CSV")}</div>`)}
+  ${sec("producao", "Lista de produção", tabela(["Sessão","Até","O que fotografar ou filmar","Para os dias"], b.producao.map(p => [p.sessao, p.quando, p.oQue, p.para])))}
+  ${sec("kit", "Kit operacional", `<h3>Respostas rápidas</h3><div class="bfgrid">${b.kit.respostas.map(([p,t],i) => `<div class="card"><b>${esc(p)}</b><p class="small">${esc(t)}</p>${bfCopiavel("rr" + i, t)}</div>`).join("")}</div>
+    <h3>FAQ para o site</h3>${b.kit.faq.map(([p,t]) => `<details class="hitem"><summary><b>${esc(p)}</b></summary><div class="hbody"><p>${esc(t)}</p></div></details>`).join("")}
+    <h3>Política de trocas e devoluções</h3><div class="card"><div class="readv small">${esc(b.kit.politica)}</div>${bfCopiavel("pol", b.kit.politica)}</div>
+    <h3>Checklist</h3><div class="grid2">${[["antes7","7 dias antes"],["vespera","Véspera"],["durante","Durante"],["depois","Depois"]].map(([k,l]) => `<div class="card"><b>${l}</b>${b.kit.checklist[k].map((t,i) => { const ck = !!(b.revisao?.check || {})[k + i]; return `<button class="chk" data-act="bfCheck" data-k="${k}${i}" aria-pressed="${ck}">${ck ? "☑" : "☐"} ${esc(t)}</button>`; }).join("")}</div>`).join("")}</div>
+    <h3>Mensagem de atraso</h3><div class="card"><div class="readv small">${esc(b.kit.atraso)}</div>${bfCopiavel("atraso", b.kit.atraso)}</div>`)}
+  ${sec("pos", "Pós-campanha", `<h3>Sequência de 5 emails, sem desconto</h3><div class="bfgrid">${b.pos.emails.map((e,i) => `<div class="card"><span class="chip neutral">${esc(e.quando)}</span><h3>${esc(e.assunto)}</h3><div class="readv small">${esc(e.corpo)}</div>${bfCopiavel("pe" + i, `Assunto: ${e.assunto}\n\n${e.corpo}`)}</div>`).join("")}</div>
+    <h3>3 grupos de clientes</h3>${tabela(["Grupo","Como separar","Recebe","Não recebe"], b.pos.grupos.map(g => [g.nome, g.como, g.recebe, g.naoRecebe]))}<p class="small muted">${esc(b.pos.notaGrupos)}</p>
+    <h3>Métricas a 31 de dezembro</h3>${tabela(["Métrica","Fórmula","Dados"], b.pos.metricas.map(m => [m.nome, m.formula, m.dados]))}
+    <h3>Relatório para 2027</h3><div class="card"><div class="readv small">${esc(b.pos.relatorio)}</div></div>`)}`;
+}
+function bfCsv(rows){
+  const cols = [["data","Data"],["hora","Hora"],["fase","Fase"],["canal","Canal"],["formato","Formato"],["tema","Tema"],["peca","Peça"],["gancho","Gancho"],["cta","CTA"],["imagem","Imagem"],["texto","Texto"]];
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  return "﻿" + [cols.map(c => q(c[1])).join(";"), ...rows.map(r => cols.map(c => q(r[c[0]])).join(";"))].join("\r\n");
+}
+async function bfGravar(campos){
+  const b = bfPlano(); if (!b) return false;
+  Object.assign(b, campos);
+  return write(`${PRIV}/blackfriday/plano`, campos, true);
+}
+async function bfCopiar(txt, el){
+  const ok = () => { const o = el.textContent; el.textContent = "Copiado"; setTimeout(() => { el.textContent = o; }, 1500); };
+  try { await navigator.clipboard.writeText(txt); ok(); } catch(e){ const t = document.createElement("textarea"); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); ok(); } catch(x){ toast("Não consegui copiar."); } t.remove(); }
+}
 function renderEstrategia(main){
+  if (UI.estSub === "bf") { renderBlackFriday(main); return; }
   const c = S.priv || {}; const pub = S.cliente || {};
   const pessoas = S.pessoas.filter(p => p.id !== S.me.id);
   if (UI.editEst) {
@@ -751,7 +860,8 @@ function renderEstrategia(main){
       <div class="row"><button class="btn primary" type="submit">Guardar</button><button class="btn" type="button" data-act="cancelEst">Cancelar</button></div></form>`;
     return;
   }
-  main.innerHTML = `<div class="priv-banner">🔒 <b>Área privada.</b> A equipa e a cliente não veem este separador.</div>
+  main.innerHTML = `<div class="seg" role="group" aria-label="Estratégia">${[["geral","Estratégia geral"],["bf","Black Friday 🔒"]].map(([k,l]) => `<button data-act="estSub" data-v="${k}" aria-pressed="${(UI.estSub||"geral")===k}">${l}</button>`).join("")}</div>
+  <div class="priv-banner">🔒 <b>Área privada.</b> A equipa e a cliente não veem este separador.</div>
   ${simBanner()}${UI.sim ? "" : `<div class="row" style="justify-content:flex-end">${simBotao()}</div>`}
   ${estadoEstrategiaHtml()}
   ${avaliacaoHtml()}
@@ -1559,6 +1669,16 @@ document.addEventListener("click", async e => {
     case "vista": UI.vista = el.dataset.v; try { localStorage.setItem("td-vista", UI.vista); } catch(x){} renderMain(); break;
     case "abrirSemana": UI.semAberta = el.dataset.id; UI.tab = "semanas"; renderChrome(); renderMain(); break;
     case "verSemana": UI.semana = el.dataset.id; UI.vista = "etapas"; UI.tab = "quadro"; renderChrome(); renderMain(); break;
+    case "estSub": UI.estSub = el.dataset.v; try { localStorage.setItem("td-estsub", UI.estSub); } catch(x){} renderMain(); window.scrollTo(0,0); break;
+    case "bfCopy": bfCopiar(BF_TXT[el.dataset.k] || "", el); break;
+    case "bfRev": case "bfNota": { const b = bfPlano(); if (!b) break; const rv = JSON.parse(JSON.stringify(b.revisao || {})); const cur = rv[el.dataset.sec] || {};
+      const nota = $(`#bfn-${el.dataset.sec}`)?.value ?? cur.nota ?? "";
+      rv[el.dataset.sec] = { ...cur, ...(a === "bfRev" ? { estado: cur.estado === el.dataset.v ? null : el.dataset.v } : {}), nota, em: new Date().toISOString() };
+      const y = window.scrollY; if (await bfGravar({ revisao: rv })) { renderMain(); window.scrollTo(0, y); toast("Revisão guardada."); } break; }
+    case "bfCheck": { const b = bfPlano(); if (!b) break; const rv = JSON.parse(JSON.stringify(b.revisao || {})); rv.check = rv.check || {}; rv.check[el.dataset.k] = !rv.check[el.dataset.k];
+      const y = window.scrollY; if (await bfGravar({ revisao: rv })) { renderMain(); window.scrollTo(0, y); } break; }
+    case "bfPeca": UI.bfCalc.pecas.push({ nome:"Nova peça", pvp:null, custo:null, stock:null, precoBF:null }); { const y = window.scrollY; renderMain(); window.scrollTo(0, y); } break;
+    case "bfCalcSave": if (await bfGravar({ calc: JSON.parse(JSON.stringify(UI.bfCalc)) })) toast("Valores guardados."); break;
     case "irMes": { const b = $("#boardSem"); if (b) el.dataset.m === "hoje" ? irPara(b, semanaAtual()?.id) : irPara(b, null, el.dataset.m); break; }
     case "mes": { const [y,m] = UI.mes.split("-").map(Number); const d = new Date(y, m-1+Number(el.dataset.d), 1); UI.mes = `${d.getFullYear()}-${pad(d.getMonth()+1)}`; renderMain(); break; }
     case "novoCartao": {
@@ -1648,6 +1768,7 @@ document.addEventListener("change", async e => {
   const t = e.target;
   if (t.matches("[data-act=semSel]")) { UI.semana = t.value; renderMain(); }
   if (t.matches("[data-act=mesSel]")) { UI.mes = t.value; renderMain(); }
+  if (t.matches("[data-act=bfFase]")) { UI.bfFase = t.value; t.blur(); renderMain(); }
   else if (t.matches("[data-act=semAbrir]")) { UI.semAberta = t.value; UI.editSem = null; t.blur(); renderMain(); }
   else if (t.matches("[data-act=sugSel]")) { UI.sugId = t.value; t.blur(); renderMain(); }
   else if (t.matches("[data-act=relSel]")) { UI.relId = t.value; t.blur(); renderMain(); }
@@ -1657,6 +1778,10 @@ document.addEventListener("change", async e => {
   else if (t.matches("[data-of]")) { UI.of[t.dataset.of] = t.value; if (t.tagName === "SELECT") { t.blur(); renderMain(); } }
 });
 document.addEventListener("input", e => { const t = e.target; if (t.matches("[data-of]")) UI.of[t.dataset.of] = t.value; if (t.matches("[data-qa]")) UI.qaTxt = t.value; if (t.matches("[data-ret]")) { UI.of.retTxt[t.dataset.ret] = t.value; }
+  if (t.matches("[data-bfc],[data-bfp]")) { const num = v => v === "" ? null : Number(v);
+    if (t.dataset.bfc) UI.bfCalc[t.dataset.bfc] = num(t.value);
+    else { const [i,k] = t.dataset.bfp.split("."); UI.bfCalc.pecas[i][k] = k === "nome" ? t.value : num(t.value); }
+    const r = $("#bfCalcRes"); if (r) r.innerHTML = bfCalcHtml(UI.bfCalc); }
   if (t.matches("[data-hist]")) { UI.hist[t.dataset.hist] = t.value; if (t.tagName === "INPUT") { const pos = t.selectionStart; renderMain(); const n = $("#h-q"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } } } });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && UI.cardId) closeCard(); });
 
