@@ -210,6 +210,7 @@ ul.fala li{font-family:"Patrick Hand",cursive;font-size:17px;line-height:1.35}
 .jpasso .tr{height:14px;background:var(--sunk);border-radius:7px;overflow:hidden;display:block} .jpasso .tr span{display:block;height:100%;background:var(--td-terra);border-radius:7px}
 .perde{color:var(--bad);font-weight:700}
 .bfnav{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0} .bfnav a{text-decoration:none} .bfsec{scroll-margin-top:60px;display:grid;gap:12px} .bfrevbox{border-top:1px dashed var(--line);padding-top:10px} .bfrev{display:grid;gap:6px;max-width:560px} .bfgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px} .bfgrid .card{display:grid;gap:6px;align-content:start} .bfgrid .card .btn{justify-self:start} .bfgrid.wide{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))} button.card.camp{text-align:left;font:inherit;color:inherit;cursor:pointer;display:grid;gap:6px;align-content:start;justify-items:start} button.card.camp:hover{border-color:var(--terra)} .pubitem{display:grid;gap:8px;align-content:start} button.chk{display:block;width:100%;text-align:left;background:none;border:0;padding:4px 0;font:inherit;color:inherit;cursor:pointer} .callout{background:var(--warn-bg);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:8px}
+.tarefa{display:grid;grid-template-columns:28px 1fr;gap:8px;border-top:1px solid var(--line);padding:10px 0} .tarefa .chk{font-size:20px;padding:0} .tarefa.feita b{text-decoration:line-through;opacity:.6}
 .hist{display:grid;gap:6px} .hitem{border:1px solid var(--line);border-radius:10px;background:var(--surface)} .hitem summary{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;padding:8px 10px;cursor:pointer} .hitem summary .hd{font-variant-numeric:tabular-nums;min-width:62px;font-weight:700} .hitem summary .chip{padding:0 6px;font-size:11px} .hbody{padding:0 12px 12px;display:grid;gap:6px} .hcorpo{white-space:pre-wrap;max-height:420px;overflow:auto;background:var(--sunk);border-radius:8px;padding:10px}
 .plano{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px} .pcol{display:grid;gap:8px;align-content:start} .pit{background:var(--sunk);border-radius:10px;padding:10px;display:grid;gap:6px} .sug .resultado{background:var(--ok-bg, var(--sunk));border-radius:6px;padding:4px 8px} #relForm .inp[type=number]{text-align:right}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--muted)} .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
@@ -318,7 +319,7 @@ const PAPEL_TXT = { dona:"Estratega", equipa:"Equipa criativa", cliente:"Cliente
 
 let db = null, userCap = null, sample = null, mcp = null;
 const APP_URL = "https://claude.ai/artifact/D3MiggwcKrr8yggsoKk3vz";
-const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], relPriv:[], avaliacoes:[], historico:[], bf:[], campanhas:[], emails:[], mensagens:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
+const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], relPriv:[], avaliacoes:[], historico:[], bf:[], campanhas:[], emails:[], mensagens:[], tarefas:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
 const UI = { menc:[], notif:false, sugId:null, tab:"quadro", vista:"semanas", semana:"todas", semAberta:null, mes:"2026-10", cardId:null, pend:false, editSem:null, editEst:false, editDados:null, relId:null, editMelh:null, qaBusy:false, qaTxt:"",
   of:{ area:"conteudos", camp:"", canal:"instagram", comBrief:"", comOut:[], ini:"", fim:"", modo:"semana", semanas:[], data:"", tipo:"Feed", formato:"Reel", brief:"", busy:false, prog:"", out:[], err:"", ret:null, retTxt:{}, rascId:null, insp:"", confSub:false } };
 try { if (!localStorage.getItem("td-ajuda-vista")) UI.ajuda = true; } catch(e){}
@@ -365,7 +366,7 @@ async function write(path, data, merge){
   catch(e){ toast(e && e.code === "invalid_argument" ? "Não tens permissão para isto." : "Não gravou. Tenta outra vez."); return false; }
 }
 function sub(name, q){ q.onSnapshot(snap => { S[name] = snap.docs.map(d => { const o = { id:d.id, ...d.data() }; if (name === "cartoes") o.etapa = normEtapa(o.etapa); return o; }); S.loaded[name] = true; onData(name); }, () => { S.loaded[name] = true; onData(name); }); }
-function isEditing(){ const a = document.activeElement; return UI.editSem || UI.editEst || UI.editCom || UI.editCamp || UI.editPub || UI.editDados || UI.editRel || (a && $("#main").contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)); }
+function isEditing(){ const a = document.activeElement; return UI.editSem || UI.editTar || UI.editEst || UI.editCom || UI.editCamp || UI.editPub || UI.editDados || UI.editRel || (a && $("#main").contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)); }
 function onData(name){
   if (["comentarios","pessoas","inspiracoes"].includes(name)) resolveNames();
   renderChrome();
@@ -389,7 +390,7 @@ function renderMainSafe(){ if (isEditing()) { UI.pend = true; } else renderMain(
   userCap = await window.claude?.use?.("user") ?? null;
   if (userCap) { const me = await userCap.me(); S.me = { id: me.id, isOwner: me.isOwner }; if (me.id && me.name) S.names[me.id] = me.name; }
   db.doc(`clientes/${CLIENTE}`).onSnapshot(s => { S.cliente = s.exists ? s.data() : null; onData("cliente"); }, () => {});
-  for (const c of ["semanas","cartoes","comentarios","inspiracoes","pessoas","relatorios","emails","mensagens"]) sub(c, db.collection(c).where("cliente","==",CLIENTE));
+  for (const c of ["semanas","cartoes","comentarios","inspiracoes","pessoas","relatorios","emails","mensagens","tarefas"]) sub(c, db.collection(c).where("cliente","==",CLIENTE));
   if (S.me.isOwner) {
     db.doc(PRIV).onSnapshot(s => { S.priv = s.exists ? s.data() : null; onData("priv"); }, () => {});
     sub("metricas", db.collection(`${PRIV}/metricas`));
@@ -456,7 +457,7 @@ function renderChrome(){
 const AJUDA = {
   dona: ["Em Estratégia tens a estratégia geral e as Campanhas (Black Friday, Natal…). A Oficina lê as campanhas: gera o calendário de conteúdos, os emails e as mensagens dos canais alinhados com as datas e as fases.", "Planeias cada semana em Semanas (objetivo, oferta, estratégia do feed e dos stories). Só tu editas.", "Na Oficina 🔒 geras conteúdos para uma ou várias semanas, retificas com comentários e envias para o quadro (coluna Ideia).", "Revês cada cartão e envias para a criativa. Quando volta em Revisão estratégica, aprovas e segue para a cliente.", "Depois do OK da cliente, a criativa põe os ficheiros na Drive. Quando é publicado, eu avalio os números (aparece \"avaliação pendente\").", "Estratégia, Dados e Oficina só tu vês. Em Estratégia → Pessoas dás nome e papel a quem entra. Todas as segundas às 8h tens lá as minhas sugestões para aplicar.", "Nos comentários de cada cartão podes identificar pessoas (@). Recebem a notificação no sino 🔔 e respondem com OK."],
   equipa: ["No Quadro vês todos os cartões por semana. O chip \"à tua espera\" no topo leva-te ao que é teu.", "Abre o cartão: tens intenção, tema, como fazer, legenda e os stories. Faz no Canva ou CapCut e cola os links.", "Quando estiver pronto, carrega em \"Enviar para revisão estratégica\".", "Se vier com \"alterações pedidas\", o pedido está nos comentários do cartão, logo no topo. Quando te identificarem (@), aparece no sino 🔔: responde com ✓ OK.", "Depois do OK da cliente: exporta cada ficheiro, guarda-o na pasta indicada da Drive com o nome indicado e cola o link. Depois de publicar, marca como publicado."],
-  cliente: ["No topo, \"à tua espera\" mostra os conteúdos que precisam do teu OK.", "Abre o cartão, vê o texto e o criativo (botão Abrir nos links).", "Se estiver bem, carrega em \"Dar OK\". Se não, \"Pedir alterações\" e escreve o que queres mudar.", "Em Semanas vês o objetivo, a oferta e a estratégia de cada semana.", "Nos comentários de cada cartão podes identificar a Tânia ou a Ângela (@). Quando te identificam, aparece no sino 🔔.", "Em Relatórios vês como correu cada semana.", "Em Email marketing e Canais estão os emails e as mensagens do Instagram e do WhatsApp para aprovares: Aprovar ou Pedir alteração."]
+  cliente: ["No topo, \"à tua espera\" mostra os conteúdos que precisam do teu OK.", "Abre o cartão, vê o texto e o criativo (botão Abrir nos links).", "Se estiver bem, carrega em \"Dar OK\". Se não, \"Pedir alterações\" e escreve o que queres mudar.", "Em Semanas vês o objetivo, a oferta e a estratégia de cada semana, e as Ações da semana: o que tens de fazer (site, Instagram, dados), passo a passo. Marca cada uma quando estiver feita.", "Nos comentários de cada cartão podes identificar a Tânia ou a Ângela (@). Quando te identificam, aparece no sino 🔔.", "Em Relatórios vês como correu cada semana.", "Em Email marketing e Canais estão os emails e as mensagens do Instagram e do WhatsApp para aprovares: Aprovar ou Pedir alteração."]
 };
 function ajudaHtml(){ if (!UI.ajuda) return ""; const p = papel();
   return `<div class="card" style="border-left:4px solid var(--terra)"><div class="spread"><h3>Como funciona · ${esc(PAPEL_TXT[p])}</h3><button class="btn sm" data-act="ajuda">Fechar</button></div><ol class="clean">${AJUDA[p].map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>`; }
@@ -733,7 +734,31 @@ function renderSemanas(main){
   `<div class="wkhero"><span class="small" style="opacity:.85">${esc(cap1(MESES[parse(w.inicio).getMonth()]))} · ${esc(fmtLongo(w.inicio))} a ${esc(fmtLongo(w.fim))}${w.palavraChave ? ` · palavra-chave ${esc(w.palavraChave)}` : ""}</span><h2>${esc(nomeSemana(w))}</h2><p style="font-size:18px">${esc(w.titulo)}</p>
     <div class="row" style="margin-top:6px">${ETAPAS.map(([k,l]) => { const n = its.filter(c => c.etapa === k).length; return n ? `<span class="et et-${k}">${l} ${n}</span>` : ""; }).join("")}<button class="chip neutral" data-act="verSemana" data-id="${esc(w.id)}">Ver cartões no quadro →</button></div></div>`}
   <div class="wkgrid">${box("b-obj","Objetivo",w.objetivo,"objetivo",90)}${box("b-of","Oferta",w.oferta,"oferta",90)}${box("b-feed","Estratégia do feed",w.estrategiaFeed,"estrategiaFeed")}${box("b-st","Estratégia dos stories",w.estrategiaStories,"estrategiaStories")}</div>
-`;
+  ${tarefasHtml(w)}`;
+}
+/* ações da semana: o que a cliente tem de aplicar (site, loja, Instagram, email) */
+const AREAS_TAR = ["Site","Instagram","Email","WhatsApp","Loja e stock","Produção","Outro"];
+const tarefasDe = w => (S.tarefas||[]).filter(t => t.semana === w.id).sort((a,b) => (a.prazo||"9").localeCompare(b.prazo||"9") || (a.criadoEm||"").localeCompare(b.criadoEm||""));
+function tarefaForm(t, w){
+  const x = t || { area:"Site", quem:"Sílvia", prazo:w.fim };
+  return `<form class="panel" data-form="tarefa" data-id="${esc(t?.id || "")}" data-sem="${esc(w.id)}" style="gap:8px">
+    <label class="f">Ação<input name="titulo" value="${esc(x.titulo)}" required placeholder="Ex.: Tirar do site as peças do Jardim das Descobertas"></label>
+    <div class="fgrid"><label class="f">Área<select name="area">${AREAS_TAR.map(a => `<option${x.area===a?" selected":""}>${a}</option>`).join("")}</select></label><label class="f">Até<input type="date" name="prazo" value="${esc(x.prazo)}"></label><label class="f">Quem<input name="quem" value="${esc(x.quem)}"></label></div>
+    <label class="f">Porquê<textarea name="porque" style="min-height:50px">${esc(x.porque)}</textarea></label>
+    <label class="f">Como fazer (um passo por linha)<textarea name="como" style="min-height:90px">${esc(x.como)}</textarea></label>
+    <div class="row"><button class="btn primary" type="submit">Guardar</button><button class="btn" type="button" data-act="tarCancel">Cancelar</button>${t ? `<button class="btn ghost danger" type="button" data-act="tarApagar" data-id="${esc(t.id)}">Apagar</button>` : ""}</div></form>`;
+}
+function tarefasHtml(w){
+  const ts = tarefasDe(w), dona = isDona(), feitas = ts.filter(t => t.feito).length;
+  if (!ts.length && !dona) return "";
+  return `<div class="card"><div class="spread"><h2>Ações da semana</h2><span class="chip ${ts.length && feitas === ts.length ? "ok" : "warn"}">${feitas} de ${ts.length} feitas</span></div>
+    <p class="small muted">O que a ${esc(papel() === "cliente" ? "tua marca" : "Sílvia")} tem de aplicar esta semana para os conteúdos funcionarem. Marca quando estiver feito.</p>
+    ${ts.map(t => UI.editTar === t.id ? tarefaForm(t, w) : `<div class="tarefa${t.feito ? " feita" : ""}"><button class="chk" data-act="tarFeito" data-id="${esc(t.id)}" aria-pressed="${!!t.feito}" aria-label="Marcar como feita">${t.feito ? "☑" : "☐"}</button>
+      <div style="display:grid;gap:4px"><div class="row"><b>${esc(t.titulo)}</b><span class="chip neutral">${esc(t.area || "")}</span>${t.prazo ? `<span class="small muted">até ${esc(fmtCurto(t.prazo))}</span>` : ""}${t.quem ? `<span class="small muted">· ${esc(t.quem)}</span>` : ""}</div>
+        ${t.porque ? `<p class="small">${esc(t.porque)}</p>` : ""}${linhasDe(t.como).length ? `<ol class="clean small">${linhasDe(t.como).map(l => `<li>${esc(l)}</li>`).join("")}</ol>` : ""}
+        ${t.feito ? `<span class="small muted">Feito${t.feitoPor ? " por " + esc(nomeDe(t.feitoPor)) : ""}${t.feitoEm ? " · " + esc(fmtQuando(t.feitoEm)) : ""}</span>` : ""}
+        ${dona ? `<div><button class="btn ghost sm" data-act="tarEdit" data-id="${esc(t.id)}">Editar</button></div>` : ""}</div></div>`).join("") || `<p class="muted small">Ainda não há ações para esta semana.</p>`}
+    ${dona ? (UI.editTar === "nova:" + w.id ? tarefaForm(null, w) : `<button class="btn" data-act="tarNova" data-sem="${esc(w.id)}">+ Ação para a cliente</button>`) : ""}</div>`;
 }
 
 /* ---------- estratégia (privado) ---------- */
@@ -1707,7 +1732,8 @@ Inspiração: referência descrita (sem inventar links).
 Legenda: Trazer, algo novo está a chegar.
 Storie — Intenção: Manter a caixa presente no dia do spoiler. Estratégia: Contagem decrescente passiva. A mãe só toca para receber o lembrete, não tem de responder a nada. Tema: Está a chegar a data para abrir a caixa. Texto: Vamos abrir quarta às 10h. Como fazer: Vídeo da caixa que temos de exterior.`;
 function blocoSemana(w){
-  return `SEMANA ${nomeSemana(w)} (${w.inicio} a ${w.fim}): ${w.titulo}\nObjetivo: ${w.objetivo||"-"}\nPalavra-chave: ${w.palavraChave||"-"}\nOferta: ${w.oferta||"-"}\nEstratégia do feed: ${w.estrategiaFeed||"-"}\nEstratégia dos stories: ${w.estrategiaStories||"-"}`;
+  const ts = tarefasDe(w);
+  return (ts.length ? `AÇÕES DA CLIENTE NESTA SEMANA (os conteúdos têm de bater certo com elas; não mandes para páginas ou peças que vão sair do site):\n${ts.map(t => `- ${t.titulo}${t.prazo ? ` (até ${t.prazo})` : ""}`).join("\n")}\n\n` : "") + `SEMANA ${nomeSemana(w)} (${w.inicio} a ${w.fim}): ${w.titulo}\nObjetivo: ${w.objetivo||"-"}\nPalavra-chave: ${w.palavraChave||"-"}\nOferta: ${w.oferta||"-"}\nEstratégia do feed: ${w.estrategiaFeed||"-"}\nEstratégia dos stories: ${w.estrategiaStories||"-"}`;
 }
 /* memória: o que já foi criado, o que resultou e o que o último relatório disse, para não repetir e repetir o que vende */
 function memoriaOficina(w){
@@ -1891,6 +1917,12 @@ document.addEventListener("click", async e => {
     case "vista": UI.vista = el.dataset.v; try { localStorage.setItem("td-vista", UI.vista); } catch(x){} renderMain(); break;
     case "abrirSemana": UI.semAberta = el.dataset.id; UI.tab = "semanas"; renderChrome(); renderMain(); break;
     case "verSemana": UI.semana = el.dataset.id; UI.vista = "etapas"; UI.tab = "quadro"; renderChrome(); renderMain(); break;
+    case "tarNova": UI.editTar = "nova:" + el.dataset.sem; renderMain(); break;
+    case "tarEdit": UI.editTar = el.dataset.id; renderMain(); break;
+    case "tarCancel": UI.editTar = null; renderMain(); break;
+    case "tarApagar": if (confirm("Apagar esta ação?")) { try { await db.doc(`tarefas/${el.dataset.id}`).delete(); UI.editTar = null; renderMain(); } catch(x){ toast("Não apagou."); } } break;
+    case "tarFeito": { const t = (S.tarefas||[]).find(x => x.id === el.dataset.id); if (!t) break; const feito = !t.feito;
+      if (await write(`tarefas/${t.id}`, { feito, feitoPor: feito ? S.me.id : null, feitoEm: feito ? new Date().toISOString() : null }, true)) { t.feito = feito; renderMain(); } break; }
     case "abrirCamp": UI.estSub = "campanhas"; UI.campId = el.dataset.id; UI.editCamp = null; UI.campFases = null; renderMain(); window.scrollTo(0,0); break;
     case "voltarCamp": UI.campId = null; UI.editCamp = null; UI.campFases = null; renderMain(); window.scrollTo(0,0); break;
     case "novaCamp": UI.campId = null; UI.editCamp = "nova"; UI.campFases = [{ fase:"", inicio:"", fim:"", objetivo:"", mensagem:"", canais:"" }]; renderMain(); break;
@@ -2059,6 +2091,11 @@ document.addEventListener("submit", async e => {
     ["inicio","fim","palavraChave","titulo","objetivo","oferta","estrategiaStories","estrategiaFeed"].forEach(k => { if (fd.has(k)) cur[k] = fd.get(k); });
     const n = Number(fd.get("numero")); cur.numero = n > 0 ? n : null;
     if (await write(`semanas/${f.dataset.id}`, cur)) { UI.editSem = null; toast("Guardado."); renderMain(); }
+  } else if (f.dataset.form === "tarefa") {
+    const id = f.dataset.id || `${CLIENTE}-t-${uidShort()}`;
+    const cur = { ...((S.tarefas||[]).find(x => x.id === id) || { cliente:CLIENTE, semana:f.dataset.sem, feito:false, criadoEm:new Date().toISOString() }) }; delete cur.id;
+    ["titulo","area","prazo","quem","porque","como"].forEach(k => cur[k] = fd.get(k) || "");
+    if (await write(`tarefas/${id}`, cur)) { UI.editTar = null; toast("Ação guardada."); renderMain(); }
   } else if (f.dataset.form === "comunicacao") {
     const comunicacao = { ...(S.priv?.comunicacao || {}) };
     COM_CANAIS.forEach(([k]) => { comunicacao[k] = { ...(comunicacao[k]||{}) }; ["nome","porque","cadencia","tipos","regras"].forEach(x => comunicacao[k][x] = fd.get(`${k}_${x}`) || ""); });
