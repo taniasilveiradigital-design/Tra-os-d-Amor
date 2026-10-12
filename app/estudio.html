@@ -157,7 +157,7 @@ textarea.cap{font-family:"Patrick Hand",Karla,cursive!important;font-size:17px!i
 .wkhero::before{content:"T";position:absolute;right:20px;top:-30px;font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:170px;opacity:.12;line-height:1}
 .wkhero h2{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:500;font-size:38px}
 .wkgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
-.dobra-t{cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px} .dobra-t::before{content:"▾";display:inline-block;width:1em;flex:none;color:var(--muted);} .dobra.fechado .dobra-t::before{content:"▸"} .dobra.fechado>:not(.dobra-hd){display:none} .dobra.fechado{gap:0} .dobra-t:hover{color:var(--terra)} .dobrabar{display:flex;gap:8px;justify-content:flex-end}
+.mudou{background:var(--warn-bg);border-radius:8px;padding:6px 8px} .dobra-t{cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px} .dobra-t::before{content:"▾";display:inline-block;width:1em;flex:none;color:var(--muted);} .dobra.fechado .dobra-t::before{content:"▸"} .dobra.fechado>:not(.dobra-hd){display:none} .dobra.fechado{gap:0} .dobra-t:hover{color:var(--terra)} .dobrabar{display:flex;gap:8px;justify-content:flex-end}
 .box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:8px;align-content:start;border-top:4px solid var(--td-castanho)}
 .box.b-obj{border-top-color:var(--td-terra)} .box.b-of{border-top-color:var(--td-castanho)} .box.b-feed{border-top-color:var(--td-azul)} .box.b-st{border-top-color:var(--td-salvia)}
 .insp{display:grid;gap:8px}
@@ -1960,12 +1960,14 @@ function renderOficina(main){
   ${S.rascunhos.filter(r => r.id.startsWith("r-")).length ? `<div class="card"><h3>Rascunhos guardados</h3>${[...S.rascunhos].filter(r => r.id.startsWith("r-")).sort((a,b) => (b.em||"").localeCompare(a.em||"")).map(r => `<div class="spread" style="border-top:1px solid var(--line);padding-top:8px"><span>${esc(fmtQuando(r.em))} · ${esc((r.out||[]).map(g => g.titulo).join(", "))}</span><span class="row"><button class="btn sm" data-act="abrirRasc" data-id="${esc(r.id)}">Abrir</button><button class="btn ghost sm danger" data-act="apagarRasc" data-id="${esc(r.id)}">Apagar</button></span></div>`).join("")}</div>` : ""}`;
 }
 function previewCartao(c,gi,i){
-  const f = (l,v,cls) => v ? `<div style="display:grid;gap:2px"><span class="lbl">${l}</span><p class="readv ${cls||""}" style="${cls?"font-size:17px":""}">${esc(v)}</p></div>` : "";
+  const mud = new Set(c._mudou||[]);
+  const f = (l,v,cls,st) => v ? `<div style="display:grid;gap:2px"${mud.has(st ? "Stories" : l) ? ` class="mudou"` : ""}><span class="lbl">${l}${mud.has(l) && !st ? ` <span class="chip warn" style="padding:0 6px">mudou</span>` : ""}</span><p class="readv ${cls||""}" style="${cls?"font-size:17px":""}">${esc(v)}</p></div>` : "";
   const k = `${gi}-${i}`; const busy = UI.of.ret === k;
   return `<div class="sec"><div class="spread"><div><span class="small muted">${esc(c.data ? fmtDia(c.data) : "")}</span><h3>${esc(c.titulo || c.tipo)}${c.formato ? " · " + esc(c.formato) : ""}</h3></div>
       <div class="row"><button class="btn primary sm" data-act="enviarUm" data-g="${gi}" data-i="${i}">Enviar para o quadro</button><button class="btn sm" data-act="guardarRasc">Guardar</button><button class="btn ghost sm danger" data-act="eliminarUm" data-g="${gi}" data-i="${i}">Eliminar</button></div></div>
     ${f("Intenção",c.intencao)}${f("Estratégia",c.estrategia)}${f("Tema",c.tema)}${f("Como fazer",c.comoFazer)}${f("Inspiração",c.inspiracao)}${f("Legenda",c.legenda,"hand")}
-    ${(c.stories||[]).map((s,j) => `<div class="sec story"><h4>Storie ${j+1} · ${s.media==="foto"?"foto":"vídeo"}</h4>${f("Intenção",s.intencao)}${f("Estratégia",s.estrategia)}${f("Tema",s.tema)}${f("Texto",s.texto,"hand")}${f("Como fazer",s.comoFazer)}${f("Inspiração",s.inspiracao)}</div>`).join("")}
+    ${(c.stories||[]).map((s,j) => `<div class="sec story"><h4>Storie ${j+1} · ${s.media==="foto"?"foto":"vídeo"}${mud.has("Stories") ? ` <span class="chip warn" style="padding:0 6px">mudou</span>` : ""}</h4>${f("Intenção",s.intencao,"",1)}${f("Estratégia",s.estrategia,"",1)}${f("Tema",s.tema,"",1)}${f("Texto",s.texto,"hand",1)}${f("Como fazer",s.comoFazer,"",1)}${f("Inspiração",s.inspiracao,"",1)}</div>`).join("")}
+    ${(c._versoes||[]).length ? `<div class="row"><span class="small muted">${c._mudou ? (c._mudou.length ? "Na última retificação mudou: " + esc(c._mudou.join(", ")) + "." : "A última retificação não mudou nada no texto.") : ""}</span><button class="btn sm" data-act="retVoltar" data-g="${gi}" data-i="${i}">↶ Voltar à versão anterior</button></div>` : ""}
     ${(c._pedidos||[]).length ? `<div class="coms">${c._pedidos.map(t => `<div class="com"><span class="who">Tu <span class="role dona">pedido de retificação</span></span><p class="readv">${esc(t)}</p></div>`).join("")}</div>` : ""}
     <div class="sec priv" style="gap:8px"><label class="f">Comentário para retificar este conteúdo<textarea id="ret-${k}" data-ret="${k}" style="min-height:60px" placeholder="Ex.: a legenda está demasiado poética, quero o preço na 2.ª linha; o storie 2 tem de ser sondagem, não link.">${esc((UI.of.retTxt||{})[k]||"")}</textarea></label>
       <div class="row"><button class="btn sm" data-act="retificar" data-g="${gi}" data-i="${i}" ${busy || UI.of.busy || !sample ? "disabled" : ""}>${busy ? "A retificar… (até 1 minuto)" : "Retificar"}</button></div></div>
@@ -1976,14 +1978,29 @@ async function retificar(gi, i){
   const pedido = ((o.retTxt||{})[k]||"").trim(); if (!pedido) { toast("Escreve o que queres mudar."); return; }
   const w = S.semanas.find(x => x.id === g.semana) || semanaDe(c.data) || semanasOrd()[0];
   o.ret = k; renderMain();
-  const limpo = { ...c }; delete limpo._pedidos;
+  const limpo = cartaoLimpo(c); const anterior = (c._versoes||[]).slice(-1)[0];
   try {
-    const res = await sample.json(`És a estrategista de conteúdos sénior da Tânia Silveira para a marca Traços D'Amor. Escreve em português de Portugal.\n\nMARCA\n${MARCA}\n\n${w ? blocoSemana(w) : ""}\n\nCARTÃO ATUAL (JSON):\n${JSON.stringify(limpo)}\n\n${(c._pedidos||[]).length ? "PEDIDOS ANTERIORES DA TÂNIA (continuam válidos):\n" + c._pedidos.map(t => "- " + t).join("\n") + "\n\n" : ""}NOVO PEDIDO DA TÂNIA:\n${pedido}\n\nRetifica o cartão exatamente como ela pede. Mantém o que ela não mandou mudar. Mantém a mesma data e o mesmo tipo, salvo se ela pedir outra coisa. Nunca inventes preços, tecidos ou tamanhos: usa [parênteses retos].\nResponde só com o cartão em JSON, com as mesmas chaves: {"data","tipo","formato","titulo","intencao","estrategia","tema","comoFazer","inspiracao","legenda","stories":[{"intencao","estrategia","tema","texto","comoFazer","inspiracao","media"}]}`, { modelTier:"complex", cache:false });
+    const res = await sample.json(`És a estrategista de conteúdos sénior da Tânia Silveira para a marca Traços D'Amor. Escreve em português de Portugal.\n\nMARCA\n${MARCA}\n\n${w ? blocoSemana(w) : ""}\n\nCARTÃO ATUAL (JSON):\n${JSON.stringify(limpo)}\n\n${anterior ? "VERSÃO ANTERIOR DO CARTÃO (se ela pedir para voltar ao que estava, é esta):\n" + JSON.stringify(anterior) + "\n\n" : ""}${(c._pedidos||[]).length ? "PEDIDOS ANTERIORES DA TÂNIA (já aplicados; se o novo pedido os contrariar, manda o novo):\n" + c._pedidos.map(t => "- " + t).join("\n") + "\n\n" : ""}NOVO PEDIDO DA TÂNIA:\n${pedido}\n\nRetifica o cartão exatamente como ela pede. Não tens acesso à internet: se ela pedir referências do Instagram ou do Pinterest, não inventes links nem contas; descreve referências concretas (o que se vê, enquadramento, luz, ritmo) e pesquisas exatas para ela procurar. Mantém o que ela não mandou mudar. Mantém a mesma data e o mesmo tipo, salvo se ela pedir outra coisa. Nunca inventes preços, tecidos ou tamanhos: usa [parênteses retos].\nResponde só com o cartão em JSON, com as mesmas chaves: {"data","tipo","formato","titulo","intencao","estrategia","tema","comoFazer","inspiracao","legenda","stories":[{"intencao","estrategia","tema","texto","comoFazer","inspiracao","media"}]}`, { modelTier:"complex", cache:false });
     if (!res || typeof res !== "object" || Array.isArray(res)) throw { code:"invalid_json" };
-    g.cartoes[i] = { ...res, _pedidos:[...(c._pedidos||[]), pedido] };
-    o.retTxt[k] = ""; toast("Retificado.");
-  } catch(e){ toast(e?.code === "not_granted" ? "Não deste permissão para usar o Claude nesta página." : "Não consegui retificar. Tenta outra vez."); }
+    const novo = res.cartao && typeof res.cartao === "object" ? res.cartao : res;
+    const mudou = CAMPOS_CARTAO.filter(([ch]) => JSON.stringify(novo[ch] ?? "") !== JSON.stringify(limpo[ch] ?? "")).map(([,l]) => l);
+    g.cartoes[i] = { ...novo, _pedidos:[...(c._pedidos||[]), pedido], _versoes:[...(c._versoes||[]), limpo].slice(-5), _mudou:mudou };
+    o.retTxt[k] = ""; toast(mudou.length ? "Retificado: mudou " + mudou.join(", ") + "." : "A resposta veio igual. Reformula o pedido.");
+    await guardarRascSilencio();
+  } catch(e){ toast(e?.code === "not_granted" ? "Não deste permissão para usar o Claude nesta página." : e?.code === "rate_limited" ? "Muitos pedidos seguidos. Espera um minuto e tenta outra vez." : e?.code === "invalid_json" ? "A resposta veio cortada. Tenta outra vez." : "Não consegui retificar. Tenta outra vez."); }
   o.ret = null; renderMain();
+}
+const CAMPOS_CARTAO = [["data","Data"],["tipo","Tipo"],["formato","Formato"],["titulo","Título"],["intencao","Intenção"],["estrategia","Estratégia"],["tema","Tema"],["comoFazer","Como fazer"],["inspiracao","Inspiração"],["legenda","Legenda"],["stories","Stories"]];
+function cartaoLimpo(c){ const x = { ...c }; delete x._pedidos; delete x._versoes; delete x._mudou; return x; }
+async function guardarRascSilencio(){
+  const o = UI.of; if (!o.rascId) return;
+  await write(`data/users/${S.me.id}/${o.rascId}`, { em:new Date().toISOString(), brief:o.brief, semanas:o.semanas, out:o.out });
+}
+async function retVoltar(gi, i){
+  const g = UI.of.out[gi]; const c = g && g.cartoes[i]; if (!c || !(c._versoes||[]).length) return;
+  const vs = [...c._versoes]; const ant = vs.pop();
+  g.cartoes[i] = { ...ant, _pedidos:c._pedidos, _versoes:vs };
+  toast("Voltou à versão anterior."); renderMain(); await guardarRascSilencio();
 }
 let genCtl = null;
 async function gerar(soFalhas){
@@ -2196,6 +2213,7 @@ document.addEventListener("click", async e => {
     case "descartar": UI.of.out = []; UI.of.rascId = null; renderMain(); break;
     case "eliminarUm": { const g = UI.of.out[Number(el.dataset.g)]; g.cartoes.splice(Number(el.dataset.i),1); if (!g.cartoes.length) UI.of.out.splice(Number(el.dataset.g),1); UI.of.retTxt = {}; renderMain(); break; }
     case "retificar": retificar(Number(el.dataset.g), Number(el.dataset.i)); break;
+    case "retVoltar": retVoltar(Number(el.dataset.g), Number(el.dataset.i)); break;
     case "enviarUm": { const g = UI.of.out[Number(el.dataset.g)]; const i = Number(el.dataset.i); if (await enviarParaQuadro(g.cartoes[i])) { g.cartoes.splice(i,1); UI.of.retTxt = {}; if (!g.cartoes.length) UI.of.out.splice(Number(el.dataset.g),1); toast("Enviado para Ideia."); renderMain(); } break; }
     case "enviarTodos": { let n = 0; for (const g of UI.of.out) for (const c of g.cartoes) if (await enviarParaQuadro(c)) n++; UI.of.out = []; toast(`${n} cartões enviados para Ideia.`); renderMain(); break; }
     case "guardarRasc": { const id = UI.of.rascId || `r-${uidShort()}`; if (await write(`data/users/${S.me.id}/${id}`, { em:new Date().toISOString(), brief:UI.of.brief, semanas:UI.of.semanas, out:UI.of.out })) { UI.of.rascId = id; toast("Guardado nos rascunhos."); } break; }
