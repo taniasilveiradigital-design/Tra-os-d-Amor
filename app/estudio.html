@@ -822,7 +822,7 @@ function renderFeed(main){
       <td><input type="date" class="inp" data-feed="${esc(t.id)}" data-k="data" value="${esc(t.data)}" min="${esc(w.inicio)}" max="${esc(w.fim)}"></td><td><input class="inp" data-feed="${esc(t.id)}" data-k="titulo" value="${esc(t.titulo)}" placeholder="Ex.: Reel Primeiro foi o toque"></td>
       <td><button class="chip ${(cfg.fixos||[]).includes(t.id) ? "ok" : "neutral"}" data-act="feedFixo" data-id="${esc(t.id)}">${(cfg.fixos||[]).includes(t.id) ? "📌 Fixo" : "Fixar"}</button></td>
       <td><button class="btn ghost sm danger" data-act="feedRm" data-id="${esc(t.id)}">Tirar</button></td></tr>`).join("")}</tbody></table></div>` : `<p class="muted small">Ainda não há capas para esta semana. Carrega as capas que a Ângela fez (uma imagem por publicação, na vertical).</p>`}
-    <h3>Fixos nesta semana</h3><div class="row">${(cfg.fixos||[]).map(id => { const t = (S.feed||[]).find(x => x.id === id); return t ? `<span class="chip ok">📌 ${esc(t.titulo || (t.semana === "antes" ? "publicação antiga " + t.ordem : "nova"))} <button class="linkbtn" data-act="feedFixo" data-id="${esc(id)}" aria-label="Tirar dos fixos">✕</button></span>` : ""; }).join("") || `<span class="small muted">Sem fixos.</span>`}</div>
+    <h3>Fixos nesta semana</h3>${(S.feedcfg||[]).find(c => c.id === w.id)?.fixosMudados ? "" : `<p class="small muted">Estão os fixos de hoje. Ao fixares uma publicação, estes saem dos fixos e voltam ao lugar deles no feed; depois podes juntar mais, até 3.</p>`}<div class="row">${(cfg.fixos||[]).map(id => { const t = (S.feed||[]).find(x => x.id === id); return t ? `<span class="chip ok">📌 ${esc(t.titulo || (t.semana === "antes" ? "publicação antiga " + t.ordem : "nova"))} <button class="linkbtn" data-act="feedFixo" data-id="${esc(id)}" aria-label="Tirar dos fixos">✕</button></span>` : ""; }).join("") || `<span class="small muted">Sem fixos.</span>`}</div>
     <p class="small muted">Quando um fixo sai, a publicação volta ao lugar dela no feed: as novas pela data; as antigas pela posição abaixo (1 = a mais recente; se não souberes, fica no fim).</p>
     ${[...new Set([...(cfgAte("").fixos||[]), ...(cfg.fixos||[])])].map(id => (S.feed||[]).find(x => x.id === id && x.semana === "antes")).filter(Boolean).map(t => `<label class="f" style="max-width:420px">Lugar de "${esc(t.titulo || "publicação " + t.ordem)}" quando não está fixa<input type="number" min="1" class="inp" data-feed="${esc(t.id)}" data-k="ordemReal" value="${t.ordemReal != null && t.ordemReal < 1000 ? Math.round(t.ordemReal - 1.5) : ""}" placeholder="fim do feed"></label>`).join("")}
     <p class="small muted">Fixar uma publicação antiga: <select class="inp" style="width:auto" data-act="feedFixoAntigo"><option value="">Fixar publicação antiga…</option>${(S.feed||[]).filter(t => t.semana === "antes").sort((a,b) => a.ordem - b.ordem).slice(0,30).map(t => `<option value="${esc(t.id)}">${esc(t.titulo || "Publicação " + t.ordem)}</option>`).join("")}</select></p></div>
@@ -835,8 +835,16 @@ function renderFeed(main){
       ${destAll.filter(d => !(cfg.destaques||[]).includes(d.id)).length ? `<select class="inp" style="width:auto" data-act="destJunta"><option value="">Voltar a pôr…</option>${destAll.filter(d => !(cfg.destaques||[]).includes(d.id)).map(d => `<option value="${esc(d.id)}">${esc(d.nome)}</option>`).join("")}</select>` : ""}</div>
     <p class="small muted">O Instagram mostra primeiro o destaque atualizado há menos tempo. A ordem daqui é a que queremos ver: atualizem-nos pela ordem inversa.</p></div>`;
 }
+// fixar numa semana: a primeira escolha da semana substitui os fixos que vinham de trás (saem e voltam ao lugar); as seguintes juntam-se, até 3
+function fixarNaSemana(w, c, id){
+  if (c.fixos.includes(id)) { c.fixos = c.fixos.filter(x => x !== id); c.fixosMudados = true; return; }
+  if (!c.fixosMudados) { c.fixos = [id]; c.fixosMudados = true; return; }
+  if (c.fixos.length >= 3) { toast("Máximo 3 fixos. Tira um primeiro."); return; }
+  c.fixos.push(id);
+}
 async function feedCfgGuardar(w, muda){
-  const base = cfgAte(w.inicio); const cur = { cliente:CLIENTE, inicio:w.inicio, fixos:[...(base.fixos||[])], destaques:[...(base.destaques||[])] };
+  const base = cfgAte(w.inicio); const proprio = (S.feedcfg||[]).find(c => c.id === w.id);
+  const cur = { cliente:CLIENTE, inicio:w.inicio, fixos:[...(base.fixos||[])], destaques:[...(base.destaques||[])], fixosMudados: !!proprio?.fixosMudados };
   muda(cur);
   if (await write(`feedcfg/${w.id}`, cur)) { const i = (S.feedcfg||[]).findIndex(c => c.id === w.id); if (i >= 0) S.feedcfg[i] = { id:w.id, ...cur }; else (S.feedcfg = S.feedcfg || []).push({ id:w.id, ...cur }); renderMain(); }
 }
@@ -2002,7 +2010,7 @@ document.addEventListener("click", async e => {
     case "abrirSemana": UI.semAberta = el.dataset.id; UI.tab = "semanas"; renderChrome(); renderMain(); break;
     case "verSemana": UI.semana = el.dataset.id; UI.vista = "etapas"; UI.tab = "quadro"; renderChrome(); renderMain(); break;
     case "feedFixo": { const w = S.semanas.find(x => x.id === UI.feedSem); if (!w) break; const id = el.dataset.id;
-      await feedCfgGuardar(w, c => { if (c.fixos.includes(id)) c.fixos = c.fixos.filter(x => x !== id); else { if (c.fixos.length >= 3) { toast("Máximo 3 fixos. Tira um primeiro."); return; } c.fixos.push(id); } }); break; }
+      await feedCfgGuardar(w, c => fixarNaSemana(w, c, id)); break; }
     case "feedRm": { const t = (S.feed||[]).find(x => x.id === el.dataset.id); if (!t || !confirm("Tirar esta capa?")) break;
       try { await db.doc(`feed/${t.id}`).delete(); if (assetsCap && t.asset) await assetsCap.delete(t.asset).catch(() => {}); } catch(x){ toast("Não tirou."); } break; }
     case "destMove": { const w = S.semanas.find(x => x.id === UI.feedSem); if (!w) break; const i = Number(el.dataset.i), j = i + Number(el.dataset.d);
@@ -2150,7 +2158,7 @@ document.addEventListener("change", async e => {
   if (t.matches("[data-act=destNovo]") && t.files?.[0]) { const w = S.semanas.find(x => x.id === UI.feedSem); const id = await subirImagem(t.files[0]); t.value = ""; if (!id || !w) return;
     const did = `${CLIENTE}-d-${uidShort()}`; if (await write(`destaques/${did}`, { cliente:CLIENTE, nome:"Novo destaque", asset:id, criadoEm:new Date().toISOString() })) await feedCfgGuardar(w, c => { c.destaques.push(did); }); }
   if (t.matches("[data-act=destJunta]") && t.value) { const w = S.semanas.find(x => x.id === UI.feedSem); const v = t.value; if (w) await feedCfgGuardar(w, c => { if (!c.destaques.includes(v)) c.destaques.push(v); }); }
-  if (t.matches("[data-act=feedFixoAntigo]") && t.value) { const w = S.semanas.find(x => x.id === UI.feedSem); const v = t.value; if (w) await feedCfgGuardar(w, c => { if (c.fixos.includes(v)) return; if (c.fixos.length >= 3) { toast("Máximo 3 fixos. Tira um primeiro."); return; } c.fixos.push(v); }); }
+  if (t.matches("[data-act=feedFixoAntigo]") && t.value) { const w = S.semanas.find(x => x.id === UI.feedSem); const v = t.value; if (w) await feedCfgGuardar(w, c => { if (!c.fixos.includes(v)) fixarNaSemana(w, c, v); }); }
   if (t.matches("[data-feed]")) { const v = t.dataset.k === "ordemReal" ? (t.value === "" ? 1000 : Number(t.value) + 1.5) : t.value; await write(`feed/${t.dataset.feed}`, { [t.dataset.k]: v }, true); }
   if (t.matches("[data-dest]")) { await write(`destaques/${t.dataset.dest}`, { nome: t.value }, true); }
   if (t.matches("[data-act=ofCampSel]")) { UI.of.camp = t.value; UI.of.comOut = []; t.blur(); renderMain(); }
