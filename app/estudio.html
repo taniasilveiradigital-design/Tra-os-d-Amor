@@ -784,7 +784,8 @@ function estadoFeed(w){
   const ini = w ? w.inicio : "";
   const semIni = id => (S.semanas.find(s => s.id === id) || {}).inicio || "9999";
   const novos = (S.feed||[]).filter(t => t.semana !== "antes" && semIni(t.semana) <= ini && ini).sort((a,b) => (b.data||"").localeCompare(a.data||"") || (b.criadoEm||"").localeCompare(a.criadoEm||""));
-  const antes = (S.feed||[]).filter(t => t.semana === "antes").sort((a,b) => (a.ordem||0) - (b.ordem||0));
+  const lugar = t => t.ordemReal ?? t.ordem ?? 0; // ordemReal: o lugar da publicação quando não está fixada
+  const antes = (S.feed||[]).filter(t => t.semana === "antes").sort((a,b) => lugar(a) - lugar(b));
   const cfg = cfgAte(ini);
   const todos = [...novos, ...antes];
   const fixos = (cfg.fixos||[]).map(id => todos.find(t => t.id === id)).filter(Boolean).slice(0,3);
@@ -822,6 +823,8 @@ function renderFeed(main){
       <td><button class="chip ${(cfg.fixos||[]).includes(t.id) ? "ok" : "neutral"}" data-act="feedFixo" data-id="${esc(t.id)}">${(cfg.fixos||[]).includes(t.id) ? "📌 Fixo" : "Fixar"}</button></td>
       <td><button class="btn ghost sm danger" data-act="feedRm" data-id="${esc(t.id)}">Tirar</button></td></tr>`).join("")}</tbody></table></div>` : `<p class="muted small">Ainda não há capas para esta semana. Carrega as capas que a Ângela fez (uma imagem por publicação, na vertical).</p>`}
     <h3>Fixos nesta semana</h3><div class="row">${(cfg.fixos||[]).map(id => { const t = (S.feed||[]).find(x => x.id === id); return t ? `<span class="chip ok">📌 ${esc(t.titulo || (t.semana === "antes" ? "publicação antiga " + t.ordem : "nova"))} <button class="linkbtn" data-act="feedFixo" data-id="${esc(id)}" aria-label="Tirar dos fixos">✕</button></span>` : ""; }).join("") || `<span class="small muted">Sem fixos.</span>`}</div>
+    <p class="small muted">Quando um fixo sai, a publicação volta ao lugar dela no feed: as novas pela data; as antigas pela posição abaixo (1 = a mais recente; se não souberes, fica no fim).</p>
+    ${[...new Set([...(cfgAte("").fixos||[]), ...(cfg.fixos||[])])].map(id => (S.feed||[]).find(x => x.id === id && x.semana === "antes")).filter(Boolean).map(t => `<label class="f" style="max-width:420px">Lugar de "${esc(t.titulo || "publicação " + t.ordem)}" quando não está fixa<input type="number" min="1" class="inp" data-feed="${esc(t.id)}" data-k="ordemReal" value="${t.ordemReal != null && t.ordemReal < 1000 ? Math.round(t.ordemReal - 1.5) : ""}" placeholder="fim do feed"></label>`).join("")}
     <p class="small muted">Fixar uma publicação antiga: <select class="inp" style="width:auto" data-act="feedFixoAntigo"><option value="">Fixar publicação antiga…</option>${(S.feed||[]).filter(t => t.semana === "antes").sort((a,b) => a.ordem - b.ordem).slice(0,30).map(t => `<option value="${esc(t.id)}">${esc(t.titulo || "Publicação " + t.ordem)}</option>`).join("")}</select></p></div>
   <div class="card"><h2>Destaques a partir desta semana</h2>${cfgW ? "" : `<p class="small muted">Esta semana usa os destaques de antes. Ao mexer aqui, passam a valer a partir desta semana.</p>`}
     <div class="destlist">${(cfg.destaques||[]).map((id,i) => { const d = (S.destaques||[]).find(x => x.id === id); if (!d) return "";
@@ -2148,7 +2151,7 @@ document.addEventListener("change", async e => {
     const did = `${CLIENTE}-d-${uidShort()}`; if (await write(`destaques/${did}`, { cliente:CLIENTE, nome:"Novo destaque", asset:id, criadoEm:new Date().toISOString() })) await feedCfgGuardar(w, c => { c.destaques.push(did); }); }
   if (t.matches("[data-act=destJunta]") && t.value) { const w = S.semanas.find(x => x.id === UI.feedSem); const v = t.value; if (w) await feedCfgGuardar(w, c => { if (!c.destaques.includes(v)) c.destaques.push(v); }); }
   if (t.matches("[data-act=feedFixoAntigo]") && t.value) { const w = S.semanas.find(x => x.id === UI.feedSem); const v = t.value; if (w) await feedCfgGuardar(w, c => { if (c.fixos.includes(v)) return; if (c.fixos.length >= 3) { toast("Máximo 3 fixos. Tira um primeiro."); return; } c.fixos.push(v); }); }
-  if (t.matches("[data-feed]")) { await write(`feed/${t.dataset.feed}`, { [t.dataset.k]: t.value }, true); }
+  if (t.matches("[data-feed]")) { const v = t.dataset.k === "ordemReal" ? (t.value === "" ? 1000 : Number(t.value) + 1.5) : t.value; await write(`feed/${t.dataset.feed}`, { [t.dataset.k]: v }, true); }
   if (t.matches("[data-dest]")) { await write(`destaques/${t.dataset.dest}`, { nome: t.value }, true); }
   if (t.matches("[data-act=ofCampSel]")) { UI.of.camp = t.value; UI.of.comOut = []; t.blur(); renderMain(); }
   if (t.matches("[data-act=ofCanalSel]")) { UI.of.canal = t.value; UI.of.comOut = []; t.blur(); renderMain(); }
