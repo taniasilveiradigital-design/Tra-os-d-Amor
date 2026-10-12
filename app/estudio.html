@@ -211,6 +211,17 @@ ul.fala li{font-family:"Patrick Hand",cursive;font-size:17px;line-height:1.35}
 .perde{color:var(--bad);font-weight:700}
 .bfnav{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0} .bfnav a{text-decoration:none} .bfsec{scroll-margin-top:60px;display:grid;gap:12px} .bfrevbox{border-top:1px dashed var(--line);padding-top:10px} .bfrev{display:grid;gap:6px;max-width:560px} .bfgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px} .bfgrid .card{display:grid;gap:6px;align-content:start} .bfgrid .card .btn{justify-self:start} .bfgrid.wide{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))} button.card.camp{text-align:left;font:inherit;color:inherit;cursor:pointer;display:grid;gap:6px;align-content:start;justify-items:start} button.card.camp:hover{border-color:var(--terra)} .pubitem{display:grid;gap:8px;align-content:start} button.chk{display:block;width:100%;text-align:left;background:none;border:0;padding:4px 0;font:inherit;color:inherit;cursor:pointer} .callout{background:var(--warn-bg);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:8px}
 .tarefa{display:grid;grid-template-columns:28px 1fr;gap:8px;border-top:1px solid var(--line);padding:10px 0} .tarefa .chk{font-size:20px;padding:0} .tarefa.feita b{text-decoration:line-through;opacity:.6}
+.antesdepois{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start}
+.phone{border:1px solid var(--line);border-radius:22px;padding:12px 8px;background:var(--surface);max-width:380px;margin:0 auto;display:grid;gap:10px}
+.phone-hd{display:flex;justify-content:space-between;align-items:center;padding:0 6px}
+.phone-dest{display:flex;gap:10px;overflow-x:auto;padding:2px 6px}
+.dest{display:grid;justify-items:center;gap:3px;min-width:58px}.dest .dn{font-size:11px;text-align:center;max-width:64px;line-height:1.2}
+.dc{width:54px;height:54px;border-radius:50%;background-size:cover;background-position:center;border:2px solid var(--line);display:inline-block;flex:none}
+.phone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.tile-f{position:relative;aspect-ratio:3/4;background:var(--sunk);overflow:hidden}.tile-f img{width:100%;height:100%;object-fit:cover;display:block}
+.tile-f.novo{outline:3px solid var(--terra);outline-offset:-3px}.tile-f .pin{position:absolute;top:3px;right:4px;font-size:12px}.tile-f .nv{position:absolute;left:4px;bottom:4px;background:var(--terra);color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 6px}
+.destlist{display:grid;gap:8px}.destrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.destrow .inp{flex:1;min-width:140px}
+.linkbtn{background:none;border:0;cursor:pointer;color:inherit;padding:0 2px}
 .hist{display:grid;gap:6px} .hitem{border:1px solid var(--line);border-radius:10px;background:var(--surface)} .hitem summary{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;padding:8px 10px;cursor:pointer} .hitem summary .hd{font-variant-numeric:tabular-nums;min-width:62px;font-weight:700} .hitem summary .chip{padding:0 6px;font-size:11px} .hbody{padding:0 12px 12px;display:grid;gap:6px} .hcorpo{white-space:pre-wrap;max-height:420px;overflow:auto;background:var(--sunk);border-radius:8px;padding:10px}
 .plano{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px} .pcol{display:grid;gap:8px;align-content:start} .pit{background:var(--sunk);border-radius:10px;padding:10px;display:grid;gap:6px} .sug .resultado{background:var(--ok-bg, var(--sunk));border-radius:6px;padding:4px 8px} #relForm .inp[type=number]{text-align:right}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--muted)} .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
@@ -319,7 +330,7 @@ const PAPEL_TXT = { dona:"Estratega", equipa:"Equipa criativa", cliente:"Cliente
 
 let db = null, userCap = null, sample = null, mcp = null;
 const APP_URL = "https://claude.ai/artifact/D3MiggwcKrr8yggsoKk3vz";
-const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], relPriv:[], avaliacoes:[], historico:[], bf:[], campanhas:[], emails:[], mensagens:[], tarefas:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
+const S = { estado:{ lidas:[] }, sugestoes:[], cliente:null, priv:null, semanas:[], cartoes:[], comentarios:[], inspiracoes:[], pessoas:[], metricas:[], resultados:[], perguntas:[], relatorios:[], relPriv:[], avaliacoes:[], historico:[], bf:[], campanhas:[], emails:[], mensagens:[], tarefas:[], feed:[], destaques:[], feedcfg:[], rascunhos:[], loaded:{}, me:{ id:null, isOwner:false }, names:{} };
 const UI = { menc:[], notif:false, sugId:null, tab:"quadro", vista:"semanas", semana:"todas", semAberta:null, mes:"2026-10", cardId:null, pend:false, editSem:null, editEst:false, editDados:null, relId:null, editMelh:null, qaBusy:false, qaTxt:"",
   of:{ area:"conteudos", camp:"", canal:"instagram", comBrief:"", comOut:[], ini:"", fim:"", modo:"semana", semanas:[], data:"", tipo:"Feed", formato:"Reel", brief:"", busy:false, prog:"", out:[], err:"", ret:null, retTxt:{}, rascId:null, insp:"", confSub:false } };
 try { if (!localStorage.getItem("td-ajuda-vista")) UI.ajuda = true; } catch(e){}
@@ -390,7 +401,7 @@ function renderMainSafe(){ if (isEditing()) { UI.pend = true; } else renderMain(
   userCap = await window.claude?.use?.("user") ?? null;
   if (userCap) { const me = await userCap.me(); S.me = { id: me.id, isOwner: me.isOwner }; if (me.id && me.name) S.names[me.id] = me.name; }
   db.doc(`clientes/${CLIENTE}`).onSnapshot(s => { S.cliente = s.exists ? s.data() : null; onData("cliente"); }, () => {});
-  for (const c of ["semanas","cartoes","comentarios","inspiracoes","pessoas","relatorios","emails","mensagens","tarefas"]) sub(c, db.collection(c).where("cliente","==",CLIENTE));
+  for (const c of ["semanas","cartoes","comentarios","inspiracoes","pessoas","relatorios","emails","mensagens","tarefas","feed","destaques","feedcfg"]) sub(c, db.collection(c).where("cliente","==",CLIENTE));
   if (S.me.isOwner) {
     db.doc(PRIV).onSnapshot(s => { S.priv = s.exists ? s.data() : null; onData("priv"); }, () => {});
     sub("metricas", db.collection(`${PRIV}/metricas`));
@@ -401,6 +412,7 @@ function renderMainSafe(){ if (isEditing()) { UI.pend = true; } else renderMain(
     sub("avaliacoes", db.collection(`${PRIV}/avaliacoes`));
     sub("historico", db.collection(`${PRIV}/historico`));
     sub("bf", db.collection(`${PRIV}/blackfriday`));
+    window.claude?.use?.("assets").then(a => { assetsCap = a; if (UI.tab === "feed") renderMain(); }).catch(() => {});
     sub("campanhas", db.collection(`${PRIV}/campanhas`));
     if (S.me.id) sub("rascunhos", db.collection(`data/users/${S.me.id}`));
     sample = await window.claude?.use?.("sample") ?? null;
@@ -449,7 +461,7 @@ function renderChrome(){
   $("#statusChips").innerHTML = `<button class="chip ${nn ? "bad" : "neutral"}" data-act="notif" aria-expanded="${!!UI.notif}">🔔 ${nn}</button><button class="chip neutral" data-act="ajuda" aria-expanded="${!!UI.ajuda}">? Como funciona</button><span class="chip neutral">${esc(PAPEL_TXT[p])}</span>` +
     (pt.length ? `<button class="chip bad" data-act="paraTi">● ${pt.length} à tua espera</button>` : `<span class="chip ok">Nada à tua espera</span>`);
   const pub = [["quadro","Quadro"],["calendario","Calendário"],["semanas","Semanas"],["emails","Email marketing"],["canais","Canais"],["relatorios","Relatórios"]];
-  const priv = p === "dona" ? [["estrategia","Estratégia 🔒"],["dados","Dados 🔒"],["historico","Histórico 🔒"],["oficina","Oficina 🔒"]] : [];
+  const priv = p === "dona" ? [["estrategia","Estratégia 🔒"],["dados","Dados 🔒"],["historico","Histórico 🔒"],["feed","Feed 🔒"],["oficina","Oficina 🔒"]] : [];
   if (![...pub,...priv].find(t => t[0] === UI.tab)) UI.tab = "quadro";
   $("#tabs").innerHTML = pub.map(([k,l]) => `<button role="tab" data-tab="${k}" aria-selected="${UI.tab===k}">${l}</button>`).join("") +
     (priv.length ? `<span class="sep" aria-hidden="true"></span>` + priv.map(([k,l]) => `<button role="tab" data-tab="${k}" aria-selected="${UI.tab===k}" class="priv">${l}</button>`).join("") : "");
@@ -465,7 +477,7 @@ function renderMain(){
   const main = $("#main");
   if (S.nodb) { main.innerHTML = `<div class="empty"><h3>Abre esta página no claude.ai</h3><p>A aplicação precisa da base de dados, que só existe dentro do claude.ai.</p></div>`; return; }
   if (!S.loaded.cartoes) { main.innerHTML = `<div class="empty"><p>A carregar…</p></div>`; return; }
-  const priv = { estrategia:renderEstrategia, dados:renderDados, historico:renderHistorico, oficina:renderOficina };
+  const priv = { estrategia:renderEstrategia, dados:renderDados, historico:renderHistorico, feed:renderFeed, oficina:renderOficina };
   if (priv[UI.tab] && !isDona()) UI.tab = "quadro";
   const fn = {quadro:renderQuadro, calendario:renderCal, semanas:renderSemanas, emails:renderEmails, canais:renderCanais, relatorios:renderRelatorios, ...priv}[UI.tab] || renderQuadro;
   if (UI.tab === "dados" || UI.tab === "estrategia") comSimulacao(() => fn(main)); else fn(main);
@@ -734,6 +746,7 @@ function renderSemanas(main){
   `<div class="wkhero"><span class="small" style="opacity:.85">${esc(cap1(MESES[parse(w.inicio).getMonth()]))} · ${esc(fmtLongo(w.inicio))} a ${esc(fmtLongo(w.fim))}${w.palavraChave ? ` · palavra-chave ${esc(w.palavraChave)}` : ""}</span><h2>${esc(nomeSemana(w))}</h2><p style="font-size:18px">${esc(w.titulo)}</p>
     <div class="row" style="margin-top:6px">${ETAPAS.map(([k,l]) => { const n = its.filter(c => c.etapa === k).length; return n ? `<span class="et et-${k}">${l} ${n}</span>` : ""; }).join("")}<button class="chip neutral" data-act="verSemana" data-id="${esc(w.id)}">Ver cartões no quadro →</button></div></div>`}
   <div class="wkgrid">${box("b-obj","Objetivo",w.objetivo,"objetivo",90)}${box("b-of","Oferta",w.oferta,"oferta",90)}${box("b-feed","Estratégia do feed",w.estrategiaFeed,"estrategiaFeed")}${box("b-st","Estratégia dos stories",w.estrategiaStories,"estrategiaStories")}</div>
+  ${feedSemanaHtml(w)}
   ${tarefasHtml(w)}`;
 }
 /* ações da semana: o que a cliente tem de aplicar (site, loja, Instagram, email) */
@@ -761,6 +774,74 @@ function tarefasHtml(w){
     ${dona ? (UI.editTar === "nova:" + w.id ? tarefaForm(null, w) : `<button class="btn" data-act="tarNova" data-sem="${esc(w.id)}">+ Ação para a cliente</button>`) : ""}</div>`;
 }
 
+/* ---------- feed: antes e depois (privado para gerir, a cliente vê o resultado em cada semana) ---------- */
+let assetsCap = null;
+const blobUrl = id => id ? "/_blob/" + id : "";
+const cfgOrd = () => [...(S.feedcfg||[])].sort((a,b) => (a.inicio||"").localeCompare(b.inicio||""));
+function cfgAte(inicio){ let c = null; for (const x of cfgOrd()) if ((x.inicio||"") <= inicio) c = x; return c || { fixos:[], destaques:[] }; }
+function estadoFeed(w){
+  // w = null → só o antes (o feed de hoje); w = semana → o feed com tudo o que entrou até essa semana
+  const ini = w ? w.inicio : "";
+  const semIni = id => (S.semanas.find(s => s.id === id) || {}).inicio || "9999";
+  const novos = (S.feed||[]).filter(t => t.semana !== "antes" && semIni(t.semana) <= ini && ini).sort((a,b) => (b.data||"").localeCompare(a.data||"") || (b.criadoEm||"").localeCompare(a.criadoEm||""));
+  const antes = (S.feed||[]).filter(t => t.semana === "antes").sort((a,b) => (a.ordem||0) - (b.ordem||0));
+  const cfg = cfgAte(ini);
+  const todos = [...novos, ...antes];
+  const fixos = (cfg.fixos||[]).map(id => todos.find(t => t.id === id)).filter(Boolean).slice(0,3);
+  const grelha = [...fixos, ...todos.filter(t => !fixos.includes(t))];
+  const dest = (cfg.destaques||[]).map(id => (S.destaques||[]).find(d => d.id === id)).filter(Boolean);
+  return { grelha, fixos:new Set(fixos.map(t => t.id)), dest, novos:new Set(w ? novos.filter(t => t.semana === w.id).map(t => t.id) : []) };
+}
+function telemovelHtml(est, titulo, max){
+  const c = S.cliente || {}; const n = max || 15;
+  return `<div class="phone"><div class="phone-hd"><b>${esc(c.instagram || "@marca")}</b>${titulo ? `<span class="chip neutral">${esc(titulo)}</span>` : ""}</div>
+    <div class="phone-dest">${est.dest.map(d => `<div class="dest"><span class="dc" style="${d.asset ? `background-image:url('${blobUrl(d.asset)}')` : `background:${esc(d.cor || "var(--sunk)")}`}"></span><span class="dn">${esc(d.nome)}</span></div>`).join("") || `<span class="small muted">Sem destaques</span>`}</div>
+    <div class="phone-grid">${est.grelha.slice(0, n).map(t => `<div class="tile-f${est.novos.has(t.id) ? " novo" : ""}" title="${esc(t.titulo || "")}"><img src="${blobUrl(t.asset)}" alt="${esc(t.titulo || "Publicação")}" loading="lazy">${est.fixos.has(t.id) ? `<span class="pin" aria-label="Fixo">📌</span>` : ""}${est.novos.has(t.id) ? `<span class="nv">nova</span>` : ""}</div>`).join("")}</div>
+    ${est.grelha.length > n ? `<p class="small muted" style="text-align:center">+ ${est.grelha.length - n} publicações abaixo</p>` : ""}</div>`;
+}
+function feedSemanaHtml(w){
+  const temAlgo = (S.feed||[]).some(t => t.semana === w.id) || (S.feedcfg||[]).some(c => c.id === w.id);
+  if (!temAlgo) return "";
+  return `<div class="card"><h2>Como fica o feed esta semana</h2><p class="small muted">As publicações novas desta semana estão marcadas. Em cima, os destaques como vão ficar.</p>${telemovelHtml(estadoFeed(w), "", 12)}</div>`;
+}
+function renderFeed(main){
+  const ws = semanasOrd().filter(w => w.fim >= addDays(todayIso, -7));
+  const w = S.semanas.find(x => x.id === UI.feedSem) || semanaAtual() || ws[0]; if (!w) { main.innerHTML = `<div class="empty"><p>Sem semanas.</p></div>`; return; }
+  UI.feedSem = w.id;
+  const anterior = semanasOrd().filter(x => x.inicio < w.inicio).pop();
+  const antes = estadoFeed(anterior || null), depois = estadoFeed(w);
+  const daSemana = (S.feed||[]).filter(t => t.semana === w.id).sort((a,b) => (a.data||"").localeCompare(b.data||""));
+  const cfg = cfgAte(w.inicio); const cfgW = (S.feedcfg||[]).find(c => c.id === w.id);
+  const destAll = [...(S.destaques||[])].sort((a,b) => (a.criadoEm||"").localeCompare(b.criadoEm||""));
+  main.innerHTML = `<div class="priv-banner">🔒 <b>Feed: antes e depois.</b> Aqui geres as capas e os destaques. A cliente vê, em cada semana, só o resultado: "Como fica o feed esta semana".</div>
+  <div class="spread"><select class="inp" style="width:auto" data-act="feedSel" id="feedSel" aria-label="Semana">${ws.map(x => `<option value="${esc(x.id)}"${x.id===w.id?" selected":""}>${esc(cap1(MESES[parse(x.inicio).getMonth()]))} · ${esc(nomeSemana(x))} · ${esc(x.titulo)}</option>`).join("")}</select>
+    ${assetsCap ? `<label class="btn primary">+ Capas desta semana<input type="file" accept="image/*" multiple data-act="feedUp" hidden></label>` : `<span class="small muted">Para carregar capas, abre a app como dona no claude.ai.</span>`}</div>
+  <div class="antesdepois"><div><h3>Antes</h3>${telemovelHtml(antes, anterior ? `até ${nomeSemana(anterior)}` : "hoje", 18)}</div><div><h3>Depois · ${esc(nomeSemana(w))}</h3>${telemovelHtml(depois, w.titulo, 18)}</div></div>
+  <div class="card"><h2>Capas desta semana</h2>${daSemana.length ? `<div class="tbl"><table><thead><tr><th></th><th>Dia</th><th>Título</th><th>Fixo</th><th></th></tr></thead><tbody>${daSemana.map(t => `<tr><td><img src="${blobUrl(t.asset)}" alt="" style="width:48px;aspect-ratio:3/4;object-fit:cover;border-radius:4px"></td>
+      <td><input type="date" class="inp" data-feed="${esc(t.id)}" data-k="data" value="${esc(t.data)}" min="${esc(w.inicio)}" max="${esc(w.fim)}"></td><td><input class="inp" data-feed="${esc(t.id)}" data-k="titulo" value="${esc(t.titulo)}" placeholder="Ex.: Reel Primeiro foi o toque"></td>
+      <td><button class="chip ${(cfg.fixos||[]).includes(t.id) ? "ok" : "neutral"}" data-act="feedFixo" data-id="${esc(t.id)}">${(cfg.fixos||[]).includes(t.id) ? "📌 Fixo" : "Fixar"}</button></td>
+      <td><button class="btn ghost sm danger" data-act="feedRm" data-id="${esc(t.id)}">Tirar</button></td></tr>`).join("")}</tbody></table></div>` : `<p class="muted small">Ainda não há capas para esta semana. Carrega as capas que a Ângela fez (uma imagem por publicação, na vertical).</p>`}
+    <h3>Fixos nesta semana</h3><div class="row">${(cfg.fixos||[]).map(id => { const t = (S.feed||[]).find(x => x.id === id); return t ? `<span class="chip ok">📌 ${esc(t.titulo || (t.semana === "antes" ? "publicação antiga " + t.ordem : "nova"))} <button class="linkbtn" data-act="feedFixo" data-id="${esc(id)}" aria-label="Tirar dos fixos">✕</button></span>` : ""; }).join("") || `<span class="small muted">Sem fixos.</span>`}</div>
+    <p class="small muted">Fixar uma publicação antiga: <select class="inp" style="width:auto" data-act="feedFixoAntigo"><option value="">Fixar publicação antiga…</option>${(S.feed||[]).filter(t => t.semana === "antes").sort((a,b) => a.ordem - b.ordem).slice(0,30).map(t => `<option value="${esc(t.id)}">${esc(t.titulo || "Publicação " + t.ordem)}</option>`).join("")}</select></p></div>
+  <div class="card"><h2>Destaques a partir desta semana</h2>${cfgW ? "" : `<p class="small muted">Esta semana usa os destaques de antes. Ao mexer aqui, passam a valer a partir desta semana.</p>`}
+    <div class="destlist">${(cfg.destaques||[]).map((id,i) => { const d = (S.destaques||[]).find(x => x.id === id); if (!d) return "";
+      return `<div class="destrow"><span class="dc" style="${d.asset ? `background-image:url('${blobUrl(d.asset)}')` : `background:${esc(d.cor || "var(--sunk)")}`}"></span><input class="inp" data-dest="${esc(d.id)}" value="${esc(d.nome)}" aria-label="Nome do destaque">
+        <button class="btn ghost sm" data-act="destMove" data-i="${i}" data-d="-1" aria-label="Subir">↑</button><button class="btn ghost sm" data-act="destMove" data-i="${i}" data-d="1" aria-label="Descer">↓</button>
+        ${assetsCap ? `<label class="btn ghost sm">Capa<input type="file" accept="image/*" data-act="destUp" data-id="${esc(d.id)}" hidden></label>` : ""}<button class="btn ghost sm danger" data-act="destRm" data-i="${i}">Tirar</button></div>`; }).join("") || `<p class="muted small">Sem destaques.</p>`}</div>
+    <div class="row">${assetsCap ? `<label class="btn">+ Destaque novo<input type="file" accept="image/*" data-act="destNovo" hidden></label>` : ""}
+      ${destAll.filter(d => !(cfg.destaques||[]).includes(d.id)).length ? `<select class="inp" style="width:auto" data-act="destJunta"><option value="">Voltar a pôr…</option>${destAll.filter(d => !(cfg.destaques||[]).includes(d.id)).map(d => `<option value="${esc(d.id)}">${esc(d.nome)}</option>`).join("")}</select>` : ""}</div>
+    <p class="small muted">O Instagram mostra primeiro o destaque atualizado há menos tempo. A ordem daqui é a que queremos ver: atualizem-nos pela ordem inversa.</p></div>`;
+}
+async function feedCfgGuardar(w, muda){
+  const base = cfgAte(w.inicio); const cur = { cliente:CLIENTE, inicio:w.inicio, fixos:[...(base.fixos||[])], destaques:[...(base.destaques||[])] };
+  muda(cur);
+  if (await write(`feedcfg/${w.id}`, cur)) { const i = (S.feedcfg||[]).findIndex(c => c.id === w.id); if (i >= 0) S.feedcfg[i] = { id:w.id, ...cur }; else (S.feedcfg = S.feedcfg || []).push({ id:w.id, ...cur }); renderMain(); }
+}
+async function subirImagem(file){
+  if (!assetsCap) return null;
+  try { const r = await assetsCap.upload(file); return r.id; }
+  catch(e){ toast(e?.code === "too_large" ? "Imagem demasiado grande (máximo 20 MB)." : e?.code === "unsupported_type" ? "Formato não suportado. Usa JPG, PNG ou WebP." : e?.code === "quota_or_state" ? "Sem espaço para mais imagens." : "Não carregou. Tenta outra vez."); return null; }
+}
 /* ---------- estratégia (privado) ---------- */
 /* ---------- Black Friday (privado): os 9 prompts da Imersão Fibra IA aplicados à Traços ---------- */
 const BF_SECS = [["resumo","Decisão"],["faltam","O que falta"],["passos","Passos 0 a 4"],["calc","Calculadora"],["comunicacao","Comunicação"],["calendario","Calendário"],["producao","Produção"],["kit","Kit operacional"],["pos","Pós-campanha"]];
@@ -1917,6 +1998,13 @@ document.addEventListener("click", async e => {
     case "vista": UI.vista = el.dataset.v; try { localStorage.setItem("td-vista", UI.vista); } catch(x){} renderMain(); break;
     case "abrirSemana": UI.semAberta = el.dataset.id; UI.tab = "semanas"; renderChrome(); renderMain(); break;
     case "verSemana": UI.semana = el.dataset.id; UI.vista = "etapas"; UI.tab = "quadro"; renderChrome(); renderMain(); break;
+    case "feedFixo": { const w = S.semanas.find(x => x.id === UI.feedSem); if (!w) break; const id = el.dataset.id;
+      await feedCfgGuardar(w, c => { if (c.fixos.includes(id)) c.fixos = c.fixos.filter(x => x !== id); else { if (c.fixos.length >= 3) { toast("Máximo 3 fixos. Tira um primeiro."); return; } c.fixos.push(id); } }); break; }
+    case "feedRm": { const t = (S.feed||[]).find(x => x.id === el.dataset.id); if (!t || !confirm("Tirar esta capa?")) break;
+      try { await db.doc(`feed/${t.id}`).delete(); if (assetsCap && t.asset) await assetsCap.delete(t.asset).catch(() => {}); } catch(x){ toast("Não tirou."); } break; }
+    case "destMove": { const w = S.semanas.find(x => x.id === UI.feedSem); if (!w) break; const i = Number(el.dataset.i), j = i + Number(el.dataset.d);
+      await feedCfgGuardar(w, c => { if (j < 0 || j >= c.destaques.length) return; [c.destaques[i], c.destaques[j]] = [c.destaques[j], c.destaques[i]]; }); break; }
+    case "destRm": { const w = S.semanas.find(x => x.id === UI.feedSem); if (!w) break; const i = Number(el.dataset.i); await feedCfgGuardar(w, c => { c.destaques.splice(i, 1); }); break; }
     case "tarNova": UI.editTar = "nova:" + el.dataset.sem; renderMain(); break;
     case "tarEdit": UI.editTar = el.dataset.id; renderMain(); break;
     case "tarCancel": UI.editTar = null; renderMain(); break;
@@ -2050,6 +2138,18 @@ document.addEventListener("change", async e => {
   if (t.matches("[data-act=semSel]")) { UI.semana = t.value; renderMain(); }
   if (t.matches("[data-act=mesSel]")) { UI.mes = t.value; renderMain(); }
   if (t.matches("[data-act=bfFase]")) { UI.bfFase = t.value; t.blur(); renderMain(); }
+  if (t.matches("[data-act=feedSel]")) { UI.feedSem = t.value; t.blur(); renderMain(); }
+  if (t.matches("[data-act=feedUp]") && t.files?.length) { const w = S.semanas.find(x => x.id === UI.feedSem); if (!w) return; let n = 0;
+    for (const f of t.files) { const id = await subirImagem(f); if (!id) continue;
+      if (await write(`feed/${CLIENTE}-f-${uidShort()}`, { cliente:CLIENTE, semana:w.id, asset:id, data:w.inicio, titulo:f.name.replace(/\.[^.]+$/, ""), criadoEm:new Date().toISOString() })) n++; }
+    toast(`${n} capa${n === 1 ? "" : "s"} carregada${n === 1 ? "" : "s"}. Acerta o dia de cada uma.`); t.value = ""; }
+  if (t.matches("[data-act=destUp]") && t.files?.[0]) { const id = await subirImagem(t.files[0]); if (id) await write(`destaques/${t.dataset.id}`, { asset:id }, true); t.value = ""; }
+  if (t.matches("[data-act=destNovo]") && t.files?.[0]) { const w = S.semanas.find(x => x.id === UI.feedSem); const id = await subirImagem(t.files[0]); t.value = ""; if (!id || !w) return;
+    const did = `${CLIENTE}-d-${uidShort()}`; if (await write(`destaques/${did}`, { cliente:CLIENTE, nome:"Novo destaque", asset:id, criadoEm:new Date().toISOString() })) await feedCfgGuardar(w, c => { c.destaques.push(did); }); }
+  if (t.matches("[data-act=destJunta]") && t.value) { const w = S.semanas.find(x => x.id === UI.feedSem); const v = t.value; if (w) await feedCfgGuardar(w, c => { if (!c.destaques.includes(v)) c.destaques.push(v); }); }
+  if (t.matches("[data-act=feedFixoAntigo]") && t.value) { const w = S.semanas.find(x => x.id === UI.feedSem); const v = t.value; if (w) await feedCfgGuardar(w, c => { if (c.fixos.includes(v)) return; if (c.fixos.length >= 3) { toast("Máximo 3 fixos. Tira um primeiro."); return; } c.fixos.push(v); }); }
+  if (t.matches("[data-feed]")) { await write(`feed/${t.dataset.feed}`, { [t.dataset.k]: t.value }, true); }
+  if (t.matches("[data-dest]")) { await write(`destaques/${t.dataset.dest}`, { nome: t.value }, true); }
   if (t.matches("[data-act=ofCampSel]")) { UI.of.camp = t.value; UI.of.comOut = []; t.blur(); renderMain(); }
   if (t.matches("[data-act=ofCanalSel]")) { UI.of.canal = t.value; UI.of.comOut = []; t.blur(); renderMain(); }
   if (t.matches("[data-act=pubEstado]")) { if (await write(`${t.dataset.col}/${t.dataset.id}`, { estado:t.value, atualizadoEm:new Date().toISOString() }, true)) toast("Estado atualizado."); t.blur(); }
