@@ -157,6 +157,7 @@ textarea.cap{font-family:"Patrick Hand",Karla,cursive!important;font-size:17px!i
 .wkhero::before{content:"T";position:absolute;right:20px;top:-30px;font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:170px;opacity:.12;line-height:1}
 .wkhero h2{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:500;font-size:38px}
 .wkgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.dobra-t{cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px} .dobra-t::before{content:"▾";display:inline-block;width:1em;flex:none;color:var(--muted);} .dobra.fechado .dobra-t::before{content:"▸"} .dobra.fechado>:not(.dobra-hd){display:none} .dobra.fechado{gap:0} .dobra-t:hover{color:var(--terra)} .dobrabar{display:flex;gap:8px;justify-content:flex-end}
 .box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:8px;align-content:start;border-top:4px solid var(--td-castanho)}
 .box.b-obj{border-top-color:var(--td-terra)} .box.b-of{border-top-color:var(--td-castanho)} .box.b-feed{border-top-color:var(--td-azul)} .box.b-st{border-top-color:var(--td-salvia)}
 .insp{display:grid;gap:8px}
@@ -486,9 +487,36 @@ function renderMain(){
   if (priv[UI.tab] && !isDona()) UI.tab = "quadro";
   const fn = {quadro:renderQuadro, calendario:renderCal, semanas:renderSemanas, emails:renderEmails, canais:renderCanais, relatorios:renderRelatorios, ...priv}[UI.tab] || renderQuadro;
   if (UI.tab === "dados" || UI.tab === "estrategia") comSimulacao(() => fn(main)); else fn(main);
+  dobraveis(main);
   if (UI.ajuda) main.insertAdjacentHTML("afterbegin", ajudaHtml());
   if (UI.notif) main.insertAdjacentHTML("afterbegin", notifHtml());
 }
+
+/* secções com título e seta: abrem e fecham, e a app lembra-se */
+UI.dobras = new Set(); try { UI.dobras = new Set(JSON.parse(localStorage.getItem("td-dobras") || "[]")); } catch(e){}
+function dobraveis(main){
+  const lista = [];
+  main.querySelectorAll(".card, .box").forEach(c => {
+    if (c.tagName === "BUTTON" || c.tagName === "FORM" || c.closest(".bfgrid") || c.closest("form")) return;
+    let hd = c.firstElementChild, t = hd;
+    if (hd && !/^H[234]$/.test(hd.tagName)) { const f = hd.firstElementChild; t = (hd.classList.contains("spread") || hd.classList.contains("row")) && f && /^H[234]$/.test(f.tagName) ? f : hd.tagName === "DIV" && hd.textContent.length < 300 ? hd.querySelector("h2, h3") : null; if (!t) return; }
+    if (!hd || c.children.length < 2) return;
+    const chave = UI.tab + "|" + t.textContent.trim().slice(0, 60);
+    c.classList.add("dobra"); hd.classList.add("dobra-hd"); t.classList.add("dobra-t");
+    t.dataset.act = "dobrar"; t.dataset.k = chave; t.setAttribute("role", "button"); t.tabIndex = 0;
+    const fechado = UI.dobras.has(chave); c.classList.toggle("fechado", fechado); t.setAttribute("aria-expanded", String(!fechado));
+    lista.push(t);
+  });
+  if (lista.length >= 3) main.insertAdjacentHTML("afterbegin", `<div class="dobrabar"><button class="btn ghost sm" data-act="dobrarTudo" data-v="1">▸ Fechar tudo</button><button class="btn ghost sm" data-act="dobrarTudo" data-v="0">▾ Abrir tudo</button></div>`);
+}
+function dobrar(t, fechar){
+  const c = t.closest(".dobra"); if (!c) return;
+  if (fechar === undefined) fechar = !c.classList.contains("fechado");
+  c.classList.toggle("fechado", fechar); t.setAttribute("aria-expanded", String(!fechar));
+  if (fechar) UI.dobras.add(t.dataset.k); else UI.dobras.delete(t.dataset.k);
+}
+const guardarDobras = () => { try { localStorage.setItem("td-dobras", JSON.stringify([...UI.dobras])); } catch(e){} };
+document.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.classList?.contains("dobra-t")) { e.preventDefault(); dobrar(e.target); guardarDobras(); } });
 
 /* ---------- cartões ---------- */
 function checklist(c){
@@ -2012,9 +2040,12 @@ document.addEventListener("click", async e => {
   if (tab) { UI.tab = tab.dataset.tab; try { localStorage.setItem("td-tab3", UI.tab); } catch(x){} renderChrome(); renderMain(); return; }
   const op = e.target.closest("[data-open]");
   if (op && !e.target.closest("#modal")) { openCard(op.dataset.open); return; }
+  const ancora = e.target.closest('a[href^="#"]'); if (ancora && ancora.getAttribute("href").length > 1) { const alvo = document.getElementById(ancora.getAttribute("href").slice(1)); const t = alvo?.classList.contains("fechado") && alvo.querySelector(".dobra-t"); if (t) { dobrar(t, false); guardarDobras(); } }
   const el = e.target.closest("[data-act]"); if (!el) return;
   const a = el.dataset.act; const card = () => S.cartoes.find(x => x.id === UI.cardId);
   switch (a) {
+    case "dobrar": dobrar(el); guardarDobras(); break;
+    case "dobrarTudo": document.querySelectorAll("#main .dobra-t").forEach(t => dobrar(t, el.dataset.v === "1")); guardarDobras(); break;
     case "ajuda": UI.ajuda = !UI.ajuda; try { localStorage.setItem("td-ajuda-vista", "1"); } catch(x){} renderChrome(); renderMain(); break;
     case "sugEstado": { const g = S.sugestoes.find(x => x.id === el.dataset.doc); if (!g) break; const itens = (g.itens||[]).map((x,i) => i === Number(el.dataset.i) ? { ...x, estado:el.dataset.v } : x);
       if (await write(`${PRIV}/sugestoes/${g.id}`, { itens }, true)) { g.itens = itens; renderMain(); } break; }
