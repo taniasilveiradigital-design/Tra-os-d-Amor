@@ -382,10 +382,14 @@ function onData(name){
   if (["comentarios","pessoas","inspiracoes"].includes(name)) resolveNames();
   renderChrome();
   if (UI.cardId) renderModalLive();
-  if (isEditing()) { UI.pend = true; return; }
+  if (isEditing() || UI.ptrDown) { UI.pend = true; return; }
   renderMain();
 }
-document.addEventListener("focusout", () => setTimeout(() => { if (UI.pend && !isEditing()) { UI.pend = false; renderMain(); } }, 60));
+// nunca redesenhar a meio de um clique: com o rato carregado, espera que o clique chegue ao botão
+document.addEventListener("pointerdown", () => { UI.ptrDown = true; }, true);
+const soltar = () => setTimeout(() => { UI.ptrDown = false; if (UI.pend && !isEditing()) { UI.pend = false; renderMain(); } }, 80);
+document.addEventListener("pointerup", soltar, true); document.addEventListener("pointercancel", soltar, true);
+document.addEventListener("focusout", () => setTimeout(() => { if (UI.pend && !isEditing() && !UI.ptrDown) { UI.pend = false; renderMain(); } }, 60));
 async function resolveNames(){
   if (!userCap) return;
   const ids = [...new Set([...S.comentarios.map(c => c.autor), ...S.inspiracoes.map(c => c.autor), ...S.pessoas.map(p => p.id)].filter(Boolean))].filter(id => !(id in S.names));
