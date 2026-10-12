@@ -1921,7 +1921,7 @@ function renderOficina(main){
     <label class="f">Inspiração (links e notas, um por linha)<textarea id="of-insp" data-of="insp" style="min-height:80px" placeholder="https://pinterest.com/pin/… → story de quarta, composição com o embrulho\nhttps://instagram.com/p/… → reel de segunda, ritmo dos cortes">${esc(o.insp)}</textarea></label>
     <label class="f">O que queres que eu faça<textarea id="of-brief" data-of="brief" style="min-height:130px" placeholder="Ex.: temos vídeos da Sílvia a abrir caixas e fotos dos conjuntos no jardim. Quero spoiler na segunda e revelação na quarta às 10h.">${esc(o.brief)}</textarea></label>
     <div class="row"><button class="btn primary" data-act="gerar" ${o.busy || !sample || !sel.length ? "disabled" : ""}>${o.busy ? esc(o.prog || "A pensar…") : o.modo === "semana" && sel.length > 1 ? `Gerar ${sel.length} semanas` : "Gerar"}</button>${o.busy ? `<button class="btn" data-act="parar">Parar</button>` : ""}${!sample ? `<span class="small muted">Só funciona dentro do claude.ai.</span>` : ""}</div>
-    ${o.err ? `<p class="small" style="color:var(--bad)">${esc(o.err)}</p>` : ""}</div>
+    ${o.err ? `<p class="small" style="color:var(--bad)">${esc(o.err)}</p>${(o.falhas||[]).length && !o.busy ? `<button class="btn" data-act="gerarFalhas">Tentar outra vez</button>` : ""}` : ""}</div>
   ${o.out.length ? `<div class="card"><div class="spread"><h2>Proposta</h2><div class="row"><button class="btn primary" data-act="enviarTodos">Enviar tudo para o quadro (Ideia)</button>${o.modo === "semana" ? (o.confSub ? `<span class="row small">Apaga os cartões em Ideia destas semanas e põe estes no lugar? <button class="btn danger sm" data-act="substituir">Sim, substituir</button><button class="btn sm" data-act="noSub">Não</button></span>` : `<button class="btn" data-act="askSub">Substituir a semana no quadro</button>`) : ""}<button class="btn" data-act="guardarRasc">Guardar tudo</button><button class="btn ghost danger" data-act="descartar">Eliminar tudo</button></div></div>
     ${o.out.map((g,gi) => `<h3 class="serif" style="font-size:24px">${esc(g.titulo)}</h3>${g.nota ? `<p class="chip warn" style="white-space:normal">${esc(g.nota)}</p>` : ""}${g.cartoes.map((c,i) => previewCartao(c,gi,i)).join("")}`).join("")}</div>` : ""}
   ${S.rascunhos.filter(r => r.id.startsWith("r-")).length ? `<div class="card"><h3>Rascunhos guardados</h3>${[...S.rascunhos].filter(r => r.id.startsWith("r-")).sort((a,b) => (b.em||"").localeCompare(a.em||"")).map(r => `<div class="spread" style="border-top:1px solid var(--line);padding-top:8px"><span>${esc(fmtQuando(r.em))} · ${esc((r.out||[]).map(g => g.titulo).join(", "))}</span><span class="row"><button class="btn sm" data-act="abrirRasc" data-id="${esc(r.id)}">Abrir</button><button class="btn ghost sm danger" data-act="apagarRasc" data-id="${esc(r.id)}">Apagar</button></span></div>`).join("")}</div>` : ""}`;
@@ -1953,24 +1953,35 @@ async function retificar(gi, i){
   o.ret = null; renderMain();
 }
 let genCtl = null;
-async function gerar(){
+async function gerar(soFalhas){
   if (!sample) return; const o = UI.of; const sel = semanasOrd().filter(w => o.semanas.includes(w.id)); if (!sel.length) return;
   const alvo = o.modo === "semana" ? sel : [sel[0]];
-  o.busy = true; o.err = ""; o.out = []; o.rascId = null; o.retTxt = {}; genCtl = new AbortController();
-  const erroDe = e => e?.code === "not_granted" ? "Não deste permissão para usar o Claude nesta página." : e?.code === "rate_limited" ? "Muitos pedidos seguidos. Espera um minuto e carrega em Gerar." : e?.code === "invalid_json" ? "A resposta veio cortada. Carrega em Gerar outra vez." : e?.code === "prompt_too_large" ? "O pedido ficou grande demais. Encurta o texto em \"O que queres que eu faça\"." : `Não consegui gerar (${e?.code || "erro"}). Tenta outra vez.`;
+  const falhasAntes = soFalhas ? (o.falhas || []) : [];
+  o.busy = true; o.err = ""; if (!soFalhas) { o.out = []; o.rascId = null; o.retTxt = {}; } o.falhas = []; genCtl = new AbortController();
+  const erroDe = e => e?.code === "not_granted" ? "Não deste permissão para usar o Claude nesta página (aceita o pedido de permissão quando aparecer)." : e?.code === "rate_limited" ? "Muitos pedidos seguidos ou limite de uso atingido. Espera uns minutos." : e?.code === "invalid_json" ? "a resposta veio cortada ou mal formada" : e?.code === "prompt_too_large" ? "o pedido ficou grande demais" : e?.code === "sampling_disabled" ? "O Claude não está disponível nesta conta." : e?.code === "session_expired" ? "A sessão expirou: volta a entrar no claude.ai." : `erro ${e?.code || "desconhecido"}`;
+  const paraTudo = e => ["not_granted","rate_limited","sampling_disabled","session_expired","not_declared","capability_disabled","cancelled"].includes(e?.code);
+  let ultimoErro = null;
   semanas: for (let k = 0; k < alvo.length; k++) {
-    const w = alvo[k], g = { semana:w.id, titulo:`${nomeSemana(w)} · ${w.titulo}`, nota:"", cartoes:[] };
-    const dias = []; for (let d = parse(w.inicio); iso(d) <= w.fim; d.setDate(d.getDate()+1)) dias.push(iso(d));
-    const partes = o.modo === "semana" ? [dias.slice(0,3), dias.slice(3,5), dias.slice(5)].filter(p => p.length) : [null];
-    for (let j = 0; j < partes.length; j++) {
-      o.prog = `${alvo.length > 1 ? `Semana ${k+1} de ${alvo.length} · ` : ""}${partes.length > 1 ? `parte ${j+1} de ${partes.length}` : "a pensar"}… (até 1 minuto cada)`; renderMain();
-      try { const res = await sample.json(promptOficina(w, partes[j] ? { dias:partes[j], feitos:g.cartoes } : null), { signal: genCtl.signal, modelTier:"complex", cache:false });
-        if (!res || !Array.isArray(res.cartoes)) throw { code:"invalid_json" };
-        g.cartoes.push(...res.cartoes); if (res.notaParaTania) g.nota = [g.nota, res.notaParaTania].filter(Boolean).join(" ");
-      } catch(e){ if (g.cartoes.length) o.out.push(g); o.err = e?.code === "cancelled" ? "" : (g.cartoes.length ? `Gerei ${g.cartoes.length} dias desta semana; o resto falhou. ` : "") + erroDe(e); break semanas; }
+    const w = alvo[k];
+    let g = o.out.find(x => x.semana === w.id); if (!g) { g = { semana:w.id, titulo:`${nomeSemana(w)} · ${w.titulo}`, nota:"", cartoes:[] }; o.out.push(g); }
+    const todos = []; for (let d = parse(w.inicio); iso(d) <= w.fim; d.setDate(d.getDate()+1)) todos.push(iso(d));
+    // um dia de cada vez: respostas mais curtas, e se um dia falhar os outros ficam
+    const dias = o.modo === "semana" ? (soFalhas ? todos.filter(d => falhasAntes.some(f => f.semana === w.id && f.dia === d)) : todos) : [null];
+    for (let j = 0; j < dias.length; j++) {
+      o.prog = `${alvo.length > 1 ? `Semana ${k+1} de ${alvo.length} · ` : ""}${dias[j] ? `${DIAS_L[dow(dias[j])]} (${j+1} de ${dias.length})` : "a pensar"}… (até 1 minuto)`; renderMain();
+      try { const res = await sample.json(promptOficina(w, dias[j] ? { dias:[dias[j]], feitos:g.cartoes } : null), { signal: genCtl.signal, modelTier:"complex", cache:false });
+        const cs = Array.isArray(res?.cartoes) ? res.cartoes : (res && res.data ? [res] : null);
+        if (!cs || !cs.length) throw { code:"invalid_json" };
+        g.cartoes.push(...cs.map(c => ({ ...c, data: c.data || dias[j] || c.data }))); g.cartoes.sort((a,b) => (a.data||"").localeCompare(b.data||""));
+        if (res.notaParaTania) g.nota = [g.nota, res.notaParaTania].filter(Boolean).join(" ");
+      } catch(e){ ultimoErro = e; if (e?.code === "cancelled") break semanas;
+        if (dias[j]) o.falhas.push({ semana:w.id, dia:dias[j] });
+        if (paraTudo(e)) { o.err = erroDe(e); break semanas; } }
     }
-    o.out.push(g);
   }
+  o.out = o.out.filter(g => g.cartoes.length);
+  if (!o.err && o.falhas.length) o.err = `Não consegui gerar ${o.falhas.length === 1 ? "um dia" : o.falhas.length + " dias"} (${o.falhas.map(f => fmtCurto(f.dia)).join(", ")}): ${erroDe(ultimoErro)}. Os outros estão em baixo. Carrega em "Tentar outra vez" só para esses.`;
+  else if (!o.err && !o.out.length && ultimoErro && ultimoErro.code !== "cancelled") o.err = `Não consegui gerar: ${erroDe(ultimoErro)}.`;
   o.busy = false; o.prog = ""; renderMain();
 }
 async function enviarParaQuadro(c){
@@ -2134,6 +2145,7 @@ document.addEventListener("click", async e => {
     case "ofModo": UI.of.modo = el.dataset.v; if (UI.of.modo === "dia") UI.of.semanas = UI.of.semanas.slice(0,1); renderMain(); break;
     case "ofSem": { const id = el.dataset.id; const s = UI.of.semanas;
       if (UI.of.modo === "dia" || UI.of.auto) UI.of.semanas = [id]; else UI.of.semanas = s.includes(id) ? (s.length > 1 ? s.filter(x => x !== id) : s) : [...s, id]; UI.of.auto = false; renderMain(); break; }
+    case "gerarFalhas": gerar(true); break;
     case "gerar": gerar(); break;
     case "parar": genCtl?.abort(); break;
     case "descartar": UI.of.out = []; UI.of.rascId = null; renderMain(); break;
