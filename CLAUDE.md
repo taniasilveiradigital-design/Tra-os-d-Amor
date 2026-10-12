@@ -25,6 +25,7 @@ Regras: `privado` read/write owner · `semanas`, `clientes`, `relatorios`, `feed
 - A Oficina gera um dia de cada vez e lê campanhas, ações da semana e memória de tudo o que foi feito.
 - Antes de publicar: extrair o `<script>` e correr `node --check`; testar com Playwright (Chromium em /opt/pw-browsers) e um mock de `window.claude` (db/user/sample/assets).
 - A página nunca redesenha a meio de um clique (`UI.ptrDown`); manter isto ao mexer em `onData`.
+- Nunca usar `confirm()`/`alert()`: dentro do claude.ai são bloqueados. Para apagar, usar `confirmarClique(el, msg)` (dois cliques).
 
 ## Em falta (dados da cliente)
 Preços e tamanhos de outono, custos e stock (Black Friday), plataforma do site e ferramenta de email, exportação Meta (Instagram/Facebook), data limite de envio de Natal.

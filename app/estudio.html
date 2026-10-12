@@ -221,6 +221,7 @@ ul.fala li{font-family:"Patrick Hand",cursive;font-size:17px;line-height:1.35}
 .tile-f{position:relative;aspect-ratio:3/4;background:var(--sunk);overflow:hidden}.tile-f img{width:100%;height:100%;object-fit:cover;display:block}
 .tile-f.novo{outline:3px solid var(--terra);outline-offset:-3px}.tile-f .pin{position:absolute;top:3px;right:4px;font-size:12px}.tile-f .nv{position:absolute;left:4px;bottom:4px;background:var(--terra);color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 6px}
 .destlist{display:grid;gap:8px}.destrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.destrow .inp{flex:1;min-width:140px}
+.armado{background:var(--bad)!important;color:#fff!important}
 .linkbtn{background:none;border:0;cursor:pointer;color:inherit;padding:0 2px}
 .hist{display:grid;gap:6px} .hitem{border:1px solid var(--line);border-radius:10px;background:var(--surface)} .hitem summary{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;padding:8px 10px;cursor:pointer} .hitem summary .hd{font-variant-numeric:tabular-nums;min-width:62px;font-weight:700} .hitem summary .chip{padding:0 6px;font-size:11px} .hbody{padding:0 12px 12px;display:grid;gap:6px} .hcorpo{white-space:pre-wrap;max-height:420px;overflow:auto;background:var(--sunk);border-radius:8px;padding:10px}
 .plano{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px} .pcol{display:grid;gap:8px;align-content:start} .pit{background:var(--sunk);border-radius:10px;padding:10px;display:grid;gap:6px} .sug .resultado{background:var(--ok-bg, var(--sunk));border-radius:6px;padding:4px 8px} #relForm .inp[type=number]{text-align:right}
@@ -1997,6 +1998,15 @@ async function enviarParaQuadro(c){
 }
 
 /* ---------- events ---------- */
+// confirmação em dois cliques: dentro do claude.ai as janelas confirm() são bloqueadas e devolvem sempre "não"
+function confirmarClique(el, msg){
+  const chave = (el.dataset.act || "") + ":" + (el.dataset.id || "");
+  if (UI.armado === chave && Date.now() - UI.armadoEm < 6000) { UI.armado = null; return true; }
+  UI.armado = chave; UI.armadoEm = Date.now();
+  const orig = el.textContent; el.textContent = msg; el.classList.add("armado");
+  setTimeout(() => { if (UI.armado === chave) UI.armado = null; if (el.isConnected) { el.textContent = orig; el.classList.remove("armado"); } }, 6000);
+  return false;
+}
 document.addEventListener("click", async e => {
   const tab = e.target.closest("[data-tab]");
   if (tab) { UI.tab = tab.dataset.tab; try { localStorage.setItem("td-tab3", UI.tab); } catch(x){} renderChrome(); renderMain(); return; }
@@ -2028,7 +2038,7 @@ document.addEventListener("click", async e => {
     case "verSemana": UI.semana = el.dataset.id; UI.vista = "etapas"; UI.tab = "quadro"; renderChrome(); renderMain(); break;
     case "feedFixo": { const w = S.semanas.find(x => x.id === UI.feedSem); if (!w) break; const id = el.dataset.id;
       await feedCfgGuardar(w, c => fixarNaSemana(w, c, id)); break; }
-    case "feedRm": { const t = (S.feed||[]).find(x => x.id === el.dataset.id); if (!t || !confirm("Tirar esta capa?")) break;
+    case "feedRm": { const t = (S.feed||[]).find(x => x.id === el.dataset.id); if (!t || !confirmarClique(el, "Tirar? Carrega outra vez")) break;
       try { await db.doc(`feed/${t.id}`).delete(); if (assetsCap && t.asset) await assetsCap.delete(t.asset).catch(() => {}); } catch(x){ toast("Não tirou."); } break; }
     case "destMove": { const w = S.semanas.find(x => x.id === UI.feedSem); if (!w) break; const i = Number(el.dataset.i), j = i + Number(el.dataset.d);
       await feedCfgGuardar(w, c => { if (j < 0 || j >= c.destaques.length) return; [c.destaques[i], c.destaques[j]] = [c.destaques[j], c.destaques[i]]; }); break; }
@@ -2036,7 +2046,7 @@ document.addEventListener("click", async e => {
     case "tarNova": UI.editTar = "nova:" + el.dataset.sem; renderMain(); break;
     case "tarEdit": UI.editTar = el.dataset.id; renderMain(); break;
     case "tarCancel": UI.editTar = null; renderMain(); break;
-    case "tarApagar": if (confirm("Apagar esta ação?")) { try { await db.doc(`tarefas/${el.dataset.id}`).delete(); UI.editTar = null; renderMain(); } catch(x){ toast("Não apagou."); } } break;
+    case "tarApagar": if (confirmarClique(el, "Apagar? Carrega outra vez")) { try { await db.doc(`tarefas/${el.dataset.id}`).delete(); UI.editTar = null; renderMain(); } catch(x){ toast("Não apagou."); } } break;
     case "tarFeito": { const t = (S.tarefas||[]).find(x => x.id === el.dataset.id); if (!t) break; const feito = !t.feito;
       if (await write(`tarefas/${t.id}`, { feito, feitoPor: feito ? S.me.id : null, feitoEm: feito ? new Date().toISOString() : null }, true)) { t.feito = feito; renderMain(); } break; }
     case "abrirCamp": UI.estSub = "campanhas"; UI.campId = el.dataset.id; UI.editCamp = null; UI.campFases = null; renderMain(); window.scrollTo(0,0); break;
@@ -2045,7 +2055,7 @@ document.addEventListener("click", async e => {
     case "editCamp": UI.editCamp = "edit"; UI.campFases = null; renderMain(); window.scrollTo(0,0); break;
     case "addFase": UI.campFases.push({ fase:"", inicio:"", fim:"", objetivo:"", mensagem:"", canais:"" }); renderMain(); break;
     case "rmFase": UI.campFases.splice(Number(el.dataset.i), 1); renderMain(); break;
-    case "apagarCamp": if (confirm("Apagar esta campanha?")) { try { await db.doc(`${PRIV}/campanhas/${el.dataset.id}`).delete(); UI.campId = null; UI.editCamp = null; renderMain(); } catch(x){ toast("Não apagou."); } } break;
+    case "apagarCamp": if (confirmarClique(el, "Apagar a campanha? Carrega outra vez")) { try { await db.doc(`${PRIV}/campanhas/${el.dataset.id}`).delete(); UI.campId = null; UI.editCamp = null; renderMain(); } catch(x){ toast("Não apagou."); } } break;
     case "editCom": UI.editCom = true; renderMain(); break;
     case "cancelCom": UI.editCom = false; renderMain(); break;
     case "ofArea": UI.of.area = el.dataset.v; UI.of.err = ""; renderMain(); break;
@@ -2060,7 +2070,7 @@ document.addEventListener("click", async e => {
     case "canalF": UI.canalF = el.dataset.v; renderMain(); break;
     case "pubEdit": UI.editPub = el.dataset.id; renderMain(); break;
     case "pubCancel": UI.editPub = null; renderMain(); break;
-    case "pubApagar": if (confirm("Apagar?")) { try { await db.doc(`${el.dataset.col}/${el.dataset.id}`).delete(); UI.editPub = null; renderMain(); } catch(x){ toast("Não apagou."); } } break;
+    case "pubApagar": if (confirmarClique(el, "Apagar? Carrega outra vez")) { try { await db.doc(`${el.dataset.col}/${el.dataset.id}`).delete(); UI.editPub = null; renderMain(); } catch(x){ toast("Não apagou."); } } break;
     case "pubAprovar": if (await write(`${el.dataset.col}/${el.dataset.id}`, { estado:"aprovado", nota:"", aprovadoPor:S.me.id, atualizadoEm:new Date().toISOString() }, true)) toast("Aprovado."); break;
     case "pubAlterar": UI.pubAlt = el.dataset.id; renderMain(); break;
     case "pubAltCancel": UI.pubAlt = null; renderMain(); break;
