@@ -27,5 +27,8 @@ Regras: `privado` read/write owner · `semanas`, `clientes`, `relatorios`, `feed
 - A página nunca redesenha a meio de um clique (`UI.ptrDown`); manter isto ao mexer em `onData`.
 - Nunca usar `confirm()`/`alert()`: dentro do claude.ai são bloqueados. Para apagar, usar `confirmarClique(el, msg)` (dois cliques).
 
+## Métricas
+- Pasta da Drive "Metricas" (id `1284KNoeBaWc2MTAdzOrxzW70ISI2XZQ9`): a cliente envia as exportações da Meta e a Tânia carrega lá. Ler com o conector Google Drive, gravar em `privado/tracosdamor/metricas` e preparar rascunho de relatório em `privado/tracosdamor/relatorios` (nunca publicar sem validação da Tânia).
+
 ## Em falta (dados da cliente)
 Preços e tamanhos de outono, custos e stock (Black Friday), plataforma do site e ferramenta de email, exportação Meta (Instagram/Facebook), data limite de envio de Natal.
